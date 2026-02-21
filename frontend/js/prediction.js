@@ -6,9 +6,7 @@ let isMuted = false;
 
 // 👉 DYNAMIC URL TOGGLE: Automatically switches between Local and Production
 // This automatically uses your localhost for now, but is ready for Render later!
-const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-    ? 'http://127.0.0.1:5000' 
-    : 'https://safenav-18sk.onrender.com';
+const API_BASE_URL = 'https://safenav-18sk.onrender.com';
 
 let map;
 let locationMarker;
