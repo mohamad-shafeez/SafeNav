@@ -109,6 +109,10 @@ async function runFullAnalysis() {
     const navBox = document.getElementById('nav-instruction-box');
     const navText = document.getElementById('nav-text');
 
+    // 👉 UPDATE 1: Grab the duration value right when the button is clicked
+    const durationInput = document.getElementById('tripDuration');
+    const durationMins = durationInput ? parseInt(durationInput.value) : 30; // Default to 30 if input missing
+
     if (!locationInput || !locationInput.value) return alert("Please enter a location first.");
 
     // Loading UI State
@@ -120,7 +124,7 @@ async function runFullAnalysis() {
 
     try {
         let coords;
-        // A. Location Resolution
+        // A. Location Resolution (GPS or Geocoding)
         if (locationInput.value === "My Location") {
             coords = await new Promise((resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(
@@ -139,16 +143,13 @@ async function runFullAnalysis() {
         // --- 🚀 Smooth Map Animation ---
         if (locationMarker) map.removeLayer(locationMarker);
         map.flyTo([coords.lat, coords.lon], 14, { animate: true, duration: 1.5 });
-        
         locationMarker = L.marker([coords.lat, coords.lon]).addTo(map).bindPopup("Scanning...").openPopup();
 
         // --- 📜 Auto-Scroll to Result ---
         document.getElementById('predictionMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        // B. 🚀 CALLING THE DYNAMIC BACKEND URL
+        // B. 🚀 CALLING THE BACKEND
         const hour = new Date().getHours();
-        
-        // 👉 CRITICAL FIX: Safe fallback for user_profile reading
         const activeProfile = document.getElementById('userProfile')?.value || localStorage.getItem('ai_user_profile') || 'standard';
 
         const response = await fetch(`${API_BASE_URL}/api/prediction/predict`, {
@@ -159,7 +160,8 @@ async function runFullAnalysis() {
                 lng: coords.lon, 
                 time: (hour > 18 || hour < 6) ? 'night' : 'day', 
                 travel_mode: document.getElementById('travelMode')?.value || 'walking',
-                user_profile: activeProfile
+                user_profile: activeProfile,
+                duration_mins: durationMins // 👉 UPDATE 2: Send the duration to your Python backend!
             })
         });
 
@@ -171,10 +173,9 @@ async function runFullAnalysis() {
         drawDangerZone(coords.lat, coords.lon, data.risk_level);
         startHydrationAlert(data.risk_level);
 
-        // --- 🎙️ SAFE VOICE TRIGGER ---
+        // --- 🎙️ VOICE ENGINE TRIGGER ---
         const profileSelect = document.getElementById('userProfile');
-        let currentProfile = "Standard"; // Default fallback if dropdown is broken
-
+        let currentProfile = "Standard"; 
         if (profileSelect && profileSelect.selectedIndex !== -1) {
             currentProfile = profileSelect.options[profileSelect.selectedIndex].text;
         }
@@ -182,11 +183,8 @@ async function runFullAnalysis() {
         let voiceMsg = `[${currentProfile} Mode]: Alert: ${data.risk_level}. ${data.advice}`;
         if (navText) navText.innerText = voiceMsg;
         
-        // 👉 CRITICAL FIX: Prevents double-speaking and uses the correct global function
         if (window.speak && typeof window.speak === 'function') {
             window.speak(voiceMsg, true);
-        } else if (typeof speak === 'function') {
-            speak(voiceMsg); 
         }
 
     } catch (e) {

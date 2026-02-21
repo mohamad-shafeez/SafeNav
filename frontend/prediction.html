@@ -30,61 +30,61 @@
 
 <main class="main-container">
     <div class="voice-toggle-container" style="position: fixed; bottom: 80px; right: 20px; z-index: 1000;">
-    <button id="toggleVoiceBtn" class="btn-voice" onclick="toggleMute()" style="background: #ffffff; border: 2px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.3s;">
-        <span id="voiceIcon" style="font-size: 1.5rem;">🔊</span>
-    </button>
-</div>
-  <section class="card animated-fade-in-up">
-    <h2 class="card-title">Disaster Risk Prediction</h2>
-
-    <div class="input-group">
-      <label for="locationInput">Enter Location</label>
-      <input type="text" id="locationInput" placeholder="City or Address">
-      <button id="useMyLocationBtn" class="btn btn-secondary">📍 Use My Current Location</button>
-    </div>
-<div class="ai-controls-container" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-    <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-        <span style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block;"></span>
-        Personalized Trip Parameters
+        <button id="toggleVoiceBtn" class="btn-voice" onclick="toggleMute()" style="background: #ffffff; border: 2px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.3s;">
+            <span id="voiceIcon" style="font-size: 1.5rem;">🔊</span>
+        </button>
     </div>
 
-    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div class="input-group">
-            <label for="travelMode" style="font-weight: 600; color: #1e293b; margin-bottom: 8px; display: block;">🚶 Travel Mode</label>
-            <select id="travelMode" class="form-control" style="width: 100%; border: 1.5px solid #cbd5e1; transition: border-color 0.2s;">
-                <option value="walking">Walking</option>
-                <option value="bike">Bike / Scooter</option>
-                <option value="cab">Car / Cab</option>
-            </select>
-        </div>
+    <section class="card animated-fade-in-up">
+        <h2 class="card-title">Disaster Risk Prediction</h2>
 
         <div class="input-group">
-            <label for="userProfile" style="font-weight: 600; color: #1e293b; margin-bottom: 8px; display: block;">🧬 Safety Profile</label>
-            <select id="userProfile" class="form-control" onchange="updateProfilePreview()" style="width: 100%; border: 1.5px solid #cbd5e1; transition: border-color 0.2s;">
-    <option value="Standard">Standard / No Conditions</option>
-    <option value="Asthma">Asthma / Respiratory</option>
-    <option value="Elderly">Elderly / Mobility</option>
-    <option value="Heart">Heart Condition</option>
-    <option value="Heat">Heat Sensitive</option>
-    <option value="Altitude">High Altitude Sensitive</option>
-    <option value="Worker">Outdoor Worker</option>
-</select>
+            <label for="locationInput">Enter Location</label>
+            <input type="text" id="locationInput" placeholder="City or Address">
+            <button id="useMyLocationBtn" class="btn btn-secondary">📍 Use My Current Location</button>
         </div>
-    </div>
 
-    <div id="profileHint" style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.8rem; color: #475569; border-left: 4px solid #3b82f6;">
-        AI logic is currently optimized for standard health thresholds.
-    </div>
-</div>
+        <div class="ai-controls-container" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <span style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block;"></span>
+                Personalized Trip Parameters
+            </div>
 
+            <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-group">
+                    <label for="travelMode" style="font-weight: 600; color: #1e293b; margin-bottom: 8px; display: block;">🚶 Travel Mode</label>
+                    <select id="travelMode" class="form-control" style="width: 100%; border: 1.5px solid #cbd5e1; height: 45px; border-radius: 8px;">
+                        <option value="walking">Walking</option>
+                        <option value="bike">Bike / Scooter</option>
+                        <option value="cab">Car / Cab</option>
+                    </select>
+                </div>
 
-<div id="profileHint" style="font-size: 0.75rem; color: #6b7280; margin-top: 5px; font-style: italic;">
-    Thresholds optimized for healthy adults.
-</div>
+                <div class="input-group">
+                    <label for="userProfile" style="font-weight: 600; color: #1e293b; margin-bottom: 8px; display: block;">🧬 Safety Profile</label>
+                    <select id="userProfile" class="form-control" onchange="updateProfilePreview()" style="width: 100%; border: 1.5px solid #cbd5e1; height: 45px; border-radius: 8px;">
+                        <option value="Standard">Standard / No Conditions</option>
+                        <option value="Asthma">Asthma / Respiratory</option>
+                        <option value="Elderly">Elderly / Mobility</option>
+                        <option value="Heart">Heart Condition</option>
+                        <option value="Heat">Heat Sensitive</option>
+                        <option value="Altitude">High Altitude Sensitive</option>
+                        <option value="Worker">Outdoor Worker</option>
+                    </select>
+                </div>
 
+                <div class="input-group" style="grid-column: span 2;">
+                    <label for="tripDuration" style="font-weight: 600; color: #1e293b; margin-bottom: 8px; display: block;">⏳ Expected Exposure (Minutes)</label>
+                    <input type="number" id="tripDuration" value="30" min="5" max="480" class="form-control" style="width: 100%; border: 1.5px solid #cbd5e1; height: 45px; border-radius: 8px; padding: 0 12px;">
+                </div>
+            </div>
 
-    <button id="checkRiskBtn" class="btn" style="margin-top: 20px;">⚠️ Check Risk</button>
+            <div id="profileHint" style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.8rem; color: #475569; border-left: 4px solid #3b82f6;">
+                Syncing with your medical profile...
+            </div>
+        </div>
 
+        <button id="checkRiskBtn" class="btn" style="margin-top: 10px; width: 100%;">⚠️ Check AI Risk Analysis</button>
     <div class="map-controls" style="margin: 20px 0 10px; display: flex; gap: 10px;">
         <button onclick="toggleWeatherLayer('clouds_new')" class="btn btn-secondary" style="font-size: 0.8rem; padding: 5px 10px;">☁️ Clouds</button>
         <button onclick="toggleWeatherLayer('precipitation_new')" class="btn btn-secondary" style="font-size: 0.8rem; padding: 5px 10px;">🌧️ Rain</button>
