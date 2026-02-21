@@ -1,5 +1,7 @@
 // ================= CONFIGURATION =================
-const API_BASE_URL = 'http://127.0.0.1:5000/tools';
+const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:5000' 
+    : 'https://safenav-18sk.onrender.com';
 // Note: Currency API key is okay here if it's a free public tier, 
 // but ideally move to backend later. For now, we focus on AI.
 const EXCHANGE_API_KEY = "767d15c92cbc866c2e3d4159";

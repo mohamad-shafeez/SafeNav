@@ -5,9 +5,9 @@
 // Global variable to store the logged-in user's info
 let currentUser = null;
 
-const API_BASE_URL = window.location.hostname === 'localhost' 
+const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
     ? 'http://127.0.0.1:5000' 
-    : 'https://your-backend-service.onrender.com'; // Change this after deployment
+    : 'https://safenav-18sk.onrender.com'; // Your actual live URL! // Change this after deployment
 
 document.addEventListener('DOMContentLoaded', function() {
     // 🛡️ THE LOGIN WALL: Check if user is authenticated
@@ -276,10 +276,9 @@ async function fetchImage(place, destination, type) {
     const safeType = type.toLowerCase().trim();
     
     // Dynamic URL: Switches automatically between local testing and live site
-    const API_BASE_URL = window.location.hostname === 'localhost' 
-        ? 'http://127.0.0.1:5000' 
-        : 'https://your-backend-api.onrender.com';
-
+    const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:5000' 
+    : 'https://safenav-18sk.onrender.com'; // Your actual live URL!
     try {
         // 🔒 SECURE CALL: We ask our OWN backend for the image.
         // No API keys are visible in the browser anymore!
@@ -363,9 +362,9 @@ async function generateItinerary() {
 
 
 async function callSafenavAI(finalPrompt) {
-    const API_BASE_URL = window.location.hostname === 'localhost' 
-        ? 'http://127.0.0.1:5000' 
-        : 'https://your-backend-service.onrender.com';
+    const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:5000' 
+    : 'https://safenav-18sk.onrender.com'; // Your actual live URL!
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/planner/generate`, {

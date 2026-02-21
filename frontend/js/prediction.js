@@ -8,7 +8,7 @@ let isMuted = false;
 // This automatically uses your localhost for now, but is ready for Render later!
 const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
     ? 'http://127.0.0.1:5000' 
-    : 'https://your-future-render-url.onrender.com';
+    : 'https://safenav-18sk.onrender.com';
 
 let map;
 let locationMarker;

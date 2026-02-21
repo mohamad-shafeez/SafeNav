@@ -2,8 +2,12 @@
 // TravelMate Vault 
 
 class TravelMateVault {
-    constructor() {
-        this.apiBaseUrl = 'http://127.0.0.1:5000/api'; // Update this for production
+   constructor() {
+        // Smart URL that works locally AND in production
+        this.apiBaseUrl = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+            ? 'http://127.0.0.1:5000/api' 
+            : 'https://safenav-18sk.onrender.com/api'; // <--- Live cloud link added!
+            
         this.documents = [];
         this.currentFilters = {};
         this.voiceEnabled = true;
