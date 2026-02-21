@@ -2,6 +2,7 @@
 flask
 flask-cors
 python-dotenv
+gunicorn
 
 # --- AI & External APIs ---
 google-genai
