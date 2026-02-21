@@ -16,5 +16,10 @@ cryptography
 python-multipart
 typing-extensions
 
-# --- Image Processing ---
+# --- Image & Document Processing ---
 pillow
+PyPDF2
+pytesseract
+pdf2image
+opencv-python-headless
+PassportEye
