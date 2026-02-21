@@ -5,7 +5,7 @@ python-dotenv
 gunicorn
 
 # --- AI & External APIs ---
-google-genai
+google-generativeai
 requests
 
 # --- Security & Auth ---
