@@ -15,3 +15,6 @@ cryptography
 # --- Utilities & Data ---
 python-multipart
 typing-extensions
+
+# --- Image Processing ---
+pillow
