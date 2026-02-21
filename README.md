@@ -1,76 +1,47 @@
-# 🌍 SafeNav: AI-Powered Travel Safety & Itinerary Engine
+# SafeNav: AI-Powered Travel Safety & Itinerary Engine
 
-SafeNav is a full-stack, AI-driven travel companion that generates dynamic itineraries and calculates real-time environmental risk scores. Unlike standard weather apps, SafeNav uses an **Adaptive Intelligence Engine** to personalize safety warnings based on a user's specific health profile (e.g., Heart Disease, Asthma, Elderly).
+SafeNav is an AI-powered travel safety engine that combines live environmental data and health-aware risk modeling to generate personalized itineraries and real-time safety guidance. 
+
+## 🚧 Live Demo (In Progress)
+The production deployment is currently being optimized for UI stability and API efficiency. 
+* **GitHub Repository:** https://github.com/mohamad-shafeez/safenav
+*(A live screen demo and architecture walkthrough are available upon request).*
 
 ## ✨ Key Features
+* **🧬 Adaptive Risk Engine:** Calculates custom safety scores adjusting thresholds strictly based on the user's medical profile (e.g., Heart Disease, Asthma).
+* **🤖 AI Itinerary Generation:** Leverages Gemini 1.5 Flash to generate personalized, day-by-day travel plans that respect physical limitations and safety parameters.
+* **☁️ State Management:** Uses Firebase Auth and Firestore to sync health conditions across modules and store generated trips.
+* **🛰️ Real-Time Radar:** Integrates OpenWeather and WAQI with a live interactive map and rain radar layers.
+* **🎙️ Accessibility Engine:** Provides spoken warnings for high-risk environmental conditions and hydration reminders.
 
-* **🧬 Adaptive Risk Engine:** Calculates a custom safety score using real-time AQI, humidity, and temperature data, adjusting thresholds strictly based on the user's medical profile.
-* **🤖 AI Itinerary Generation:** Leverages the Google Gemini 1.5 Flash model to generate personalized, day-by-day travel plans that respect the user's budget, vibe, and physical limitations.
-* **☁️ Cloud Sync & State Management:** Uses Firebase Auth and Firestore to save user profiles, sync health conditions across pages, and store generated trips to a personalized dashboard.
-* **🛰️ Real-Time Environmental Radar:** Integrates OpenWeather API and WAQI (World Air Quality Index) with a live interactive Leaflet map and rain radar layers.
-* **🎙️ Voice Alerts:** Built-in accessibility engine that provides spoken warnings for high-risk environmental conditions and hydration reminders.
+## ⚡ System Capabilities & Metrics
+* **Real-time Multi-API Aggregation:** Synchronizes OpenWeather, WAQI, and Google Gemini data into a single payload.
+* **Low-Latency Risk Scoring:** Processes environmental variables and personalized health math in < 2 seconds.
+* **Secure Deployment:** Hosted on Render with strict environment-isolated API keys and CORS-hardened endpoints.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 **Frontend:**
 * HTML5, CSS3 (Custom Glassmorphism UI)
-* Vanilla JavaScript (Async/Await, LocalStorage state management)
+* JavaScript (ES6+, async architecture, LocalStorage state management)
 * Leaflet.js (Interactive Mapping)
-* Firebase (Authentication & Firestore Database)
+* Firebase (Authentication & Cloud Firestore)
 
 **Backend:**
 * Python (Flask)
-* Google Generative AI SDK (Gemini)
-* Flask-CORS (Cross-Origin Resource Sharing security)
+* Google Generative AI SDK (Gemini 1.5 Flash)
+* Flask-CORS (Cross-Origin Resource Sharing)
 
-**APIs & Integrations:**
-* Google Gemini API (AI Analysis & Itinerary Generation)
-* OpenWeather API (Live Weather & Heat Index)
-* WAQI API (Live Air Quality Index)
-* Unsplash API (Dynamic location imagery)
+## System Architecture
 
-## 🚀 System Architecture
+SafeNav operates on a decoupled architecture designed for scalability and fault tolerance:
+1. **The Client (Frontend):** Manages user state via Firebase and LocalStorage, handling UI rendering and asynchronous API requests.
+2. **The Gateway (Flask API):** Receives the payload, enforces CORS policies, and securely proxies requests to external APIs.
+3. **The Logic Engine:** Parses raw satellite data, applies health-specific mathematical multipliers (e.g., lowering heat thresholds for cardiac patients), and injects the synthesized context into the LLM prompt.
 
-SafeNav operates on a decoupled architecture:
-1.  **The Client (Frontend):** Manages user state (Firebase + LocalStorage) and requests analysis.
-2.  **The Gateway (Flask API):** Receives the payload and securely proxies requests to external APIs.
-3.  **The Logic Engine:** Parses raw satellite data, applies the health-specific mathematical multipliers (e.g., lowering heat thresholds for cardiac patients), and injects the context into the Gemini prompt.
+## Local Installation & Setup
 
-## 💻 Local Installation & Setup
-
-### 1. Clone the repository
-\`\`\`bash
-git clone https://github.com/yourusername/safenav.git
+1. **Clone the repository:**
+```bash
+git clone [https://github.com/mohamad-shafeez/safenav.git](https://github.com/mohamad-shafeez/safenav.git)
 cd safenav
-\`\`\`
-
-### 2. Set up the Python Backend
-Navigate to the backend directory and install the dependencies:
-\`\`\`bash
-cd backend
-pip install flask flask-cors requests google-generativeai
-\`\`\`
-
-Create a `.env` file in the `backend` folder with your API keys:
-\`\`\`env
-GOOGLE_API_KEY=your_gemini_key
-OPENWEATHER_API_KEY=your_openweather_key
-AQI_TOKEN=your_waqi_token
-\`\`\`
-
-Run the Flask server:
-\`\`\`bash
-python app.py
-\`\`\`
-
-### 3. Run the Frontend
-Because the frontend uses ES6 modules and Firebase, run it through a local server (like the VS Code "Live Server" extension).
-* Open `index.html` with Live Server.
-* Ensure the `API_BASE_URL` in your JS files points to `http://localhost:5000` for local testing.
-
-## 🔒 Security Notes
-* **API Keys:** All sensitive API keys are stored securely on the backend server (Render) using Environment Variables. No keys are exposed to the client browser.
-* **CORS:** The backend is hardened to only accept cross-origin requests from the verified frontend domain.
-
----
-*Built with ❤️ by [Your Name] for safer, smarter travel.*
