@@ -122,8 +122,9 @@ async function runFullAnalysis() {
                 );
             });
         } else {
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationInput.value)}&format=json&limit=1`);
-            const geoData = await geoRes.json();
+            
+const geoRes = await fetch(`${API_BASE_URL}/api/proxy/geocode?q=${encodeURIComponent(locationInput.value)}`);
+const geoData = await geoRes.json();
             if (!geoData.length) throw new Error("Location not found");
             coords = {lat: parseFloat(geoData[0].lat), lon: parseFloat(geoData[0].lon)};
         }
