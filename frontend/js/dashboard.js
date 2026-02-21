@@ -314,9 +314,22 @@ window.loadUserProfile = async function(user) {
             if(data.safetyMode) document.getElementById('profSafetyMode').value = data.safetyMode;
             if(data.healthProfile) document.getElementById('profHealth').value = data.healthProfile;
             
-            // 👉 THE FIX GOES HERE! This auto-selects it on the Prediction screen
-            const predictDropdown = document.getElementById('health-profile');
-            if(predictDropdown && data.healthProfile) predictDropdown.value = data.healthProfile;
+           // 👉 SMART DROPDOWN SYNC: Matches regardless of uppercase/lowercase
+// 👉 SMART DROPDOWN SYNC: Matches regardless of uppercase/lowercase
+const predictDropdown = document.getElementById('userProfile'); // 👈 Fixed the ID here!
+if (predictDropdown && data.healthProfile) {
+    // Loop through all the HTML options to find the matching one
+    Array.from(predictDropdown.options).forEach(opt => {
+        if (opt.value.toLowerCase() === data.healthProfile.toLowerCase() || 
+            opt.text.toLowerCase() === data.healthProfile.toLowerCase()) {
+            
+            predictDropdown.value = opt.value; // Force the UI to update!
+            
+            // Tell the predict page to update its visuals immediately
+            predictDropdown.dispatchEvent(new Event('change')); 
+        }
+    });
+}
             
             if(data.autoApplyHealth !== undefined) document.getElementById('profAutoApplyHealth').checked = data.autoApplyHealth;
             
