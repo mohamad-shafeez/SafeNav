@@ -32,8 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // 2. Force Render Fix for visibility
-        setTimeout(() => { map.invalidateSize(); }, 300);
+        // 2. Force Render Fix for visibility (Slightly increased timeout for mobile performance)
+        setTimeout(() => { map.invalidateSize(); }, 500);
 
         // 3. 🧬 NEW: Sync user's intelligence profile from Firebase
         syncEliteProfile();
@@ -61,6 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 🧬 NEW: SYNC ELITE PROFILE LOGIC
 async function syncEliteProfile() {
+    // Check if firebase is defined to avoid crashes if script loads out of order
+    if (typeof firebase === 'undefined') return;
+
     firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
             try {
@@ -71,7 +74,12 @@ async function syncEliteProfile() {
                     
                     // Match the saved "Health Sensitivity" from Dashboard to this page
                     if (data.healthProfile && profileDropdown) {
-                        profileDropdown.value = data.healthProfile.toLowerCase();
+                        const profileValue = data.healthProfile.toLowerCase();
+                        profileDropdown.value = profileValue;
+                        
+                        // 👉 CRITICAL FIX: Save to localStorage so Planner and other pages can read it
+                        localStorage.setItem('ai_user_profile', profileValue);
+
                         updateProfilePreview();
                         updateActiveProfileUI();
                         console.log("SafeNav: Health thresholds synced from cloud profile.");
@@ -122,9 +130,8 @@ async function runFullAnalysis() {
                 );
             });
         } else {
-            
-const geoRes = await fetch(`${API_BASE_URL}/api/proxy/geocode?q=${encodeURIComponent(locationInput.value)}`);
-const geoData = await geoRes.json();
+            const geoRes = await fetch(`${API_BASE_URL}/api/proxy/geocode?q=${encodeURIComponent(locationInput.value)}`);
+            const geoData = await geoRes.json();
             if (!geoData.length) throw new Error("Location not found");
             coords = {lat: parseFloat(geoData[0].lat), lon: parseFloat(geoData[0].lon)};
         }
@@ -140,6 +147,10 @@ const geoData = await geoRes.json();
 
         // B. 🚀 CALLING THE DYNAMIC BACKEND URL
         const hour = new Date().getHours();
+        
+        // 👉 CRITICAL FIX: Safe fallback for user_profile reading
+        const activeProfile = document.getElementById('userProfile')?.value || localStorage.getItem('ai_user_profile') || 'standard';
+
         const response = await fetch(`${API_BASE_URL}/api/prediction/predict`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -147,19 +158,20 @@ const geoData = await geoRes.json();
                 lat: coords.lat, 
                 lng: coords.lon, 
                 time: (hour > 18 || hour < 6) ? 'night' : 'day', 
-                travel_mode: document.getElementById('travelMode').value,
-                user_profile: document.getElementById('userProfile').value
+                travel_mode: document.getElementById('travelMode')?.value || 'walking',
+                user_profile: activeProfile
             })
         });
 
         const data = await response.json();
         console.log("AI DATA RECEIVED:", data);
+        
         // C. Result Handlers
         updatePredictionUI(data.risk_level, data.factors, data.advice, data.aqi, data.trend);
         drawDangerZone(coords.lat, coords.lon, data.risk_level);
         startHydrationAlert(data.risk_level);
 
-        // --- 🎙️ SAFE VOICE TRIGGER (FIXED PART) ---
+        // --- 🎙️ SAFE VOICE TRIGGER ---
         const profileSelect = document.getElementById('userProfile');
         let currentProfile = "Standard"; // Default fallback if dropdown is broken
 
@@ -170,11 +182,11 @@ const geoData = await geoRes.json();
         let voiceMsg = `[${currentProfile} Mode]: Alert: ${data.risk_level}. ${data.advice}`;
         if (navText) navText.innerText = voiceMsg;
         
-        // Use the global speak function from voice-alerts.js
-        if (window.speak) {
+        // 👉 CRITICAL FIX: Prevents double-speaking and uses the correct global function
+        if (window.speak && typeof window.speak === 'function') {
             window.speak(voiceMsg, true);
-        } else {
-            speak(voiceMsg); // Fallback to local speak if window.speak isn't ready
+        } else if (typeof speak === 'function') {
+            speak(voiceMsg); 
         }
 
     } catch (e) {
@@ -190,7 +202,7 @@ function updatePredictionUI(risk, factors, advice, aqi = 0, trend = "stable") {
     const badge = document.getElementById('predictedRisk');
     if (badge) {
         badge.textContent = risk;
-        badge.className = 'status-badge ' + risk.toLowerCase().replace(/\s/g, '');
+        badge.className = 'status-badge ' + (risk ? risk.toLowerCase().replace(/\s/g, '') : 'unknown');
     }
     const aqiBadge = document.getElementById('aqiDisplay');
     if (aqiBadge) {
@@ -199,7 +211,7 @@ function updatePredictionUI(risk, factors, advice, aqi = 0, trend = "stable") {
     }
     if (document.getElementById('predictionAdvice')) document.getElementById('predictionAdvice').textContent = advice;
     const list = document.getElementById('predictionFactors');
-    if (list) {
+    if (list && factors && Array.isArray(factors)) {
         list.innerHTML = factors.map(f => `<li>⚠️ ${f}</li>`).join('');
     }
 }
@@ -236,7 +248,7 @@ function startHydrationAlert(riskLevel) {
     if (riskLevel === "HIGH RISK") {
         if (controlBox) controlBox.style.display = 'block';
         hydrationInterval = setInterval(() => {
-            speak("Time to hydrate. Please drink water now.");
+            if(typeof speak === 'function') speak("Time to hydrate. Please drink water now.");
         }, 1800000);
     } else {
         if (controlBox) controlBox.style.display = 'none';
@@ -245,27 +257,33 @@ function startHydrationAlert(riskLevel) {
 
 // --- 🧬 PROFILE & HINT SYNC ---
 function updateActiveProfileUI() {
-    const profile = document.getElementById('userProfile').value || localStorage.getItem('ai_user_profile') || 'standard';
+    const profile = document.getElementById('userProfile')?.value || localStorage.getItem('ai_user_profile') || 'standard';
     const label = document.getElementById('activeProfileLabel');
+    
+    // 👉 CRITICAL FIX: Added Heart Disease UI Mapping
     const profileNames = {
         'standard': '🏃 Standard',
         'respiratory': '🫁 Respiratory Sensitive',
         'elderly': '👴 Heat Sensitive',
+        'heart disease': '🫀 Cardiac Sensitive',
         'worker': '🏗️ Outdoor Worker'
     };
-    if (label) label.innerText = profileNames[profile] || profile;
+    if (label) label.innerText = profileNames[profile.toLowerCase()] || profile;
 }
 
 function updateProfilePreview() {
-    const profile = document.getElementById('userProfile').value;
+    const profile = document.getElementById('userProfile')?.value || 'standard';
     const hint = document.getElementById('profileHint');
+    
+    // 👉 CRITICAL FIX: Added Heart Disease Profile Hint
     const hints = {
         'standard': 'Standard safety thresholds applied.',
         'respiratory': '🚨 Alerting for AQI levels > 70 (Asthma/COPD focus).',
         'elderly': '🔥 Alerting for Heat Index > 32°C (Vulnerable group focus).',
+        'heart disease': '🫀 Alerting for high cardiac strain and moderate pollution.',
         'worker': '🏗️ Industrial exposure thresholds active (Full-day focus).'
     };
-    if(hint) hint.innerText = hints[profile];
+    if(hint) hint.innerText = hints[profile.toLowerCase()] || 'Profile thresholds active.';
 }
 
 // The Gatekeeper function
@@ -277,14 +295,16 @@ function toggleMute() {
     if (isMuted) {
         icon.innerText = '🔇';
         btn.style.borderColor = '#94a3b8'; // Gray when muted
-        speechSynthesis.cancel(); // Stop talking immediately
+        if ('speechSynthesis' in window) speechSynthesis.cancel(); // Stop talking immediately
     } else {
         icon.innerText = '🔊';
         btn.style.borderColor = '#3b82f6'; // Blue when active
         
         // Confirm unmute with a quick sound
-        const msg = new SpeechSynthesisUtterance("Voice alerts active");
-        speechSynthesis.speak(msg);
+        if ('speechSynthesis' in window) {
+            const msg = new SpeechSynthesisUtterance("Voice alerts active");
+            speechSynthesis.speak(msg);
+        }
     }
 }
 

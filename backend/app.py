@@ -14,6 +14,7 @@ from routes.stays import stays_bp
 from routes.tools import tools_bp 
 from routes.voice import voice_bp
 from routes.documents_routes import documents_bp
+from routes.planner import planner_bp
 
 def create_app():
     # Initialize app
@@ -22,8 +23,7 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-later')
 
     # Enable CORS
-    CORS(app) 
-
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
     @app.route("/api/health")
     def health():
         return {
@@ -58,7 +58,7 @@ def create_app():
     app.register_blueprint(voice_bp, url_prefix="/api/voice")
     app.register_blueprint(documents_bp, url_prefix="/api/documents")
     app.register_blueprint(tools_bp, url_prefix="/api") 
-    
+    app.register_blueprint(planner_bp, url_prefix="/api/planner")
     return app
 
 # Expose app for Gunicorn

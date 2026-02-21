@@ -328,14 +328,17 @@ async function generateItinerary() {
 
     try {
         // 2. Fetch Elite Profile Data from Firestore (The Intelligence Layer)
+        // 👉 CRITICAL ADDITION: Pulls the profile you just used on the Prediction page!
+        const savedHealthProfile = localStorage.getItem('ai_user_profile') || "Standard / No Conditions";
+
         let userProfile = {
             safetyMode: "Normal",
-            healthProfile: "Standard / No Conditions",
-            tripStyle: document.getElementById('vibe').value || "Adventure",
-            budget: document.getElementById('budget').value || "Moderate",
-            companions: document.getElementById('companions').value || "Solo",
-            transport: document.getElementById('transport').value || "Public Transit",
-            food: document.getElementById('foodPref').value || "Any",
+            healthProfile: savedHealthProfile, // Starts with your active profile
+            tripStyle: document.getElementById('vibe')?.value || "Adventure",
+            budget: document.getElementById('budget')?.value || "Moderate",
+            companions: document.getElementById('companions')?.value || "Solo",
+            transport: document.getElementById('transport')?.value || "Public Transit",
+            food: document.getElementById('foodPref')?.value || "Any",
             country: "Not specified"
         };
 
@@ -346,7 +349,10 @@ async function generateItinerary() {
                 const data = doc.data();
                 // Override UI defaults with Elite Profile data if it exists
                 if(data.safetyMode) userProfile.safetyMode = data.safetyMode;
-                if(data.healthProfile && data.autoApplyHealth) userProfile.healthProfile = data.healthProfile;
+                
+                // 👉 FIX: Removed the buggy 'autoApplyHealth' check
+                if(data.healthProfile) userProfile.healthProfile = data.healthProfile;
+                
                 if(data.country) userProfile.country = data.country;
                 if(data.tripStyle) userProfile.tripStyle = data.tripStyle;
                 if(data.budgetDefault) userProfile.budget = data.budgetDefault;
@@ -356,24 +362,24 @@ async function generateItinerary() {
             }
         }
 
-
-async function callSafenavAI(finalPrompt) {
-   const API_BASE_URL = 'https://safenav-18sk.onrender.com'; // Your actual live URL!
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/planner/generate`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: finalPrompt })
-        });
-        
-        const data = await response.json();
-        return data.result; // The JSON string from Gemini
-    } catch (error) {
-        console.error("Security Layer Error:", error);
-        return null;
-    }
-}
+        // 👉 FIX: Cleaned up the AI Caller (Removed duplicate URL)
+        async function callSafenavAI(finalPrompt) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/planner/generate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: finalPrompt })
+                });
+                
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                return data.result; // The JSON string from Gemini
+            } catch (error) {
+                console.error("Security Layer Error:", error);
+                return null;
+            }
+        }
         // 🚀 The Master Prompt (Now Powered by the Elite Profile)
         const promptText = `
             You are a high-end, expert travel planner and safety analyst API. 
