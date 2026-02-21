@@ -1,25 +1,21 @@
-# --- Core Framework ---
+# --- Core Web Server ---
 flask
 flask-cors
 python-dotenv
 gunicorn
 
+# --- Security & Authentication ---
+cryptography
+flask-jwt-extended
+
 # --- AI & External APIs ---
 google-generativeai
 requests
 
-# --- Security & Auth ---
-flask-jwt-extended
-cryptography
-
-# --- Utilities & Data ---
-python-multipart
-typing-extensions
-
 # --- Image & Document Processing ---
 pillow
 PyPDF2
-pytesseract
-pdf2image
-opencv-python-headless
-PassportEye
+
+# --- Utilities ---
+python-multipart
+typing-extensions
