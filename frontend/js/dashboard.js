@@ -313,6 +313,11 @@ window.loadUserProfile = async function(user) {
             // 2. Safety Engine
             if(data.safetyMode) document.getElementById('profSafetyMode').value = data.safetyMode;
             if(data.healthProfile) document.getElementById('profHealth').value = data.healthProfile;
+            
+            // 👉 THE FIX GOES HERE! This auto-selects it on the Prediction screen
+            const predictDropdown = document.getElementById('health-profile');
+            if(predictDropdown && data.healthProfile) predictDropdown.value = data.healthProfile;
+            
             if(data.autoApplyHealth !== undefined) document.getElementById('profAutoApplyHealth').checked = data.autoApplyHealth;
             
             // 3. Travel Defaults

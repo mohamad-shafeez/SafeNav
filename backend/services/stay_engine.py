@@ -1,3 +1,4 @@
+import os
 import requests
 
 def get_weather_risk(lat, lng):

@@ -7,10 +7,9 @@ import google.generativeai as genai
 logging.basicConfig(level=logging.INFO)
 
 # --- CONFIGURATION & INITIALIZATION ---
-# Using environment variables protects your keys from being stolen on GitHub
-GENAI_API_KEY = os.environ.get("GOOGLE_API_KEY")
+# 👉 FIX: Check for GOOGLE_API_KEY or GEMINI_API_KEY
+GENAI_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
 WEATHER_KEY = os.environ.get("OPENWEATHER_API_KEY")
-# If using the 'demo' token, keep it; otherwise, use an env variable
 AQI_TOKEN = os.environ.get("AQI_TOKEN", "demo")
 
 if GENAI_API_KEY:
@@ -18,6 +17,7 @@ if GENAI_API_KEY:
     # Pro Tip: Initialize the model ONCE at the top level to save time per request
     ai_model = genai.GenerativeModel('gemini-1.5-flash')
 else:
+    logging.error("🚨 CRITICAL: No Gemini API Key found in prediction engine!")
     ai_model = None
 
 def calculate_risk(lat, lng, time="day", travel_mode="walking", user_profile="standard"):

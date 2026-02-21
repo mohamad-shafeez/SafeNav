@@ -12,6 +12,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof firebase !== 'undefined') {
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
+                // Automatically fill the UI with the user's saved Firebase profile
+const uid = user.uid;
+firebase.firestore().collection('users').doc(uid).get().then(doc => {
+    if (doc.exists) {
+        const data = doc.data();
+        // Update the visual dropdowns on the page!
+        if (data.budgetDefault) document.getElementById('budget').value = data.budgetDefault;
+        if (data.tripStyle) document.getElementById('vibe').value = data.tripStyle;
+        if (data.travelGroup) document.getElementById('companions').value = data.travelGroup;
+        if (data.transportDefault) document.getElementById('transport').value = data.transportDefault;
+        if (data.foodDefault) document.getElementById('foodPref').value = data.foodDefault;
+    }
+});
                 // User IS logged in. Let them use the app!
                 currentUser = user;
                 console.log("Authenticated as:", currentUser.email);
