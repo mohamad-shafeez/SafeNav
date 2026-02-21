@@ -1,0 +1,8 @@
+{
+  "version": "1.0",
+  "key_rotation_enabled": false,
+  "last_rotation": "20260114_125100",
+  "key_age_days": 0,
+  "encryption_algorithm": "AES-256-CBC",
+  "key_derivation_iterations": 100000
+}

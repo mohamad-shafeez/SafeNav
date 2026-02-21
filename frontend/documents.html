@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 TravelMate Vault Pro | Secure Document Intelligence Platform</title>
+    
+    <!-- Meta Tags for Professional SEO -->
+    <meta name="description" content="Ultra-secure AI-powered travel document management with real-time validation, biometric encryption, and multi-language voice assistance">
+    <meta name="keywords" content="travel documents, secure vault, AI validation, biometric encryption, document management">
+    <meta name="author" content="TravelMate Security Systems">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+    
+    <!-- Font Awesome Pro Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Animate.css for animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <!-- AOS (Animate On Scroll) -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/vault.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+    <!-- Voice Assistant Panel -->
+    <div id="voiceAssistant" class="voice-assistant-panel">
+        <div class="voice-header">
+            <h3><i class="fas fa-robot"></i> AI Voice Assistant</h3>
+            <button class="close-voice"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="voice-controls">
+            <div class="voice-mode-selector">
+                <button class="voice-mode active" data-mode="command">Command Mode</button>
+                <button class="voice-mode" data-mode="narration">Narration Mode</button>
+                <button class="voice-mode" data-mode="assist">Assist Mode</button>
+            </div>
+            
+            <div class="language-selector">
+                <select id="voiceLanguage">
+                    <option value="en-US">English (US)</option>
+                    <option value="en-GB">English (UK)</option>
+                    <option value="es-ES">Español</option>
+                    <option value="fr-FR">Français</option>
+                    <option value="de-DE">Deutsch</option>
+                    <option value="ja-JP">日本語</option>
+                    <option value="zh-CN">中文</option>
+                    <option value="hi-IN">हिन्दी</option>
+                </select>
+            </div>
+            
+            <button id="voiceCommandBtn" class="voice-command-btn">
+                <i class="fas fa-microphone"></i>
+                <span>Start Voice Command</span>
+            </button>
+            
+            <div class="voice-status">
+                <span id="voiceStatus">Ready for commands</span>
+                <div class="voice-visualizer" id="voiceVisualizer"></div>
+            </div>
+        </div>
+        
+        <div class="voice-commands-list">
+            <h4>Available Commands:</h4>
+            <ul>
+                <li>"Scan my documents"</li>
+                <li>"Show passport"</li>
+                <li>"Validate all"</li>
+                <li>"Export summary"</li>
+                <li>"Emergency checklist"</li>
+                <li>"Translate document"</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="vault-container" data-aos="fade-up">
+        <!-- Header with Dashboard -->
+        <header class="vault-header">
+            <div class="header-left">
+                <h1><i class="fas fa-shield-alt"></i> TravelMate <span class="pro-badge">PRO</span> Vault</h1>
+                <p class="subtitle">Military-Grade Document Security with AI Intelligence</p>
+            </div>
+            
+            <div class="header-right">
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Travel+User&background=2563eb&color=fff" alt="User">
+                    <span>Traveler</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-lock"></i>
+                        <span id="encryptedCount">0</span> Encrypted
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="validatedCount">0</span> Validated
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-clock"></i>
+                        <span id="expiringCount">0</span> Expiring
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Voice Control Bar -->
+        <div class="voice-control-bar">
+            <div class="voice-toggle-group">
+                <button id="voiceToggleBtn" class="voice-toggle-btn active">
+                    <i class="fas fa-microphone-alt"></i>
+                    <span>Voice: ENABLED</span>
+                    <div class="voice-indicator"></div>
+                </button>
+                
+                <div class="voice-features">
+                    <button class="voice-feature-btn" id="voiceScan">
+                        <i class="fas fa-search"></i> Scan
+                    </button>
+                    <button class="voice-feature-btn" id="voiceValidate">
+                        <i class="fas fa-check-double"></i> Validate
+                    </button>
+                    <button class="voice-feature-btn" id="voiceExport">
+                        <i class="fas fa-file-export"></i> Export
+                    </button>
+                    <button class="voice-feature-btn" id="voiceEmergency">
+                        <i class="fas fa-bell"></i> Emergency
+                    </button>
+                </div>
+            </div>
+            
+            <div class="ai-status">
+                <div class="ai-indicator active"></div>
+                <span>AI Assistant: ONLINE</span>
+                <span class="ai-model">GPT-4 Vision Ready</span>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Column -->
+            <div class="dashboard-column">
+                <!-- Upload Card -->
+                <div class="dashboard-card upload-card" data-aos="fade-right">
+                    <div class="card-header">
+                        <h3><i class="fas fa-cloud-upload-alt"></i> Secure Upload</h3>
+                        <div class="card-badge">AES-256 + Biometric</div>
+                    </div>
+                    
+                    <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+
+                        <div class="upload-area" id="dropArea">
+                            <i class="fas fa-file-upload"></i>
+                            <p>Drag & drop documents or click to browse</p>
+                            <span class="upload-info">Supports PDF, JPG, PNG, DOCX (Max 50MB)</span>
+                            <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.docx">
+                        </div>
+                        
+                        <div class="upload-controls">
+                            <div class="form-group">
+                                <label for="docType"><i class="fas fa-tag"></i> Document Type</label>
+                                <select id="docType" class="modern-select" required>
+                                    <option value="">Select Document Type</option>
+                                    <optgroup label="Identification">
+                                        <option value="PASSPORT">🇺🇳 Passport</option>
+                                        <option value="AADHAR">🇮🇳 Aadhar Card</option>
+                                        <option value="PAN">🇮🇳 PAN Card</option>
+                                        <option value="DRIVING_LICENSE">🚗 Driving License</option>
+                                        <option value="VOTER_ID">🗳️ Voter ID</option>
+                                        <option value="NATIONAL_ID">🆔 National ID</option>
+                                    </optgroup>
+                                    <optgroup label="Travel Documents">
+                                        <option value="VISA">🛂 Visa</option>
+                                        <option value="TRAVEL_TICKET">✈️ Flight Ticket</option>
+                                        <option value="HOTEL_BOOKING">🏨 Hotel Booking</option>
+                                        <option value="TOUR_ITINERARY">🗺️ Tour Itinerary</option>
+                                        <option value="TRAVEL_INSURANCE">🛡️ Travel Insurance</option>
+                                    </optgroup>
+                                    <optgroup label="Health & Medical">
+                                        <option value="VACCINATION_CERT">💉 Vaccination Certificate</option>
+                                        <option value="MEDICAL_REPORTS">🏥 Medical Reports</option>
+                                        <option value="HEALTH_INSURANCE">🏥 Health Insurance</option>
+                                    </optgroup>
+                                    <optgroup label="Financial">
+                                        <option value="FOREX_RECEIPT">💱 Forex Receipt</option>
+                                        <option value="CREDIT_CARD">💳 Credit Card</option>
+                                        <option value="TRAVELERS_CHEQUE">🏦 Traveler's Cheque</option>
+                                        <option value="BANK_STATEMENT">🏦 Bank Statement</option>
+                                    </optgroup>
+                                    <optgroup label="Miscellaneous">
+                                        <option value="EMERGENCY_CONTACTS">📞 Emergency Contacts</option>
+                                        <option value="TRAVEL_GUIDE">📚 Travel Guide</option>
+                                        <option value="MAPS">🗺️ Maps & Directions</option>
+                                        <option value="OTHER">📄 Other Documents</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="docTags"><i class="fas fa-hashtag"></i> Smart Tags</label>
+                                <input type="text" id="docTags" 
+                                       placeholder="Enter tags (comma separated) or voice input..."
+                                       data-role="tagsinput">
+                                <small>AI will auto-suggest relevant tags</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="expiryDate"><i class="fas fa-calendar-times"></i> Expiry Date</label>
+                                <input type="date" id="expiryDate">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="encryptionLevel"><i class="fas fa-lock"></i> Encryption Level</label>
+                                <select id="encryptionLevel" class="modern-select">
+                                    <option value="standard">Standard (AES-256)</option>
+                                    <option value="military">Military Grade</option>
+                                    <option value="biometric">Biometric + Encryption</option>
+                                    <option value="quantum">Quantum-Resistant</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-shield-alt"></i> Upload & Secure Encrypt
+                                </button>
+                                <button type="button" id="scanExisting" class="btn-secondary">
+                                    <i class="fas fa-search"></i> AI Scan Existing
+                                </button>
+                                <button type="button" id="voiceUpload" class="btn-voice">
+                                    <i class="fas fa-microphone"></i> Voice Upload
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Real-Time AI Scan Dashboard -->
+                <div class="dashboard-card scan-card" data-aos="fade-right" data-aos-delay="100">
+                    <div class="card-header">
+                        <h3><i class="fas fa-brain"></i> AI Intelligence Engine</h3>
+                        <div class="card-badge">Real-Time Analysis</div>
+                    </div>
+                    
+                    <div class="ai-scan-container">
+                        <div class="scan-header">
+                            <div class="scan-status">
+                                <div class="status-indicator" id="scanStatusIndicator"></div>
+                                <span id="scanStatusText">Ready to Scan</span>
+                            </div>
+                            <button id="startScan" class="btn-scan">
+                                <i class="fas fa-play"></i> Start Deep Scan
+                            </button>
+                        </div>
+                        
+                        <div class="scan-progress">
+                            <div class="progress-info">
+                                <span>Document Integrity</span>
+                                <span id="integrityPercent">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="integrityProgress"></div>
+                            </div>
+                            
+                            <div class="progress-info">
+                                <span>Data Extraction</span>
+                                <span id="extractionPercent">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="extractionProgress"></div>
+                            </div>
+                            
+                            <div class="progress-info">
+                                <span>Security Validation</span>
+                                <span id="securityPercent">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="securityProgress"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="scan-metrics">
+                            <div class="metric">
+                                <div class="metric-value" id="confidenceScore">0%</div>
+                                <div class="metric-label">Confidence Score</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="riskLevel">LOW</div>
+                                <div class="metric-label">Risk Level</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="validationScore">0/10</div>
+                                <div class="metric-label">Validation Score</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="aiProcessing">0ms</div>
+                                <div class="metric-label">AI Processing</div>
+                            </div>
+                        </div>
+                        
+                        <div class="scan-results">
+                            <h4><i class="fas fa-clipboard-check"></i> Scan Results</h4>
+                            <div class="results-grid" id="scanResults">
+                                <!-- Dynamic results will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="dashboard-column">
+                <!-- Document Vault -->
+                <div class="dashboard-card vault-card" data-aos="fade-left">
+                    <div class="card-header">
+                        <h3><i class="fas fa-database"></i> Secure Document Vault</h3>
+                        <div class="card-actions">
+                            <button id="refreshVault" class="icon-btn" title="Refresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button id="exportAll" class="icon-btn" title="Export All">
+                                <i class="fas fa-file-export"></i>
+                            </button>
+                            <button id="bulkActions" class="icon-btn" title="Bulk Actions">
+                                <i class="fas fa-layer-group"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="vault-filters">
+                        <div class="filter-group">
+                            <input type="text" placeholder="Search documents..." class="search-input" id="vaultSearch">
+                            <select class="filter-select" id="categoryFilter">
+                                <option value="">All Categories</option>
+                                <option value="identification">Identification</option>
+                                <option value="travel">Travel Documents</option>
+                                <option value="medical">Medical</option>
+                                <option value="financial">Financial</option>
+                            </select>
+                            <select class="filter-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="valid">✅ Valid</option>
+                                <option value="expiring">⚠️ Expiring</option>
+                                <option value="expired">❌ Expired</option>
+                                <option value="encrypted">🔒 Encrypted</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="vault-tabs">
+                        <button class="vault-tab active" data-tab="encrypted">
+                            <i class="fas fa-lock"></i> Encrypted
+                            <span class="tab-badge" id="encryptedBadge">0</span>
+                        </button>
+                        <button class="vault-tab" data-tab="general">
+                            <i class="fas fa-file"></i> General
+                            <span class="tab-badge" id="generalBadge">0</span>
+                        </button>
+                        <button class="vault-tab" data-tab="validated">
+                            <i class="fas fa-check-circle"></i> Validated
+                            <span class="tab-badge" id="validatedBadge">0</span>
+                        </button>
+                        <button class="vault-tab" data-tab="expiring">
+                            <i class="fas fa-clock"></i> Expiring
+                            <span class="tab-badge" id="expiringBadge">0</span>
+                        </button>
+                    </div>
+                    
+                    <div class="vault-content">
+                        <div class="vault-section active" id="encryptedSection">
+                            <div class="section-header">
+                                <h4><i class="fas fa-shield-alt"></i> Encrypted Documents</h4>
+                                <span class="section-info">Military-grade encryption applied</span>
+                            </div>
+                            <div class="documents-grid" id="encryptedGrid">
+                                <!-- Encrypted documents will appear here -->
+                                <div class="empty-state">
+                                    <i class="fas fa-lock"></i>
+                                    <p>No encrypted documents yet</p>
+                                    <small>Upload documents and enable encryption</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="vault-section" id="generalSection">
+                            <div class="section-header">
+                                <h4><i class="fas fa-folder-open"></i> General Documents</h4>
+                                <span class="section-info">Standard security documents</span>
+                            </div>
+                            <div class="documents-list" id="generalList">
+                                <!-- General documents will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics & Security Dashboard -->
+                <div class="dashboard-card analytics-card" data-aos="fade-left" data-aos-delay="100">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-line"></i> Security Analytics</h3>
+                        <div class="card-badge">Live Monitoring</div>
+                    </div>
+                    
+                    <div class="analytics-grid">
+                        <div class="analytics-widget">
+                            <div class="widget-header">
+                                <h5><i class="fas fa-user-shield"></i> Security Score</h5>
+                                <div class="score-circle" data-score="85">
+                                    <svg width="80" height="80">
+                                        <circle cx="40" cy="40" r="35"></circle>
+                                        <circle cx="40" cy="40" r="35" class="score-progress"></circle>
+                                        <text x="40" y="45" text-anchor="middle" class="score-text">85%</text>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="widget-metrics">
+                                <div class="metric-item">
+                                    <span>Encryption Rate</span>
+                                    <span class="metric-value" id="encryptionRate">0%</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span>Validation Rate</span>
+                                    <span class="metric-value" id="validationRate">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="analytics-widget">
+                            <div class="widget-header">
+                                <h5><i class="fas fa-calendar-exclamation"></i> Expiry Alerts</h5>
+                            </div>
+                            <div class="expiry-list" id="expiryAlerts">
+                                <!-- Expiry alerts will appear here -->
+                                <div class="expiry-item critical">
+                                    <i class="fas fa-passport"></i>
+                                    <div class="expiry-info">
+                                        <span>Passport Expiry</span>
+                                        <small>30 days remaining</small>
+                                    </div>
+                                    <span class="expiry-badge">CRITICAL</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="analytics-widget">
+                            <div class="widget-header">
+                                <h5><i class="fas fa-bell"></i> Quick Actions</h5>
+                            </div>
+                            <div class="quick-actions">
+                                <button class="action-btn" id="emergencyExport">
+                                    <i class="fas fa-download"></i> Emergency Export
+                                </button>
+                                <button class="action-btn" id="backupNow">
+                                    <i class="fas fa-cloud-upload-alt"></i> Cloud Backup
+                                </button>
+                                <button class="action-btn" id="validateAll">
+                                    <i class="fas fa-check-double"></i> Validate All
+                                </button>
+                                <button class="action-btn" id="encryptAll">
+                                    <i class="fas fa-lock"></i> Encrypt All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="threat-monitor">
+                        <h5><i class="fas fa-radar"></i> Threat Monitor</h5>
+                        <div class="threat-level">
+                            <div class="threat-indicator" id="threatIndicator"></div>
+                            <span id="threatStatus">No threats detected</span>
+                        </div>
+                        <div class="threat-log" id="threatLog">
+                            <!-- Threat log entries will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Panel -->
+        <div class="emergency-panel" id="emergencyPanel">
+            <div class="emergency-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Emergency Access Mode</h3>
+                <button class="close-emergency"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emergency-content">
+                <p>In case of emergency, these documents will be shared with emergency contacts</p>
+                <div class="emergency-actions">
+                    <button class="emergency-btn" id="shareEmergency">
+                        <i class="fas fa-share-alt"></i> Share with Emergency Contacts
+                    </button>
+                    <button class="emergency-btn" id="exportEmergency">
+                        <i class="fas fa-file-pdf"></i> Generate Emergency PDF
+                    </button>
+                    <button class="emergency-btn" id="callEmergency">
+                        <i class="fas fa-phone-alt"></i> Call Emergency Services
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice Command Log -->
+        <div class="voice-log" id="voiceLog">
+            <div class="log-header">
+                <h4><i class="fas fa-comment-alt"></i> Voice Command History</h4>
+                <button class="clear-log"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="log-content" id="voiceLogContent">
+                <!-- Voice commands will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p id="loadingText">Processing your request...</p>
+            <div class="loading-progress">
+                <div class="loading-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Main Application Script -->
+    <script src="js/vault.js"></script>
+    
+    <!-- Initialize AOS -->
+    <script>
+        AOS.init({
+            duration: 800,
+            once: false,
+            offset: 100
+        });
+    </script>
+    <script src="js/navbar.js"></script>
+</body>
+</html>

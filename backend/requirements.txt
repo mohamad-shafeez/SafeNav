@@ -1,0 +1,16 @@
+# --- Core Framework ---
+flask
+flask-cors
+python-dotenv
+
+# --- AI & External APIs ---
+google-genai
+requests
+
+# --- Security & Auth ---
+flask-jwt-extended
+cryptography
+
+# --- Utilities & Data ---
+python-multipart
+typing-extensions

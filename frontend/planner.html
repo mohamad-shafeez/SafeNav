@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelDiscover | AI Travel Planner</title>
+    <link rel="stylesheet" href="css/planner.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✈️</text></svg>">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <script src="js/firebase.js"></script>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+    <div class="animated-bg"></div>
+    
+    <nav class="glass-nav">
+        <div class="nav-container">
+            <div class="logo-wrapper">
+                <div class="logo-icon">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h1 class="logo-text">Travel<span class="logo-accent">Discover</span></h1>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link"><i class="fas fa-home"></i> Home</a>
+                <a href="#" class="nav-link"><i class="fas fa-suitcase-rolling"></i> My Trips</a>
+                <a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <div class="split-screen">
+            <div class="input-panel glass-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title"><i class="fas fa-compass"></i> Plan Your Adventure</h2>
+                    <p class="panel-subtitle">Tell us your dream, we'll craft the perfect journey</p>
+                </div>
+
+              <form id="travelForm" class="travel-form">
+                    
+                    <div class="form-group floating-group">
+                        <input type="text" id="origin" class="floating-input" placeholder=" ">
+                        <label for="origin" class="floating-label">
+                            <i class="fas fa-home"></i> Starting City (Optional)
+                        </label>
+                        <div class="search-icon">
+                            <i class="fas fa-plane-departure"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group floating-group">
+                        <input type="text" id="destination" class="floating-input" placeholder=" " required>
+                        <label for="destination" class="floating-label">
+                            <i class="fas fa-map-pin"></i> Destination City
+                        </label>
+                        <div class="search-icon">
+                            <i class="fas fa-plane-arrival"></i>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group floating-group" style="flex: 1;">
+                            <input type="date" id="startDate" class="floating-input" required>
+                            <label for="startDate" class="floating-label floating" style="top: -10px; left: 15px; font-size: 0.8rem; background: var(--card-bg);">
+                                <i class="fas fa-calendar-alt"></i> Start Date
+                            </label>
+                        </div>
+                        <div class="form-group floating-group" style="flex: 1;">
+                            <input type="number" id="days" class="floating-input" placeholder=" " min="1" max="30" required>
+                            <label for="days" class="floating-label">
+                                <i class="fas fa-clock"></i> Days
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label"><i class="fas fa-user-friends"></i> Who's Going?</label>
+                            <div class="dropdown-wrapper">
+                                <select id="companions" class="styled-select">
+                                    <option value="Solo">🧍 Solo</option>
+                                    <option value="Couple" selected>👩‍❤️‍👨 Couple</option>
+                                    <option value="Family">👨‍👩‍👧‍👦 Family</option>
+                                    <option value="Friends">🍻 Friends</option>
+                                </select>
+                                <div class="dropdown-icon"><i class="fas fa-chevron-down"></i></div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label"><i class="fas fa-car"></i> Local Transit</label>
+                            <div class="dropdown-wrapper">
+                                <select id="transport" class="styled-select">
+                                    <option value="Public Transport">🚌 Public Transit</option>
+                                    <option value="Rental Car / Scooter">🚗 Rental / Drive</option>
+                                    <option value="Cabs / Ride-hailing">🚕 Cabs / Uber</option>
+                                    <option value="Walking focused">🚶 Walking Focused</option>
+                                </select>
+                                <div class="dropdown-icon"><i class="fas fa-chevron-down"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-wallet"></i> Budget Range (Per Day)</label>
+                        <div class="dropdown-wrapper">
+                            <select id="budget" class="styled-select">
+                                <option value="Low Cost (₹1000–₹3000/day)">💰 Low (₹1,000–₹3,000/day)</option>
+                                <option value="Medium (₹3000–₹8000/day)" selected>💸 Medium (₹3,000–₹8,000/day)</option>
+                                <option value="Luxury (₹8000+/day)">💎 Luxury (₹8,000+/day)</option>
+                            </select>
+                            <div class="dropdown-icon">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-heart"></i> Trip Vibe</label>
+                        <div class="chips-container">
+                            <div class="vibe-chip" data-value="Adventure & Thrill"><i class="fas fa-hiking"></i> Adventure</div>
+                            <div class="vibe-chip" data-value="Relaxing & Chill"><i class="fas fa-umbrella-beach"></i> Relaxing</div>
+                            <div class="vibe-chip" data-value="Cultural & Historic"><i class="fas fa-landmark"></i> Cultural</div>
+                            <div class="vibe-chip" data-value="Party & Nightlife"><i class="fas fa-glass-cheers"></i> Party</div>
+                        </div>
+                        <input type="hidden" id="vibe" value="Adventure & Thrill">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-utensils"></i> Food Preference</label>
+                        <div class="dropdown-wrapper">
+                            <select id="foodPref" class="styled-select">
+                                <option value="No Preference">🍽️ Everything</option>
+                                <option value="Vegetarian">🥬 Vegetarian</option>
+                                <option value="Non-Vegetarian">🍗 Non-Vegetarian</option>
+                                <option value="Vegan">🌱 Vegan</option>
+                                <option value="Jain">☸️ Jain</option>
+                                <option value="Halal">☪️ Halal</option>
+                            </select>
+                            <div class="dropdown-icon"><i class="fas fa-chevron-down"></i></div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="generate-btn shimmer-btn" id="generateBtn">
+                        <span class="btn-content">
+                            <i class="fas fa-sparkles"></i>
+                            <span>Generate Smart Itinerary</span>
+                        </span>
+                        <div class="shimmer"></div>
+                    </button>
+                </form>
+
+                    <div class="quick-tips glass-panel">
+                        <h4><i class="fas fa-lightbulb"></i> Pro Tips</h4>
+                        <ul>
+                            <li>Be specific with destinations for better results</li>
+                            <li>Include nearby cities or regions</li>
+                            <li>Mention any special interests</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="output-panel glass-panel">
+                <div id="defaultState" class="panel-state default-state">
+                    <div class="state-icon">
+                        <i class="fas fa-plane-departure"></i>
+                    </div>
+                    <h3>Your Adventure Awaits</h3>
+                    <p>Fill in your travel preferences on the left, and we'll create a personalized itinerary just for you.</p>
+                    <div class="feature-highlights">
+                        <div class="feature">
+                            <i class="fas fa-restaurant"></i>
+                            <span>Restaurant Recommendations</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <span>Hidden Gems</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-clock"></i>
+                            <span>Day-by-Day Schedule</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loadingState" class="panel-state loading-state" style="display: none;">
+                    <div class="paper-plane-container">
+                        <div class="paper-plane">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                        <div class="flight-path"></div>
+                    </div>
+                    <h3>Crafting Your Perfect Journey</h3>
+                    <p>Our AI is analyzing thousands of travel insights...</p>
+                    <div class="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+
+                <div id="contentState" class="panel-state content-state" style="display: none;">
+                    <div class="result-header">
+                        <h3><i class="fas fa-map"></i> Your Custom Itinerary</h3>
+                        <div class="result-actions">
+                            <button class="action-btn" onclick="saveToProfile()">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                            <button class="action-btn" onclick="shareItinerary()">
+                                <i class="fas fa-share-alt"></i> Share
+                            </button>
+                            <button class="action-btn" onclick="printItinerary()">
+                                <i class="fas fa-print"></i> Print
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="timelineContainer" class="timeline-container">
+                        <div id="itineraryText" class="itinerary-content">
+                            </div>
+                    </div>
+
+                    <div class="save-reminder glass-panel">
+                        <i class="fas fa-star"></i>
+                        <div>
+                            <h4>Save This Trip</h4>
+                            <p>Access your itinerary anytime from your profile</p>
+                        </div>
+                        <button class="save-profile-btn" onclick="saveToProfile()">
+                            <i class="fas fa-bookmark"></i> Save to Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="footer-content">
+            <p>Made with <i class="fas fa-heart"></i> by TravelDiscover | AI-Powered Travel Planning</p>
+            <p class="footer-note">Note: This is a demo. For real API integration, implement backend authentication.</p>
+        </div>
+    </footer>
+
+    <script src="js/navbar.js"></script>
+    <script src="js/planner.js"></script>
+</body>
+</html>

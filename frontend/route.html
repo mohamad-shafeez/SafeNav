@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NearMe  | AI  Route Planner</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/route.css">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
+<!-- Leaflet Fullscreen plugin -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen/Control.FullScreen.css" />
+<script src="https://unpkg.com/leaflet.fullscreen/Control.FullScreen.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script> <script src="js/firebase.js"></script>
+  <script src="js/auth.js" defer></script>
+
+  <!-- Navbar -->
+  <script src="js/navbar.js" defer></script>
+
+  <script src="js/route-core.js"></script>
+<script src="js/route-premium.js"></script>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Premium Animations -->
+ 
+</head>
+
+<body data-theme="light">
+
+<!-- Premium Loading Overlay -->
+<div id="premiumLoader" class="page-transition-overlay">
+  <div class="transition-content">
+    <div class="transition-loader"></div>
+    <h3 style="margin: 20px 0 10px; font-weight: 700;">SafeNav Pro</h3>
+    <p style="opacity: 0.8; font-size: 0.9rem;">Loading premium navigation...</p>
+  </div>
+</div>
+
+<!-- Navbar -->
+<div id="navbar-placeholder"></div>
+
+<!-- Speed Warning -->
+<div id="speedWarning" class="speed-warning hidden premium-control" style="top: 80px;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 1.2rem;"></i>
+    <div>
+      <strong>Slow down!</strong>
+      <p style="margin: 5px 0 0; font-size: 0.9rem;">You're exceeding the speed limit</p>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="main-content-area">
+  
+  <!-- STAY PAGE (Initially hidden) -->
+  <div id="stayPage" class="page">
+    <div class="stay-content">
+      <h1>Stay Page Content</h1>
+      <p>Your accommodation/hotel content goes here...</p>
+    </div>
+  </div>
+
+  <!-- ROUTE PAGE (Initially active) -->
+  <div id="routePage" class="page active">
+    <div class="main-container">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+    <select id="languageSelector" onchange="changeLanguage(this.value)" style="padding: 8px 15px; border-radius: 20px; border: 1px solid #cbd5e1; background: white; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <option value="en">🇺🇸 English</option>
+        <option value="hi">🇮🇳 हिंदी (Hindi)</option>
+        <option value="kn">🇮🇳 ಕನ್ನಡ (Kannada)</option>
+        <option value="es">🇪🇸 Español</option>
+    </select>
+</div>
+      <!-- Premium Header -->
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, #1e40af, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">
+          <i class="fas fa-route" style="margin-right: 10px;"></i>SafeNav Pro
+        </h1>
+        <p style="color: #64748b; font-size: 1.1rem;">AI-powered safe route planning with real-time guidance</p>
+      </div>
+
+      <!-- Plan Route Card -->
+      <section class="card premium-card" style="animation: slide-up 0.6s ease;">
+        <h2 style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
+          <i class="fas fa-map-marker-alt" style="color: #2563eb;"></i> Plan Your Route
+        </h2>
+
+        <div class="input-group" style="position: relative; margin-bottom: 20px;">
+          <label style="font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-flag" style="color: #10b981;"></i> Start Location
+          </label>
+          <input id="startLocation" class="premium-input" placeholder="Enter start location or use current location">
+          <button id="useMyLocationBtn" class="gradient-btn" style="margin-top: 10px; padding: 12px 20px; width: 100%;">
+            <i class="fas fa-location-crosshairs" style="margin-right: 8px;"></i> Use My Current Location
+          </button>
+        </div>
+
+        <div class="input-group" style="position: relative; margin-bottom: 25px;">
+          <label style="font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-map-pin" style="color: #ef4444;"></i> Destination
+          </label>
+          <input id="endLocation" class="premium-input" placeholder="Enter destination address">
+        </div>
+
+       <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 25px; align-items: stretch;">
+          <button id="findRouteBtn" class="gradient-btn" style="flex: 1; min-width: 200px; padding: 15px; font-weight: 700; font-size: 1.1rem;">
+            <i class="fas fa-search-location" style="margin-right: 10px;"></i> Find Safest Route
+          </button>
+          <button id="reverseRouteBtn" class="btn btn-secondary" style="padding: 15px 25px; border-radius: 12px; font-weight: 600;">
+            <i class="fas fa-exchange-alt" style="margin-right: 8px;"></i> Reverse Route
+          </button>
+          
+          
+          </button>
+        </div>
+
+        </div>
+        
+        <!-- Test Buttons Container -->
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+          <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 10px; font-weight: 600;">
+            <i class="fas fa-vial" style="margin-right: 8px;"></i> Demonstration Tools
+          </p>
+        </div>
+      </section>
+
+      <!-- Live Stats Grid -->
+      <section class="card premium-card" style="animation: slide-up 0.6s ease 0.2s both;">
+        <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+          <i class="fas fa-chart-line" style="color: #2563eb;"></i> Live Navigation Dashboard
+        </h3>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Distance Remaining</div>
+            <div id="routeDistanceMain" class="stat-value">-</div>
+            <div style="font-size: 0.8rem; color: #94a3b8;"><i class="fas fa-road"></i> kilometers</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-label">Current Speed</div>
+            <div id="routeSpeedMain" class="stat-value">0</div>
+            <div style="font-size: 0.8rem; color: #94a3b8;"><i class="fas fa-tachometer-alt"></i> km/h</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-label">Estimated Arrival</div>
+            <div id="etaDisplayMain" class="stat-value">--:--</div>
+            <div style="font-size: 0.8rem; color: #94a3b8;"><i class="fas fa-clock"></i> ETA</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-label">Safety Score</div>
+            <div id="recommendedRiskHudMain" class="stat-value">-</div>
+            <div style="font-size: 0.8rem; color: #94a3b8;"><i class="fas fa-shield-alt"></i> rating</div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+          <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 1rem;">
+            <i class="fas fa-info-circle" style="color: #2563eb;"></i> Next Instruction
+          </h4>
+          <div id="currentInstructionMain" style="background: #f1f5f9; padding: 15px; border-radius: 12px; font-weight: 600; min-height: 60px; display: flex; align-items: center; justify-content: center; text-align: center;">
+            <span style="color: #64748b;">No active navigation</span>
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <h4 style="font-size: 1rem; margin-bottom: 10px; color: #475569;">Route Steps</h4>
+          <ol id="instructionListMain" style="padding-left: 20px; max-height: 200px; overflow-y: auto;"></ol>
+        </div>
+      </section>
+
+      <!-- Premium Map Container -->
+      <section class="card map-section" style="padding: 0; animation: slide-up 0.6s ease 0.4s both;">
+        <div id="mapContainer" class="premium-map-frame" style="height: 550px;">
+          <div id="map"></div>
+
+          <!-- Enhanced Voice Button -->
+          <button id="voiceToggleBtn" class="voice-btn premium floating-action" style="position: absolute; top: 20px; right: 20px;">
+            🔊
+          </button>
+
+          <!-- Premium Telemetry Overlay -->
+          <div id="telemetryOverlay" class="premium-control hidden" style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-around; padding: 15px;">
+            <div class="nav-stat" style="text-align: center;">
+              <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 5px;">SPEED</div>
+              <div id="routeSpeed" style="font-size: 1.5rem; font-weight: 800; color: #1e40af;">0</div>
+              <div style="font-size: 0.7rem; color: #94a3b8;">km/h</div>
+            </div>
+            
+            <div class="nav-stat" style="text-align: center;">
+              <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 5px;">DISTANCE</div>
+              <div id="routeDistance" style="font-size: 1.5rem; font-weight: 800; color: #059669;">0.0</div>
+              <div style="font-size: 0.7rem; color: #94a3b8;">km left</div>
+            </div>
+            
+            <div class="nav-stat" style="text-align: center;">
+              <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 5px;">ARRIVAL</div>
+              <div id="etaDisplay" style="font-size: 1.5rem; font-weight: 800; color: #7c3aed;">--:--</div>
+              <div style="font-size: 0.7rem; color: #94a3b8;">ETA</div>
+            </div>
+            
+            <div class="nav-stat" style="text-align: center;">
+              <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 5px;">SAFETY</div>
+              <div id="recommendedRiskHud" style="font-size: 1.5rem; font-weight: 800; color: #f59e0b;">-</div>
+              <div style="font-size: 0.7rem; color: #94a3b8;">score</div>
+            </div>
+          </div>
+
+          <!-- Premium Camera Alert -->
+          <div id="cameraAlertBox" class="premium-control hidden" style="position: absolute; top: 100px; left: 50%; transform: translateX(-50%); max-width: 350px; width: 90%; background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 6px solid #f59e0b;">
+            <div style="display: flex; align-items: center; gap: 15px; padding: 15px;">
+              <div style="font-size: 2rem; color: #d97706;">📸</div>
+              <div>
+                <div style="font-weight: 800; color: #92400e; margin-bottom: 5px;">SPEED CAMERA AHEAD</div>
+                <div style="color: #92400e; font-size: 0.9rem;">Limit: <span id="camLimit" style="font-weight: 800; color: #dc2626;">--</span> km/h</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Premium Bottom Controls -->
+          <div class="bottom-controls" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 15px; align-items: center;">
+            <button id="navActionBtn" class="gradient-btn" style="padding: 18px 40px; font-size: 1.2rem; font-weight: 800; border-radius: 20px; min-width: 250px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+              <i class="fas fa-play"></i> Start Navigation
+            </button>
+            <!--test button -->
+            <button id="simulateBtn" class="btn" style="background: #8b5cf6; color: white; padding: 10px 20px; border-radius: 15px; font-weight: 700; margin-top: 10px;">
+    <i class="fas fa-vial"></i> Simulate Journey
+</button>
+            <button id="cancelNavBtn" class="btn-cancel-nav hidden" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 2px solid #ef4444; padding: 12px 25px; border-radius: 15px; font-weight: 700;">
+              <i class="fas fa-stop"></i> Cancel Navigation
+            </button>
+          </div>
+
+          <!-- Premium Fullscreen Button -->
+      <button id="fullScreenBtn" class="premium-control corner-btn" style="position: absolute; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+            ⛶
+          </button>
+
+          <button id="trafficToggleBtn" class="premium-control corner-btn" style="position: absolute; bottom: 90px; right: 30px; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: white; color: #1e293b; z-index: 1000;" title="Toggle Traffic">
+            🚦
+          </button>
+
+        </div> </section>
+      <!-- Premium Risk Analysis -->
+      <section class="card premium-card" style="animation: slide-up 0.6s ease 0.6s both;">
+        <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+          <i class="fas fa-chart-bar" style="color: #2563eb;"></i> AI Route Analysis
+        </h3>
+        
+        <div style="text-align: center; margin: 20px 0;">
+          <div id="recommendedRisk" class="risk-indicator" style="font-size: 1.5rem; padding: 20px; border-radius: 20px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe);">
+            Loading analysis...
+          </div>
+        </div>
+        
+        <div style="background: #f8fafc; padding: 20px; border-radius: 16px; margin: 20px 0;">
+          <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 1.1rem;">
+            <i class="fas fa-file-alt" style="color: #10b981;"></i> Route Details
+          </h4>
+          <p id="recommendedDetails" style="color: #475569; line-height: 1.6;">-</p>
+        </div>
+        
+        <div>
+          <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 1.1rem;">
+            <i class="fas fa-check-circle" style="color: #10b981;"></i> Safety Factors
+          </h4>
+          <ul id="explanationList" class="explanation-list"></ul>
+        </div>
+        <button id="shareRouteBtn" class="gradient-btn share-glow" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); margin-top: 10px; padding: 12px 25px; border-radius: 15px; font-weight: 700; width: 100%; display: none;">
+    <i class="fas fa-share-nodes" style="margin-right: 8px;"></i> Share Safe Route
+</button>
+        <!-- AI Assistant Section -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #a78bfa); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div>
+              <div style="font-weight: 700; color: #1e293b;">AI Route Assistant</div>
+              <div style="font-size: 0.9rem; color: #64748b;">Get personalized route advice</div>
+            </div>
+          </div>
+          <button id="aiAdviceBtn" class="gradient-btn" style="width: 100%; padding: 15px; margin-top: 10px;">
+            <i class="fas fa-lightbulb" style="margin-right: 10px;"></i> Get AI Route Suggestions
+          </button>
+        </div>
+      </section>
+      
+    </div>
+  </div>
+
+</div>
+
+<!-- Premium Notification Toast -->
+<div id="premiumToast" class="premium-control hidden" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); max-width: 400px; width: 90%; z-index: 10000; background: linear-gradient(135deg, #0f172a, #1e293b); color: white; padding: 15px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);">
+  <div style="display: flex; align-items: center; gap: 15px;">
+    <div id="toastIcon" style="font-size: 1.5rem;">✨</div>
+    <div>
+      <div id="toastTitle" style="font-weight: 700; margin-bottom: 5px;">Notification</div>
+      <div id="toastMessage" style="font-size: 0.9rem; opacity: 0.9;">Message content here</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Premium loading animation
+  document.addEventListener('DOMContentLoaded', () => {
+    const loader = document.getElementById('premiumLoader');
+    
+    // Show loader initially
+    setTimeout(() => {
+      loader.classList.add('active');
+    }, 100);
+    
+    // Hide loader after page loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loader.classList.remove('active');
+        
+        // Show welcome toast
+        showPremiumToast('🚀 SafeNav Pro Ready', 'Premium navigation system loaded successfully!');
+      }, 800);
+    });
+    
+    // Initialize test buttons
+    document.getElementById('testSpeedBtn')?.addEventListener('click', () => {
+      showPremiumToast('⚡ Speed Test', 'Simulating speeding alert for demonstration');
+      // Your test speed function here
+    });
+    
+    document.getElementById('testCameraBtn')?.addEventListener('click', () => {
+      showPremiumToast('📸 Camera Test', 'Simulating speed camera detection');
+      // Your test camera function here
+    });
+    
+    document.getElementById('aiAdviceBtn')?.addEventListener('click', () => {
+      showPremiumToast('🤖 AI Assistant', 'Fetching personalized route recommendations...');
+      // Your AI advice function here
+    });
+  });
+  
+  // Premium toast notification
+  function showPremiumToast(title, message, icon = '✨') {
+    const toast = document.getElementById('premiumToast');
+    const toastIcon = document.getElementById('toastIcon');
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    toastIcon.textContent = icon;
+    toastTitle.textContent = title;
+    toastMessage.textContent = message;
+    
+    toast.classList.remove('hidden');
+    toast.style.opacity = '0';
+    toast.style.transform = 'translate(-50%, 20px)';
+    
+    // Animate in
+    setTimeout(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translate(-50%, 0)';
+      toast.style.transition = 'all 0.3s ease';
+    }, 10);
+    
+    // Auto hide after 4 seconds
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translate(-50%, 20px)';
+      
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 300);
+    }, 4000);
+  }
+</script>
+<script src="js/navbar.js"></script>
+<div id="aiCopilot" style="position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 30px; border: 1px solid #334155; backdrop-filter: blur(5px);">
+    <div id="eyeStatusIcon" style="font-size: 1.5rem;">👁️</div>
+    <div>
+        <div style="color: white; font-weight: bold; font-size: 0.9rem;">AI Guard</div>
+        <div id="eyeStatusText" style="color: #22c55e; font-size: 0.7rem;">ACTIVE</div>
+    </div>
+    <video id="inputVideo" style="display: none;" playsinline></video>
+</div>
+
+<audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+
+<script src="js/ai-copilot.js"></script>
+<script>
+    const translations = {
+        en: {
+            app_title: "SafeNav AI",
+            search_placeholder: "Where to?",
+            start_nav: "Start Navigation",
+            stop_nav: "Stop Navigation",
+            sos_btn: "SOS Emergency",
+            ai_guard: "AI Guard",
+            status_active: "ACTIVE",
+            status_sleep: "WAKE UP!",
+            settings: "Settings",
+            login: "Login",
+            logout: "Logout",
+            welcome: "Welcome to SafeNav",
+            camera_alert: "Speed Camera Ahead",
+            helmet_alert: "Please Wear Helmet"
+        },
+        hi: { 
+            app_title: "सेफ-नैव AI",
+            search_placeholder: "कहाँ जाना है?",
+            start_nav: "नेविगेशन शुरू करें",
+            stop_nav: "रुकें",
+            sos_btn: "आपातकालीन SOS",
+            ai_guard: "AI सुरक्षा",
+            status_active: "सक्रिय",
+            status_sleep: "जाग जाओ!",
+            settings: "सेटिंग्स",
+            login: "लॉग इन",
+            logout: "लॉग आउट",
+            welcome: "सेफ-नैव में आपका स्वागत है",
+            camera_alert: "आगे स्पीड कैमरा है",
+            helmet_alert: "कृपया हेलमेट पहनें"
+        }
+    };
+    
+    // Make it global
+    window.translations = translations;
+    console.log("✅ Translations Loaded (Embedded)");
+
+    function changeLanguage(langCode) {
+        if (!translations[langCode]) return;
+        localStorage.setItem('preferredLanguage', langCode);
+        const elements = document.querySelectorAll('[data-lang-key]');
+        elements.forEach(el => {
+            const key = el.getAttribute('data-lang-key');
+            if (translations[langCode][key]) {
+                if (el.tagName === 'INPUT') el.placeholder = translations[langCode][key];
+                else el.textContent = translations[langCode][key];
+            }
+        });
+    }
+</script>
+<script>
+  // 1. REGISTER SERVICE WORKER ONLY (Makes it installable)
+  // The Wake Lock logic is already handled inside js/route-core.js, so we don't need it here.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('✅ Service Worker Registered'))
+      .catch(err => console.log('❌ SW Error:', err));
+  }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      // 1. Read the website address to see if we were sent here from the Trip Planner
+      const urlParams = new URLSearchParams(window.location.search);
+      const incomingDestination = urlParams.get('dest');
+
+      if (incomingDestination) {
+          // 2. We are using YOUR exact IDs now!
+          const destInput = document.getElementById('endLocation'); 
+          const calculateBtn = document.getElementById('findRouteBtn'); 
+
+          if (destInput && calculateBtn) {
+              // 3. Type the destination into the box automatically
+              destInput.value = incomingDestination;
+              
+              // 4. Optionally grab user's current location for the "Start" box
+              const startInput = document.getElementById('startLocation');
+              if(startInput && startInput.value === "") {
+                  startInput.value = "My Current Location"; 
+                  // Note: your route-core.js might need to handle "My Current Location" as a GPS trigger
+              }
+              
+              // 5. Wait 1.5 seconds for the map to fully load, then click the button!
+              setTimeout(() => {
+                  calculateBtn.click();
+                  
+                  // Clean up the URL so it looks neat again
+                  window.history.replaceState({}, document.title, window.location.pathname);
+              }, 1500);
+          } else {
+              console.log("Auto-Route failed: Could not find endLocation or findRouteBtn.");
+          }
+      }
+  });
+</script>
+<script src="js/voice-alerts.js"></script>
+    <script src="js/prediction.js"></script> 
+</body>
+</html>
