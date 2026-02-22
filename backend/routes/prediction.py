@@ -24,6 +24,9 @@ def predict():
     time = data.get("time", "day")
     mode = data.get("travel_mode", "walking")
     user_profile = data.get("user_profile", "standard")
+    
+    # 👉 NEW: Grab the duration from the frontend (Default to 30 mins)
+    duration_mins = data.get("duration_mins", 30) 
 
     # 3. Defensive Validation: Ensure lat/lng exist and are numbers
     if lat is None or lng is None:
@@ -32,12 +35,16 @@ def predict():
     try:
         lat_f = float(lat)
         lng_f = float(lng)
+        
+        # 👉 Optional: Ensure duration is actually an integer
+        duration_mins = int(duration_mins) 
     except (TypeError, ValueError):
-        return jsonify({"error": "Latitude and Longitude must be valid numbers"}), 400
+        return jsonify({"error": "Coordinates and duration must be valid numbers"}), 400
 
     # 4. Global Error Handling for the Engine
     try:
-        result = calculate_risk(lat_f, lng_f, time, mode, user_profile)
+        # 👉 NEW: Pass duration_mins into the prediction engine!
+        result = calculate_risk(lat_f, lng_f, time, mode, user_profile, duration_mins)
         return jsonify(result), 200
     except Exception as e:
         # logging.error records the error with a timestamp and details

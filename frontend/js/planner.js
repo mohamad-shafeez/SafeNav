@@ -340,42 +340,35 @@ async function generateItinerary() {
     generateBtn.disabled = true;
 
     try {
-        // 2. Fetch Elite Profile Data from Firestore (The Intelligence Layer)
-        // 👉 CRITICAL ADDITION: Pulls the profile you just used on the Prediction page!
-        const savedHealthProfile = localStorage.getItem('ai_user_profile') || "Standard / No Conditions";
-
+        // 2. Fetch the Active Profile Data from the UI
+        // 👉 THIS IS THE FIX: We now read directly from the dropdowns so manual overrides work!
         let userProfile = {
-            safetyMode: "Normal",
-            healthProfile: savedHealthProfile, // Starts with your active profile
+            safetyMode: "Normal", // Default fallback
+            country: "Not specified", // Default fallback
+            
+            // 👉 NEW: Grabbing the Health Profile directly from the HTML dropdown you just added!
+            healthProfile: document.getElementById('plannerHealthProfile')?.value || "Standard",
+            
             tripStyle: document.getElementById('vibe')?.value || "Adventure",
             budget: document.getElementById('budget')?.value || "Moderate",
             companions: document.getElementById('companions')?.value || "Solo",
             transport: document.getElementById('transport')?.value || "Public Transit",
-            food: document.getElementById('foodPref')?.value || "Any",
-            country: "Not specified"
+            food: document.getElementById('foodPref')?.value || "Any"
         };
 
+        // We only fetch from Firebase for hidden background settings (like Safety Mode and Country)
+        // We DO NOT overwrite the UI dropdowns anymore!
         if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
             const uid = firebase.auth().currentUser.uid;
             const doc = await firebase.firestore().collection('users').doc(uid).get();
             if (doc.exists) {
                 const data = doc.data();
-                // Override UI defaults with Elite Profile data if it exists
                 if(data.safetyMode) userProfile.safetyMode = data.safetyMode;
-                
-                // 👉 FIX: Removed the buggy 'autoApplyHealth' check
-                if(data.healthProfile) userProfile.healthProfile = data.healthProfile;
-                
                 if(data.country) userProfile.country = data.country;
-                if(data.tripStyle) userProfile.tripStyle = data.tripStyle;
-                if(data.budgetDefault) userProfile.budget = data.budgetDefault;
-                if(data.travelGroup) userProfile.companions = data.travelGroup;
-                if(data.transportDefault) userProfile.transport = data.transportDefault;
-                if(data.foodDefault) userProfile.food = data.foodDefault;
             }
         }
 
-        // 👉 FIX: Cleaned up the AI Caller (Removed duplicate URL)
+        // 👉 Secure AI Caller
         async function callSafenavAI(finalPrompt) {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/planner/generate`, {
@@ -763,13 +756,13 @@ document.head.appendChild(style);
 // ==========================================
 
 async function saveTripToCloud() {
-    // Make sure we have a logged-in user (currentUser is defined at the top of planner.js)
+    // Make sure we have a logged-in user
     if (!currentUser) {
         alert("You must be logged in to save trips!");
         return;
     }
 
-    const saveBtn = document.getElementById('saveTripBtn'); // Assuming this is your save button ID
+    const saveBtn = document.getElementById('saveTripBtn'); 
     const originalText = saveBtn.innerHTML;
     
     // UI Feedback
@@ -780,7 +773,7 @@ async function saveTripToCloud() {
     const destination = document.getElementById('destination').value.trim();
     const budget = document.getElementById('budget').value;
     const vibe = document.getElementById('vibe').value;
-    const planHTML = document.getElementById('itineraryText').innerHTML; // The AI generated output
+    const planHTML = document.getElementById('itineraryText').innerHTML;
 
     const db = firebase.firestore();
     
@@ -803,6 +796,25 @@ async function saveTripToCloud() {
         saveBtn.style.background = '#10b981'; // Turn green
         saveBtn.style.color = 'white';
         
+        // 👉 NEW: Automatically reset the form back to their default profile!
+        setTimeout(() => {
+            if (typeof restoreProfileDefaults === 'function') {
+                restoreProfileDefaults();
+            }
+            
+            // Hide the itinerary and show the empty form again
+            document.getElementById('contentState').style.display = 'none';
+            document.getElementById('defaultState').style.display = 'flex';
+            
+            // Reset the save button back to normal so they can use it again
+            saveBtn.innerHTML = originalText;
+            saveBtn.style.background = ''; // Removes the green inline style
+            saveBtn.disabled = false;
+            
+            // Scroll back to the top to start planning the next trip!
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 3000); // Waits 3 seconds so they can see the "Saved!" message first
+
     } catch (error) {
         console.error("Error saving trip to cloud:", error);
         alert("Failed to save trip. Check your connection.");
@@ -898,3 +910,39 @@ window.swapActivity = async function(btnElement, oldPlace, destination, type, ti
         cardElement.innerHTML = originalHTML; 
     }
 }
+// ==========================================
+// 🔄 RESET FORM TO PROFILE DEFAULTS
+// ==========================================
+window.restoreProfileDefaults = async function() {
+    if (typeof firebase === 'undefined' || !currentUser) return;
+
+    try {
+        const doc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
+        if (doc.exists) {
+            const data = doc.data();
+            
+            // 1. Reset standard fields
+            if (data.budgetDefault) document.getElementById('budget').value = data.budgetDefault;
+            if (data.tripStyle) document.getElementById('vibe').value = data.tripStyle;
+            if (data.travelGroup) document.getElementById('companions').value = data.travelGroup;
+            if (data.transportDefault) document.getElementById('transport').value = data.transportDefault;
+            if (data.foodDefault) document.getElementById('foodPref').value = data.foodDefault;
+            
+            // 2. Reset the new Health Profile
+            if (data.healthProfile) {
+                const healthDropdown = document.getElementById('plannerHealthProfile');
+                if (healthDropdown) healthDropdown.value = data.healthProfile;
+            }
+
+            // 3. Clear the text inputs
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('days').value = '';
+
+            console.log("Form successfully reset to Profile Defaults.");
+        }
+    } catch (error) {
+        console.error("Failed to restore profile defaults:", error);
+    }
+};

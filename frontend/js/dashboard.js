@@ -287,12 +287,6 @@ window.bookSafeRide = function(platform) {
 // ==========================================
 // 👤 ELITE PROFILE & SETTINGS ENGINE
 // ==========================================
-
-window.toggleProfileDrawer = function() {
-    const drawer = document.getElementById('profileDrawer');
-    if (drawer) drawer.classList.toggle('open');
-};
-
 window.loadUserProfile = async function(user) {
     if (!user) return;
     
@@ -310,26 +304,37 @@ window.loadUserProfile = async function(user) {
             if(data.country) document.getElementById('profCountry').value = data.country;
             if(data.currency) document.getElementById('profCurrency').value = data.currency;
             
-            // 2. Safety Engine
+            // 2. Safety Engine & Settings Drawer
             if(data.safetyMode) document.getElementById('profSafetyMode').value = data.safetyMode;
             if(data.healthProfile) document.getElementById('profHealth').value = data.healthProfile;
             
-           // 👉 SMART DROPDOWN SYNC: Matches regardless of uppercase/lowercase
-// 👉 SMART DROPDOWN SYNC: Matches regardless of uppercase/lowercase
-const predictDropdown = document.getElementById('userProfile'); // 👈 Fixed the ID here!
-if (predictDropdown && data.healthProfile) {
-    // Loop through all the HTML options to find the matching one
-    Array.from(predictDropdown.options).forEach(opt => {
-        if (opt.value.toLowerCase() === data.healthProfile.toLowerCase() || 
-            opt.text.toLowerCase() === data.healthProfile.toLowerCase()) {
+            // 👉 NEW: Load Radar Settings
+            if(data.radarAlertType) document.getElementById('profRadarType').value = data.radarAlertType;
+            if(data.radarThreshold) document.getElementById('profRadarDistance').value = data.radarThreshold;
             
-            predictDropdown.value = opt.value; // Force the UI to update!
-            
-            // Tell the predict page to update its visuals immediately
-            predictDropdown.dispatchEvent(new Event('change')); 
-        }
-    });
-}
+            // 👉 SMART SYNC 1: Predict Page Dropdown
+            const predictDropdown = document.getElementById('userProfile'); 
+            if (predictDropdown && data.healthProfile) {
+                Array.from(predictDropdown.options).forEach(opt => {
+                    if (opt.value.toLowerCase() === data.healthProfile.toLowerCase() || 
+                        opt.text.toLowerCase() === data.healthProfile.toLowerCase()) {
+                        predictDropdown.value = opt.value; 
+                        predictDropdown.dispatchEvent(new Event('change')); 
+                    }
+                });
+            }
+
+            // 👉 SMART SYNC 2: Planner Page Dropdown 
+            // ⚠️ Pro Tip: Make sure this ID is 'plannerHealthProfile' if you used that in your HTML earlier!
+            const plannerDropdown = document.getElementById('plannerHealthProfile'); 
+            if (plannerDropdown && data.healthProfile) {
+                Array.from(plannerDropdown.options).forEach(opt => {
+                    if (opt.value.toLowerCase() === data.healthProfile.toLowerCase() || 
+                        opt.text.toLowerCase() === data.healthProfile.toLowerCase()) {
+                        plannerDropdown.value = opt.value; 
+                    }
+                });
+            }
             
             if(data.autoApplyHealth !== undefined) document.getElementById('profAutoApplyHealth').checked = data.autoApplyHealth;
             
@@ -360,15 +365,21 @@ window.saveUserProfile = async function() {
     saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
     saveBtn.disabled = true;
 
-    const profileData = {
+  const profileData = {
         name: document.getElementById('profName').value.trim(),
         country: document.getElementById('profCountry').value.trim(),
         currency: document.getElementById('profCurrency').value,
         
+        // 🛡️ Safety Engine Settings
         safetyMode: document.getElementById('profSafetyMode').value,
         healthProfile: document.getElementById('profHealth').value,
         autoApplyHealth: document.getElementById('profAutoApplyHealth').checked,
         
+        // 👉 NEW: Save Radar Settings right here!
+        radarAlertType: document.getElementById('profRadarType').value,
+        radarThreshold: parseFloat(document.getElementById('profRadarDistance').value) || 5,
+        
+        // 🧳 Trip Defaults
         tripStyle: document.getElementById('profStyle').value,
         budgetDefault: document.getElementById('profBudget').value,
         travelGroup: document.getElementById('profGroup').value,

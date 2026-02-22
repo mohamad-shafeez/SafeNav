@@ -2,7 +2,9 @@ import os
 import requests
 import logging
 import google.generativeai as genai
+from dotenv import load_dotenv # 👉 1. Import this!
 
+load_dotenv()
 # Setup Logging for production tracking
 logging.basicConfig(level=logging.INFO)
 

@@ -1,24 +1,32 @@
 import os
 import logging
 import google.generativeai as genai
+from dotenv import load_dotenv 
 
-# 👉 FIX 1: Check both variable names just to be safe
-GEMINI_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+# Load your .env file
+load_dotenv() 
 
-if GEMINI_KEY:
-    genai.configure(api_key=GEMINI_KEY)
+# Setup Logging
+logging.basicConfig(level=logging.INFO)
+
+# --- API KEYS ---
+GENAI_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+
+# --- INITIALIZE AI ---
+if GENAI_API_KEY:
+    genai.configure(api_key=GENAI_API_KEY)
+    ai_model = genai.GenerativeModel('gemini-1.5-flash')
 else:
-    logging.error("🚨 CRITICAL: No Gemini API Key found in environment variables!")
+    logging.error("🚨 CRITICAL: No Gemini API Key found in planner engine!")
+    ai_model = None
 
 def generate_itinerary_ai(prompt_text):
     try:
-        if not GEMINI_KEY:
+        if not ai_model:
             raise ValueError("API Key is missing. Cannot call Gemini.")
 
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        
-        # 👉 FIX 2: Force Gemini to return RAW JSON without markdown backticks!
-        response = model.generate_content(
+        # Force Gemini to return RAW JSON
+        response = ai_model.generate_content(
             prompt_text,
             generation_config={"response_mime_type": "application/json"}
         )

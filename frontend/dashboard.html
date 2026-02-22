@@ -181,9 +181,28 @@
                     <option value="Jain">Food: Jain</option>
                 </select>
             </div>
+            <h4 style="margin-top: 25px; margin-bottom: 15px; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">
+    <i class="fas fa-broadcast-tower"></i> Live Radar Settings
+</h4>
 
+<div class="form-group">
+    <label class="form-label">Alert Style</label>
+    <div class="dropdown-wrapper">
+        <select id="profRadarType" class="styled-select">
+            <option value="voice">🔊 Voice Warning</option>
+            <option value="beep">🚨 Sharp Beep</option>
+            <option value="silent">🔕 Silent Popup</option>
+        </select>
+        <div class="dropdown-icon"><i class="fas fa-chevron-down"></i></div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Warn me before (km)</label>
+    <input type="number" id="profRadarDistance" class="styled-input" min="1" max="50" placeholder="e.g., 5" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
+</div>
             <div class="profile-section">
-                <h4><i class="fas fa-ambulance"></i> Emergency Contact</h4>
+                <h5><i class="fas fa-ambulance"></i> Emergency Contact</h5>
                 <input type="text" id="profIceName" class="styled-input" placeholder="Contact Name" style="margin-bottom: 10px;">
                 <input type="tel" id="profIcePhone" class="styled-input" placeholder="Contact Number (with Country Code)">
                 <label style="display: flex; gap: 10px; align-items: center; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); margin-top: 10px;">
