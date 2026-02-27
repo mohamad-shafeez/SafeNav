@@ -1,198 +1,191 @@
 /* =========================================================
-   SAFE STAYS & TRAVEL — TOMTOM POWERED (ENHANCED)
+   SAFE STAYS & TRAVEL — MAPLIBRE + TOMTOM (V3 FULL UX)
    ========================================================= */
 
 let map;
 let userMarker = null;
-let markersLayer;
+let markersArray = []; 
 let startCoords = null;
-let selectedPlace = null;
+let selectedPlace = null; // Used for the HUD
 let voiceEnabled = true;
 let isDiscovering = false;
-let pageTransition = null;
 let discoverSession = 0;
-const TOMTOM_KEY = "eYv21bMhwipW5ydBVnvHYOtcsquJznMB";
+let radiusCircleId = 'radius-circle';
 
-// Add animation classes to CSS dynamically
-const addAnimationStyles = () => {
-    if (!document.getElementById('dynamic-styles')) {
-        const style = document.createElement('style');
-        style.id = 'dynamic-styles';
-        style.textContent = `
-            .pulse-glow {
-                animation: pulseGlow 1.5s infinite alternate;
-            }
-            @keyframes pulseGlow {
-                from { box-shadow: 0 0 5px rgba(37, 99, 235, 0.5); }
-                to { box-shadow: 0 0 20px rgba(37, 99, 235, 0.8); }
-            }
-            .slide-up {
-                animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            }
-            @keyframes slideUp {
-                from { transform: translateY(30px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-            .bounce-in {
-                animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            }
-            @keyframes bounceIn {
-                0% { transform: scale(0.3); opacity: 0; }
-                50% { transform: scale(1.05); }
-                70% { transform: scale(0.9); }
-                100% { transform: scale(1); opacity: 1; }
-            }
-            .search-highlight {
-                animation: searchHighlight 1s ease;
-            }
-            @keyframes searchHighlight {
-                0% { background: #fef3c7; }
-                100% { background: white; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-};
-
-/* ---------------- INIT MAP ---------------- */
-document.addEventListener("DOMContentLoaded", () => {
-    
-    // Add animation styles
-    addAnimationStyles();
-    
-    // Get page transition element
-    pageTransition = document.getElementById('pageTransition');
-    
-    if (typeof L === "undefined") {
-        console.error("❌ Leaflet not loaded");
+const TOMTOM_KEY = CONFIG.TOMTOM_KEY;
+const MAP_STYLE_URL = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json'; 
+/* ---------------- 1. INIT MAPLIBRE ---------------- */
+function initStaysMap() {
+    // 🛡️ THE SAFETY CHECK: Wait for CONFIG to be ready
+    if (typeof CONFIG === 'undefined' || typeof MAP_STYLE_URL === 'undefined') {
+        console.warn("⏳ Stays Config/Style not ready, retrying in 100ms...");
+        setTimeout(initStaysMap, 100);
         return;
     }
 
-    const mapEl = document.getElementById("staysMap");
-    if (!mapEl) {
-        console.error("❌ #staysMap not found");
-        return;
-    }
+    map = new maplibregl.Map({
+        container: 'staysMap',
+        style: MAP_STYLE_URL,
+        center: [78.9629, 20.5937], 
+        zoom: 4,
+        pitch: 45, 
+        attributionControl: false
+    });
 
-    markersLayer = L.layerGroup();
-    map = L.map("staysMap").setView([20.5937, 78.9629], 5);
+    map.addControl(new maplibregl.NavigationControl({showCompass: false}), 'bottom-right');
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "© OpenStreetMap"
-    }).addTo(map);
+    map.on('load', () => {
+        console.log("✅ MapLibre Vector Map Loaded (Full UX)");
+        setupEventListeners();
+        setupModalLogic();
+        setupAutocomplete();
 
-    markersLayer.addTo(map);
+        setTimeout(() => {
+            // Check if startCoords exists (declared in your global state)
+            if (typeof startCoords === 'undefined' || !startCoords) getUserLocation();
+        }, 1000);
+    });
+}
+
+// Kick off the initialization
+document.addEventListener("DOMContentLoaded", initStaysMap);
+
+/* ---------------- 2. MODAL & UI LOGIC ---------------- */
+function setupModalLogic() {
+    const modal = document.getElementById("filterModal");
     
-    // Add custom control for radius display
-    addRadiusControl();
-
-    // Setup all event listeners
-    setupEventListeners();
+    document.getElementById("openFiltersBtn").onclick = () => {
+        modal.classList.add("active");
+        speak("Select categories to discover", "normal");
+    };
     
-    // Initial user location attempt
-    setTimeout(() => {
-        if (!startCoords) {
-            getUserLocation();
-        }
-    }, 1000);
-});
-
-/* ---------------- SETUP EVENT LISTENERS ---------------- */
-function setupEventListeners() {
-    // Voice Toggle
-    document.getElementById("voiceToggle").onchange = e => {
-        voiceEnabled = e.target.checked;
-        const label = document.getElementById("voiceStatusLabel");
-        label.innerText = voiceEnabled ? "Active" : "Muted";
-        label.style.color = voiceEnabled ? "#10b981" : "#ef4444";
-        
-        // Animation feedback
-        if (voiceEnabled) {
-            label.classList.add("bounce-in");
-            setTimeout(() => label.classList.remove("bounce-in"), 600);
-            speak("Voice guidance activated", "high");
-        }
+    document.getElementById("closeFiltersBtn").onclick = () => modal.classList.remove("active");
+    
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove("active");
     };
 
-    // Enter key in search input
-    document.getElementById("startInput").addEventListener("keydown", e => {
-        if (e.key === "Enter") {
-            manualSearchLocation(true);
-        }
-    });
-    
-    // Manual Search Button (NEW)
-    const manualSearchBtn = document.getElementById("manualSearchBtn");
-    if (manualSearchBtn) {
-        manualSearchBtn.onclick = () => manualSearchLocation(true);
-    }
-
-    /* ---------------- FILTER TOGGLE ---------------- */
     document.querySelectorAll(".filter-btn").forEach(btn => {
         btn.onclick = function() {
-            const wasActive = this.classList.contains("active");
-            this.classList.toggle("active");
-            
-            // Animation
-            if (!wasActive) {
-                this.classList.add("bounce-in");
-                setTimeout(() => this.classList.remove("bounce-in"), 600);
-                
-                // Speak feedback
+            this.classList.toggle("selected");
+            if (this.classList.contains("selected")) {
                 const filterName = this.querySelector("span").textContent;
-                speak(`Showing ${filterName} places`, "normal");
+                speak(filterName + " selected", "low");
             }
         };
     });
+}
 
-    /* ---------------- GPS LOCATION ---------------- */
-    document.getElementById("myLocBtn").onclick = () => {
-        getUserLocation(true);
+/* ---------------- 3. EVENT LISTENERS ---------------- */
+function setupEventListeners() {
+    document.getElementById("voiceToggle").onchange = e => {
+        voiceEnabled = e.target.checked;
+        if (voiceEnabled) speak("Voice guidance activated", "high");
     };
 
-    /* ---------------- DISCOVER PLACES ---------------- */
+    document.getElementById("manualSearchBtn").onclick = () => manualSearchLocation(true);
+    
+    document.getElementById("startInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            document.getElementById("autocompleteResults").style.display = "none";
+            manualSearchLocation(true);
+        }
+    });
+
+    document.getElementById("myLocBtn").onclick = () => getUserLocation(true);
+
     document.getElementById("discoverBtn").onclick = () => {
+        document.getElementById("filterModal").classList.remove("active"); 
         discoverPlaces();
     };
 
-    /* ---------------- CLEAR MAP ---------------- */
-    document.getElementById("clearMapBtn").onclick = () => {
-        clearMap();
-    };
+    document.getElementById("clearMapBtn").onclick = () => clearMap();
 
-    /* ---------------- RADIUS SLIDER ---------------- */
     document.getElementById("radiusSlider").oninput = e => {
         const value = e.target.value;
         document.getElementById("radiusLabel").innerText = `${value} km`;
-        
-        // Update radius circle if exists
         updateRadiusCircle(value);
-        
-        // Visual feedback
-        const label = document.getElementById("radiusLabel");
-        label.classList.add("pulse-glow");
-        setTimeout(() => label.classList.remove("pulse-glow"), 500);
     };
 
-    /* ---------------- START NAVIGATION ---------------- */
-    document.getElementById("startNavBtn").onclick = () => {
-        startNavigationFromStay();
-    };
+    // THE HUD NAVIGATION BUTTON
+    const startNavBtn = document.getElementById("startNavBtn");
+    if(startNavBtn) {
+        startNavBtn.onclick = () => startNavigationFromStay();
+    }
+
+    // THE NEW HUD CLOSE BUTTON LOGIC (ADD THIS NOW)
+    const hudCloseBtn = document.getElementById("closeHUD");
+    if (hudCloseBtn) {
+        hudCloseBtn.onclick = (e) => {
+            if(e) e.stopPropagation(); 
+            const hud = document.getElementById("navBridgeHUD");
+            hud.style.opacity = "0";
+            hud.style.transform = "translate(-50%, 20px)";
+            
+            setTimeout(() => {
+                hud.style.display = "none";
+            }, 300);
+
+            // Clear map popups for a fresh start
+            markersArray.forEach(m => {
+                if (m.getPopup() && m.getPopup().isOpen()) m.getPopup().remove();
+            });
+            
+            speak("Selection cleared", "low");
+        };
+    }
 }
 
+/* ---------------- 4. AUTOCOMPLETE ---------------- */
+let debounceTimer;
+function setupAutocomplete() {
+    const input = document.getElementById("startInput");
+    const resultsDiv = document.getElementById("autocompleteResults");
+
+    input.addEventListener("input", (e) => {
+        clearTimeout(debounceTimer);
+        const query = e.target.value;
+        
+        if (query.length < 3) {
+            resultsDiv.style.display = "none";
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json?key=${TOMTOM_KEY}&limit=5`);
+                const data = await res.json();
+                
+                if (data.results && data.results.length > 0) {
+                    resultsDiv.innerHTML = "";
+                    data.results.forEach(item => {
+                        const div = document.createElement("div");
+                        div.className = "autocomplete-item";
+                        div.innerText = `${item.poi ? item.poi.name + ', ' : ''}${item.address.freeformAddress}`;
+                        div.onclick = () => {
+                            input.value = div.innerText;
+                            resultsDiv.style.display = "none";
+                            manualSearchLocation(true); 
+                        };
+                        resultsDiv.appendChild(div);
+                    });
+                    resultsDiv.style.display = "block";
+                }
+            } catch (err) {}
+        }, 300);
+    });
+
+    document.addEventListener("click", (e) => {
+        if (e.target !== input && e.target !== resultsDiv) {
+            resultsDiv.style.display = "none";
+        }
+    });
+}
+
+/* ---------------- 5. LOCATION & SEARCH ---------------- */
 function getUserLocation(forceUpdate = false) {
-    const btn = document.getElementById("myLocBtn");
-    const originalText = btn.innerHTML;
-    
-    if (!navigator.geolocation) {
-        alert("GPS not supported");
-        return;
-    }
-    
-    btn.innerHTML = '🛰️ Locating...';
-    btn.disabled = true;
-    btn.style.background = '#475569';
+    if (!navigator.geolocation) return;
+    speak("Locating you...", "normal");
     
     navigator.geolocation.getCurrentPosition(
         async pos => {
@@ -200,552 +193,367 @@ function getUserLocation(forceUpdate = false) {
             const lng = Number(pos.coords.longitude);
             startCoords = { lat, lng };
             
-            if (userMarker) map.removeLayer(userMarker);
-            
-            userMarker = L.marker([lat, lng], {
-                icon: L.divIcon({
-                    html: `<div class="user-location-icon"></div>`,
-                    className: "bounce-in",
-                    iconSize: [44.8, 44.8],
-                    iconAnchor: [22.4, 44.8]
-                })
-            }).addTo(map);
-            
-            map.flyTo([lat, lng], 15, { 
-                duration: 1.2,
-                animate: true 
-            });
+            setCenterMarker(lng, lat);
             
             try {
-                const res = await fetch(
-                    `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${TOMTOM_KEY}`
-                );
+                const res = await fetch(`https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${TOMTOM_KEY}`);
                 const data = await res.json();
                 const address = data.addresses?.[0]?.address?.freeformAddress || "My Location";
                 document.getElementById("startInput").value = address;
-            } catch (err) {
-                document.getElementById("startInput").value = "My Location";
-            }
+            } catch (err) {}
             
-            btn.innerHTML = '✅ Located!';
-            btn.style.background = '#10b981';
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = '#0f172a';
-                btn.disabled = false;
-            }, 1500);
-            
-            if (forceUpdate) {
-                speak("Location found", "high");
-                updateRadiusCircle(document.getElementById("radiusSlider").value);
-            }
+            if (forceUpdate) speak("Location found", "high");
+            updateRadiusCircle(document.getElementById("radiusSlider").value);
         },
-        err => {
-            btn.innerHTML = '❌ Failed';
-            btn.style.background = '#ef4444';
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = '#0f172a';
-                btn.disabled = false;
-            }, 2000);
-        },
+        err => { speak("Failed to get location", "high"); },
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
 }
 
-/* ---------------- MANUAL SEARCH LOCATION ---------------- */
 async function manualSearchLocation(withAnimation = false) {
     const query = document.getElementById("startInput").value.trim();
-    if (!query) {
-        speak("Please enter a location to search", "high");
-        return;
-    }
-    
-    const searchBtn = document.getElementById("manualSearchBtn");
-    const originalText = searchBtn.innerHTML;
-    
-    if (withAnimation) {
-        searchBtn.innerHTML = '⏳ Searching...';
-        searchBtn.disabled = true;
-        searchBtn.style.background = '#475569';
-        
-        const input = document.getElementById("startInput");
-        input.classList.add("search-highlight");
-        setTimeout(() => input.classList.remove("search-highlight"), 1000);
-    }
+    if (!query) return;
     
     try {
-        const res = await fetch(
-            `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(query)}.json?key=${TOMTOM_KEY}`
-        );
+        const res = await fetch(`https://api.tomtom.com/search/2/geocode/${encodeURIComponent(query)}.json?key=${TOMTOM_KEY}`);
         const data = await res.json();
         
         if (!data.results || !data.results.length) {
-            alert("Location not found. Please try a different name.");
-            speak("Location not found. Try another name.", "high");
+            speak("Location not found.", "high");
             return;
         }
         
         const pos = data.results[0].position;
-console.log("DEBUG TomTom position:", pos); // Add this line
-startCoords = { 
-    lat: Number(pos.lat), 
-    lng: Number(pos.lon)  // Make sure it's 'lon' not 'lng'
-};
-
-        if (userMarker) map.removeLayer(userMarker);
-
-        // FIXED: Use [lat, lng] format with correct coordinates
-        userMarker = L.marker([startCoords.lat, startCoords.lng], {
-            icon: L.divIcon({
-                html: `<div class="user-location-icon"></div>`,
-                className: "bounce-in",
-                iconSize: [44.8, 44.8],
-                iconAnchor: [22.4, 44.8]
-            })
-        }).addTo(map);
-
-        // FIXED: Use correct coordinates
-        map.flyTo([startCoords.lat, startCoords.lng], 14, { 
-            duration: 1.2,
-            animate: true 
-        });
+        startCoords = { lat: Number(pos.lat), lng: Number(pos.lon) };
         
-        if (withAnimation) {
-            searchBtn.innerHTML = '✅ Found!';
-            searchBtn.style.background = '#10b981';
-            
-            setTimeout(() => {
-                searchBtn.innerHTML = originalText;
-                searchBtn.style.background = '#2563eb';
-                searchBtn.disabled = false;
-            }, 1500);
-        }
-        
+        setCenterMarker(startCoords.lng, startCoords.lat);
         speak(`Search center set to ${query}`, "high");
         updateRadiusCircle(document.getElementById("radiusSlider").value);
         
-    } catch (err) {
-        console.error("Search error:", err);
-        alert("Search failed. Please check your connection and try again.");
-        speak("Search failed. Please try again.", "high");
-        
-        if (withAnimation) {
-            searchBtn.innerHTML = '❌ Failed';
-            searchBtn.style.background = '#ef4444';
-            
-            setTimeout(() => {
-                searchBtn.innerHTML = originalText;
-                searchBtn.style.background = '#2563eb';
-                searchBtn.disabled = false;
-            }, 2000);
-        }
-    }
+    } catch (err) {}
 }
 
-/* ---------------- DISCOVER PLACES ---------------- */
-/* ---------------- DISCOVER PLACES (FULL CORRECTED) ---------------- */
+function setCenterMarker(lng, lat) {
+    if (userMarker) userMarker.remove();
+    const el = document.createElement('div');
+    el.innerHTML = '📍';
+    el.style.fontSize = '35px';
+    el.style.filter = 'drop-shadow(0px 4px 4px rgba(0,0,0,0.3))';
+    el.style.transform = 'translateY(-15px)';
+    
+    userMarker = new maplibregl.Marker({element: el})
+        .setLngLat([lng, lat])
+        .addTo(map);
+        
+    map.flyTo({ center: [lng, lat], zoom: 14, speed: 1.5 });
+}
+
+/* ---------------- 6. DISCOVER PLACES (TOMTOM + OVERPASS DUAL ENGINE) ---------------- */
 function discoverPlaces() {
     if (!startCoords) {
         speak("Please set your location first.", "high");
-        alert("Use GPS or Search first to set a starting point.");
         return;
     }
     
-    // 1. UI Reset & Map Focus
-    const mapEl = document.getElementById("staysMap");
-    if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    clearMapMarkersOnly();
     
-    markersLayer.clearLayers();
-    selectedPlace = null;
-    
-    // Hide HUD during new discovery
     const hud = document.getElementById("navBridgeHUD");
     if (hud) hud.style.display = "none";
     
-    // Initialize bounds with user's current location
-    const bounds = L.latLngBounds([startCoords.lat, startCoords.lng]);
-    
     const radiusKm = Number(document.getElementById("radiusSlider").value) || 5;
-    const activeFilters = document.querySelectorAll(".filter-btn.active");
+    const activeFilters = document.querySelectorAll(".filter-btn.selected");
     
     if (activeFilters.length === 0) {
-        speak("Please select at least one category like hotels or cafes.", "normal");
-        alert("Select at least one filter category.");
+        speak("Please select at least one category.", "normal");
+        document.getElementById("filterModal").classList.add("active");
         return;
     }
     
-    // 2. Session Management
-    // Incremented every time Discover is clicked to stop old async results
     discoverSession++;
     const currentSession = discoverSession;
-    const totalFilters = activeFilters.length;
-    let completedFilters = 0;
+    let bounds = new maplibregl.LngLatBounds();
+    bounds.extend([startCoords.lng, startCoords.lat]);
     
-    // 3. Visual Feedback (Loader & Button)
+    let completedRequests = 0;
+    // Each filter now triggers 2 APIs (TomTom + Overpass)
+    const totalRequests = activeFilters.length * 2; 
+    
     const loader = document.getElementById("loader");
-    if (loader) {
-        loader.style.display = "flex";
-        loader.classList.add("slide-up");
-    }
+    if (loader) loader.style.display = "flex";
     
-    const discoverBtn = document.getElementById("discoverBtn");
-    discoverBtn.innerHTML = '🔄 Searching...';
-    discoverBtn.disabled = true;
-    discoverBtn.style.background = '#475569';
-    
-    // 4. Loop Through Selected Categories
-    activeFilters.forEach(btn => {
-        const emoji = btn.dataset.emoji || "📍";
-        let query = btn.dataset.query;
+    isDiscovering = true;
+
+    // --- HELPER FUNCTION: DRAWS THE ACTUAL PINS ---
+    function plotPin(pLat, pLng, pName, pFullAddress, isAccommodation, queryLower, emoji, typeName, index) {
+        if (!pName || pName === "Unnamed Place") return; // Skip unnamed garbage data
         
-        // Clean query (e.g., "category=hotel" -> "hotel")
-        if (query.includes("=")) {
-            query = query.split("=")[1].replace(/_/g, " ");
+        const safeName = pName.replace(/'/g, "\\'");
+        const safeAddress = pFullAddress.replace(/'/g, "\\'");
+        
+        const from = turf.point([startCoords.lng, startCoords.lat]);
+        const to = turf.point([pLng, pLat]);
+        const distKm = turf.distance(from, to, {units: 'kilometers'});
+
+        let bookingHTML = "";
+        let priceHTML = "";
+
+        if (isAccommodation) {
+            let minPrice, maxPrice;
+            if (queryLower.includes("hostel") || queryLower.includes("oyo") || queryLower.includes("budget") || queryLower.includes("lodge") || pName.toLowerCase().includes("hostel")) {
+                minPrice = 500; maxPrice = 1800; 
+            } else if (queryLower.includes("resort") || pName.toLowerCase().includes("resort")) {
+                minPrice = 6500; maxPrice = 18000; 
+            } else if (queryLower.includes("luxury") || queryLower.includes("premium") || pName.toLowerCase().includes("taj")) {
+                minPrice = 12000; maxPrice = 35000; 
+            } else {
+                minPrice = 2000; maxPrice = 5500; 
+            }
+
+            const priceINR = Math.floor(Math.random() * (maxPrice - minPrice + 1) + minPrice);
+            const priceUSD = Math.round(priceINR / 83); 
+            
+            priceHTML = `<div style="color: #10b981; font-weight: 900; font-size: 16px; margin-bottom: 2px;">
+                            $${priceUSD} <span style="color: #64748b; font-size: 12px;">(₹${priceINR.toLocaleString('en-IN')})</span>
+                         </div>`;
+            
+            const affiliateId = "2779272"; 
+            bookingHTML = `<a href="https://www.booking.com/searchresults.html?ss=${encodeURIComponent(pFullAddress)}&aid=${affiliateId}" target="_blank" 
+                           style="display: block; background: #003580; color: white; text-decoration: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; margin-bottom: 8px;">
+                           🏨 Book Now
+                        </a>`;
         }
-        
-        speak(`Searching for ${query} nearby`, "normal");
-        
-        // TomTom POI Search API URL
-        const url = `https://api.tomtom.com/search/2/poiSearch/${encodeURIComponent(query)}.json?key=${TOMTOM_KEY}&lat=${startCoords.lat}&lon=${startCoords.lng}&radius=${radiusKm * 1000}&limit=30`;
-        
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                // Stop processing if the user has already started a NEW discovery session
-                if (currentSession !== discoverSession) return;
 
-                if (!data.results || data.results.length === 0) {
-                    finalizeFilter();
-                    return;
-                }
-                
-                speak(`Found ${data.results.length} ${query} places`, "high");
-                
-                data.results.forEach((place, index) => {
-                    // --- DEFINE CONSTANTS FIRST ---
-                    const pLat = Number(place.position.lat);
-                    const pLng = Number(place.position.lon); // TomTom uses 'lon'
-                    const pName = place.poi?.name || "Unnamed Place";
-                    const pCity = place.address?.municipality || "this area";
-                    const safeName = pName.replace(/'/g, "\\'"); // Fixes apostrophes in names
+        const placeObj = { 
+            name: pName, fullAddress: pFullAddress, lat: pLat, lng: pLng, 
+            type: typeName, emoji: emoji, distKm: distKm
+        };
 
-                    // Validate Coords
-                    if (isNaN(pLat) || isNaN(pLng)) return;
-                    
-                    // --- STAGGERED MARKER PLACEMENT ---
-                    setTimeout(() => {
-                        if (currentSession !== discoverSession) return;
-                        
-                        const marker = L.marker([pLat, pLng], {
-                            icon: L.divIcon({
-                                html: `<div class="poi-emoji">${emoji}</div>`,
-                                className: "leaflet-div-icon",
-                                iconSize: [40, 40],
-                                iconAnchor: [20, 40]
-                            })
-                        });
-                        
-                        marker.addTo(markersLayer);
-                        bounds.extend([pLat, pLng]);
-                        
-                        // Object to store for navigation
-                        const placeObj = { 
-                            name: pName, 
-                            lat: pLat, 
-                            lng: pLng, 
-                            city: pCity,
-                            type: query,
-                            emoji: emoji
-                        };
-                        
-                        marker.on("click", () => {
-                            selectPlace(placeObj);
-                            const distKm = map.distance(
-                                [startCoords.lat, startCoords.lng],
-                                [pLat, pLng]
-                            ) / 1000;
-                            
-                            // --- START OF UPDATED AFFILIATE POPUP LOGIC ---
-                        
-                        // 1. Calculate Prices based on category
-                       // --- START OF UPDATED AFFILIATE POPUP LOGIC ---
-                        
-                        // 1. Calculate Prices based on category
-                        let basePriceUSD = 60; // Default medium
-                        if (query.toLowerCase().includes("resort") || query.toLowerCase().includes("luxury")) basePriceUSD = 250;
-                        if (query.toLowerCase().includes("hostel") || query.toLowerCase().includes("lodge") || query.toLowerCase().includes("oyo")) basePriceUSD = 20;
-
-                        const priceUSD = Math.floor(basePriceUSD + (Math.random() * 40));
-                        const priceINR = (priceUSD * 83).toLocaleString('en-IN'); 
-                        
-                        // 2. Exact Search Query for Booking.com
-                        const exactSearchQuery = pName + " " + pCity;
-
-                        // 3. The New Dual-Action Popup (Booking + Navigation)
-                        const popupHTML = `
-                            <div class="popup-card" style="text-align:center; min-width:190px;">
-                                <div style="font-weight:800; color:#1c3c72; font-size:1rem; margin-bottom:5px;">${emoji} ${pName}</div>
-                                
-                                <div style="color: #10b981; font-weight: 900; font-size: 17px; margin-bottom: 2px;">
-                                    $${priceUSD} <span style="color: #64748b; font-size: 13px;">(₹${priceINR})</span>
-                                </div>
-                                <div style="font-size:0.75rem; color:#64748b; margin-bottom:12px;">${pCity} • ${distKm.toFixed(1)} km away</div>
-                                
-                                <a href="https://www.booking.com/searchresults.html?ss=${encodeURIComponent(exactSearchQuery)}&aid=2779272" target="_blank" 
-                                   style="display: block; background: #003580; color: white; text-decoration: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; margin-bottom: 8px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                                    🏨 Book on Booking.com
-                                </a>
-
-                                <button onclick="window.prepareNavigation(${pLat}, ${pLng}, '${safeName}')"
-                                    style="background:#2563eb; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; width:100%; font-weight:600; transition:0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                                    🚗 Navigate Here
-                                </button>
-                            </div>`;
-                            
-                        marker.bindPopup(popupHTML).openPopup();
-                        // --- END OF UPDATED AFFILIATE POPUP LOGIC ---
-                        });
-                    }, index * 60); // Creates a "pop-in" effect
-                });
-                
-                finalizeFilter();
-            })
-            .catch(err => {
-                console.error("Discovery error:", err);
-                finalizeFilter();
+        setTimeout(() => {
+            if (currentSession !== discoverSession) return;
+            
+            const el = document.createElement('div');
+            el.className = 'poi-marker';
+            el.innerHTML = `<div style="background:white; border-radius:50%; padding:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); font-size:20px; border:2px solid #2563eb; cursor:pointer;">${emoji}</div>`;
+            
+            const popupHTML = `
+                <div style="text-align:center;">
+                    <div class="custom-popup-title">${emoji} ${pName}</div>
+                    ${priceHTML}
+                    <span class="custom-popup-address">${pFullAddress} <br/> <strong style="color:var(--primary)">${distKm.toFixed(1)} km away</strong></span>
+                    ${bookingHTML}
+                    <button class="custom-nav-btn" onclick="window.prepareNavigation(${pLat}, ${pLng}, '${safeName}', '${emoji}', '${safeAddress}')">
+                        🚗 Navigate Here
+                    </button>
+                </div>
+            `;
+            
+            const popup = new maplibregl.Popup({ offset: 25, closeButton: true, closeOnClick: true, className: 'glass-popup' }).setHTML(popupHTML);
+            
+            const marker = new maplibregl.Marker({element: el}).setLngLat([pLng, pLat]).setPopup(popup).addTo(map);
+            marker.getElement().addEventListener('click', () => selectPlace(placeObj));
+            
+            popup.on('close', () => {
+                const hud = document.getElementById("navBridgeHUD");
+                if (hud) { hud.style.opacity = "0"; setTimeout(() => hud.style.display = "none", 300); }
             });
+
+            markersArray.push(marker);
+            bounds.extend([pLng, pLat]);
+            
+        }, index * 25); // Faster animation to handle more pins
+    }
+
+    // --- FETCH DATA FOR EACH FILTER ---
+    activeFilters.forEach(btn => {
+        const emoji = btn.querySelector('.emoji').innerText;
+        let query = btn.dataset.query;
+        let queryLower = query.toLowerCase();
+        let typeName = btn.querySelector('span').innerText;
+        
+        const isAccommodation = ['hotel', 'oyo', 'luxury', 'resort', 'homestay', 'motel', 'camping', 'cabin', 'lodge', 'guest house'].some(kw => queryLower.includes(kw));
+        
+        // 1. TOMTOM API REQUEST (Commercial Data)
+        const tomtomUrl = `https://api.tomtom.com/search/2/poiSearch/${encodeURIComponent(query)}.json?key=${TOMTOM_KEY}&lat=${startCoords.lat}&lon=${startCoords.lng}&radius=${radiusKm * 1000}&limit=30`;
+        
+        fetch(tomtomUrl).then(res => res.json()).then(data => {
+            if (currentSession !== discoverSession) return;
+            if (data.results) {
+                data.results.forEach((place, index) => {
+                    const pLat = Number(place.position.lat);
+                    const pLng = Number(place.position.lon);
+                    const pName = place.poi?.name;
+                    const pFullAddress = place.address?.freeformAddress || pName + ", " + (place.address?.municipality || "Local Area");
+                    plotPin(pLat, pLng, pName, pFullAddress, isAccommodation, queryLower, emoji, typeName, index);
+                });
+            }
+            checkCompletion();
+        }).catch(() => checkCompletion());
+
+        // 2. OVERPASS API REQUEST (Open-Source Local Data)
+        let osmTag = `["name"~"(?i)${query}"]`; // Default regex search
+        if (isAccommodation) osmTag = `["tourism"~"hotel|hostel|guest_house|motel|camp_site"]`;
+        else if (queryLower.includes('hospital') || queryLower.includes('clinic')) osmTag = `["amenity"~"hospital|clinic"]`;
+        else if (queryLower.includes('petrol') || queryLower.includes('gas')) osmTag = `["amenity"="fuel"]`;
+
+        const overpassQuery = `[out:json][timeout:10];(node${osmTag}(around:${radiusKm * 1000},${startCoords.lat},${startCoords.lng});way${osmTag}(around:${radiusKm * 1000},${startCoords.lat},${startCoords.lng}););out center limit 30;`;
+        const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+
+        fetch(overpassUrl).then(res => res.json()).then(data => {
+            if (currentSession !== discoverSession) return;
+            if (data.elements) {
+                data.elements.forEach((place, index) => {
+                    const pLat = place.lat || place.center?.lat;
+                    const pLng = place.lon || place.center?.lon;
+                    const pName = place.tags?.name;
+                    // OSM doesn't always have addresses, so we construct a smart fallback
+                    const street = place.tags?.["addr:street"] ? place.tags["addr:street"] + ", " : "";
+                    const city = place.tags?.["addr:city"] || "Local Area";
+                    const pFullAddress = street + city;
+                    
+                    if (pLat && pLng && pName) {
+                        plotPin(pLat, pLng, pName, pFullAddress, isAccommodation, queryLower, emoji, typeName, index + 30); // Offset index so animations don't clash
+                    }
+                });
+            }
+            checkCompletion();
+        }).catch(() => checkCompletion());
     });
-    
-    // Internal helper to check when all API calls are done
-    function finalizeFilter() {
-        completedFilters++;
-        if (completedFilters === totalFilters) {
+
+    // --- CHECK WHEN ALL REQUESTS ARE DONE ---
+    function checkCompletion() {
+        completedRequests++;
+        if (completedRequests === totalRequests) {
             setTimeout(() => {
                 if (currentSession !== discoverSession) return;
-
-                if (bounds.isValid() && markersLayer.getLayers().length > 0) {
-                    map.flyToBounds(bounds, {
-                        padding: [50, 50],
-                        maxZoom: 15,
-                        duration: 1.5
-                    });
-                }
-                
                 if (loader) loader.style.display = "none";
-                
-                discoverBtn.innerHTML = '🔍 Discover Places';
-                discoverBtn.disabled = false;
-                discoverBtn.style.background = '#2563eb';
-                discoverBtn.classList.add("bounce-in");
-                
-                speak(`Discovery complete! Showing ${markersLayer.getLayers().length} locations.`, "high");
-                
-                setTimeout(() => discoverBtn.classList.remove("bounce-in"), 600);
-            }, 500);
+                isDiscovering = false;
+                if (!bounds.isEmpty()) {
+                    map.fitBounds(bounds, { padding: 80, maxZoom: 15, speed: 1.2 });
+                }
+                speak(`Discovery complete. Found ${markersArray.length} places.`, "high");
+            }, 800);
         }
     }
 }
-
-/* ---------------- SELECT PLACE ---------------- */
+/* ---------------- 7. SELECT PLACE & HUD (OPTIMIZED) ---------------- */
 function selectPlace(place) {
     selectedPlace = place;
     
-    const distKm = map.distance([startCoords.lat, startCoords.lng], [place.lat, place.lng]) / 1000;
-    
-    speak(
-        `${place.name}. ${distKm.toFixed(1)} kilometers away. Tap navigate to start.`,
-        "high"
-    );
+    speak(`${place.name}. ${place.distKm.toFixed(1)} kilometers away.`, "high");
     
     const hud = document.getElementById("navBridgeHUD");
     const display = document.getElementById("selectedPlaceDisplay");
     
     if (hud && display) {
+        // We added 'text-overflow' logic here so long names don't break the UI
         display.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
-                <span style="font-size: 20px;">${place.emoji}</span>
-                <span>${place.name}</span>
+                <span style="font-size: 24px;">${place.emoji}</span>
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">${place.name}</span>
             </div>
-            <div style="font-size: 0.9rem; color: #2563eb; font-weight: 600; margin-top: 5px;">
-                ${distKm.toFixed(1)} km away • ${place.type}
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                ${place.distKm.toFixed(1)} km away • ${place.type}
             </div>
         `;
         
+        // Ensure the HUD is visible and trigger the animation
         hud.style.display = "block";
+        
+        // Reset animation state for a "pop-in" effect
+        hud.style.transition = "none"; 
         hud.style.opacity = "0";
-        hud.style.transform = "translateY(20px)";
+        hud.style.transform = "translate(-50%, 30px)";
         
+        // Small delay to allow the browser to register the 'none' transition before animating
         setTimeout(() => {
+            hud.style.transition = "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
             hud.style.opacity = "1";
-            hud.style.transform = "translateY(0)";
-        }, 10);
-        
-        const startBtn = document.getElementById("startNavBtn");
-        startBtn.classList.add("pulse-glow");
+            hud.style.transform = "translate(-50%, 0)";
+        }, 50);
     }
-    
-    map.flyTo([place.lat, place.lng], 16, { 
-        animate: true, 
-        duration: 1.2 
-    });
+}
+/* ---------------- 8. CLEARING & RADIUS ---------------- */
+function clearMapMarkersOnly() {
+    markersArray.forEach(marker => marker.remove());
+    markersArray = [];
 }
 
-/* ---------------- CLEAR MAP ---------------- */
 function clearMap() {
-    markersLayer.clearLayers();
+    clearMapMarkersOnly();
     selectedPlace = null;
     
     const hud = document.getElementById("navBridgeHUD");
-    if (hud) {
-        hud.style.opacity = "0";
-        hud.style.transform = "translateY(20px)";
-        setTimeout(() => {
-            hud.style.display = "none";
-        }, 300);
+    if (hud) hud.style.display = "none";
+    
+    if (userMarker) {
+        map.flyTo({ center: userMarker.getLngLat(), zoom: 14, speed: 1.5 });
     }
-    
-    const startBtn = document.getElementById("startNavBtn");
-    if (startBtn) startBtn.classList.remove("pulse-glow");
-    
-    if (userMarker && !isDiscovering) {
-        map.flyTo(userMarker.getLatLng(), 14, { 
-            animate: true,
-            duration: 1 
-        });
-    }
-    
     speak("Map cleared", "low");
 }
 
-/* ---------------- RADIUS VISUALIZATION ---------------- */
-let radiusCircle = null;
-
 function updateRadiusCircle(radiusKm) {
-    if (!startCoords) return;
-    
-    if (radiusCircle) {
-        map.removeLayer(radiusCircle);
+    if (!startCoords || !map.isStyleLoaded()) return;
+
+    const center = [startCoords.lng, startCoords.lat];
+    const options = {steps: 64, units: 'kilometers'};
+    const circlePolygon = turf.circle(center, radiusKm, options);
+
+    if (map.getSource(radiusCircleId)) {
+        map.getSource(radiusCircleId).setData(circlePolygon);
+    } else {
+        map.addSource(radiusCircleId, { type: 'geojson', data: circlePolygon });
+        map.addLayer({ id: radiusCircleId + '-fill', type: 'fill', source: radiusCircleId, paint: { 'fill-color': '#3b82f6', 'fill-opacity': 0.1 } });
+        map.addLayer({ id: radiusCircleId + '-line', type: 'line', source: radiusCircleId, paint: { 'line-color': '#2563eb', 'line-width': 2, 'line-dasharray': [2, 2] } });
     }
-    
-    radiusCircle = L.circle([startCoords.lat, startCoords.lng], {
-        color: '#2563eb',
-        fillColor: '#3b82f6',
-        fillOpacity: 0.1,
-        radius: radiusKm * 1000,
-        weight: 2
-    }).addTo(map);
 }
 
-function addRadiusControl() {
-    const RadiusControl = L.Control.extend({
-        options: { position: 'topright' },
-        onAdd: function(map) {
-            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-            container.innerHTML = `
-                <div style="background: white; padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 0.9rem; font-weight: 600; color: #2563eb;">
-                    Radius: <span id="liveRadius">5</span> km
-                </div>
-            `;
-            return container;
-        }
-    });
-    
-    map.addControl(new RadiusControl());
-    
-    document.getElementById('radiusSlider').addEventListener('input', function(e) {
-        const liveRadius = document.getElementById('liveRadius');
-        if (liveRadius) {
-            liveRadius.textContent = e.target.value;
-            liveRadius.style.color = '#ef4444';
-            setTimeout(() => liveRadius.style.color = '#2563eb', 300);
-        }
-    });
-}
-
-/* ---------------- NAVIGATION HANDOFF (ACCURACY OPTIMIZED) ---------------- */
+/* ---------------- 9. NAVIGATION HANDOFF (ROCKET TRANSITION BACK) ---------------- */
 function startNavigationFromStay() {
-    if (!startCoords || !selectedPlace) {
-        showPremiumToast('⚠️ Selection Required', 'Please select a place on the map first.', 'warning');
-        return;
-    }
+    if (!startCoords || !selectedPlace) return;
     
-    // Using Coordinates (lat/lng) is 100% accurate regardless of partial addresses
     const navData = {
         start: {
             name: document.getElementById("startInput").value || "My Location",
             lat: startCoords.lat,
-            lng: startCoords.lng || startCoords.lon // Handle TomTom 'lon' vs Leaflet 'lng'
+            lng: startCoords.lng
         },
         end: {
             name: selectedPlace.name,
+            address: selectedPlace.fullAddress, // 👈 THIS IS THE CRUCIAL NEW LINE
             lat: selectedPlace.lat,
-            lng: selectedPlace.lng || selectedPlace.lon,
-            emoji: selectedPlace.emoji
+            lng: selectedPlace.lng,
+            emoji: selectedPlace.emoji || '📍'
         }
     };
     
     localStorage.setItem("pendingNav", JSON.stringify(navData));
     
-    // UI Feedback
     const hud = document.getElementById("navBridgeHUD");
-    if (hud) {
-        hud.style.opacity = "0";
-        hud.style.transform = "translateY(20px)";
-    }
+    if (hud) hud.style.display = "none";
     
     speak(`Starting navigation to ${selectedPlace.name}`, "high");
-    setTimeout(() => transitionToRoute(), 500);
+    transitionToRoute();
 }
-
-function prepareNavigation(lat, lng, name) {
-    if (!startCoords) {
-        showPremiumToast('📍 Location Needed', 'Please set your search center first.', 'info');
-        return;
-    }
-    
-    const navData = {
-        start: {
-            name: document.getElementById("startInput").value || "My Location",
-            lat: startCoords.lat,
-            lng: startCoords.lng || startCoords.lon
-        },
-        end: {
-            name: name,
-            lat: lat,
-            lng: lng
-        }
-    };
-    
-    localStorage.setItem("pendingNav", JSON.stringify(navData));
-    speak(`Navigating to ${name}`, "high");
-    setTimeout(() => transitionToRoute(), 500);
-}
-
 function transitionToRoute() {
+    const pageTransition = document.getElementById('pageTransition');
     if (pageTransition) {
-        pageTransition.classList.add("active");
-        
+        pageTransition.style.display = "flex";
         pageTransition.innerHTML = `
             <div style="text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 20px; animation: bounce 1s infinite;">🚀</div>
-                <div style="font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">Routing to ${selectedPlace?.name || 'Destination'}</div>
-                <div style="font-size: 0.9rem; opacity: 0.8;">Preparing navigation...</div>
+                <div style="font-size: 60px; margin-bottom: 20px; animation: bounce 1s infinite;">🚀</div>
+                <div style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px;">Routing to ${selectedPlace?.name || 'Destination'}</div>
+                <div style="font-size: 1rem; opacity: 0.8;">Calculating Safe Route...</div>
             </div>
         `;
     }
     
     setTimeout(() => {
         window.location.href = "route.html";
-    }, 1000);
+    }, 1200);
 }
 
-/* ===============================
-   SMART VOICE ENGINE
-================================ */
+/* ---------------- 10. SMART VOICE ENGINE ---------------- */
 let voiceQueueTimeout = null;
-
 function speak(text, priority = "normal") {
     if (!voiceEnabled || !window.speechSynthesis) return;
     
@@ -753,20 +561,39 @@ function speak(text, priority = "normal") {
     if (voiceQueueTimeout) clearTimeout(voiceQueueTimeout);
     
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
+    utterance.rate = 1.0;
     utterance.pitch = 1;
-    utterance.volume = 1;
     
-    const delay = priority === "high" ? 150 : 350;
-    
+    const delay = priority === "high" ? 100 : 300;
     voiceQueueTimeout = setTimeout(() => {
         speechSynthesis.speak(utterance);
     }, delay);
 }
+/* ---------------- 11. POPUP NAVIGATION BRIDGE ---------------- */
+window.prepareNavigation = function(lat, lng, name, emoji, address) {
+    selectedPlace = {
+        name: name,
+        fullAddress: address,
+        lat: lat,
+        lng: lng,
+        emoji: emoji
+    };
+    startNavigationFromStay();
+};
 
-// Make functions global
-window.startNavigationFromStay = startNavigationFromStay;
-window.prepareNavigation = prepareNavigation;
-window.manualSearchLocation = manualSearchLocation;
-window.selectPlace = selectPlace;
-console.log("✅ stays.js enhanced version loaded");
+window.startNavigationFromStay = function() {
+    if (!selectedPlace) return;
+
+    // 1. Pack the suitcase (Save data to browser memory)
+    const navData = {
+        lat: selectedPlace.lat,
+        lng: selectedPlace.lng,
+        name: selectedPlace.name
+    };
+    localStorage.setItem('pendingNavDestination', JSON.stringify(navData));
+
+    console.log("🚀 Teleporting to Route Page with destination:", selectedPlace.name);
+
+    // 2. Go to the Route page
+    window.location.href = 'route.html';
+};

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Safe Stays & Route Planner</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SafeNav">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('✅ Service Worker Registered on Stays', reg.scope))
+                    .catch(err => console.warn('⚠️ SW Failed', err));
+            });
+        }
+    </script>
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div style="display:flex; justify-content:flex-end; padding:10px 15px;">
+    <button id="logoutBtn" style="background:#ef4444; color:white; border:none; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer;">
+        Logout
+    </button>
+</div>
+
+
+<div id="loader">
+    <div style="font-size: 40px; margin-bottom: 10px;">🔄</div>
+    <div>Analyzing Safety & Loading Spots...</div>
+</div>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Safe Stays & Travel</h1>
+        <p>Find safe places & navigate with real-time AI guidance</p>
+    </div>
+
+  <!-- IN stays.html - Add this search button after the location input -->
+<!-- Find this section in your stays.html: -->
+
+<div class="input-group">
+    <label>Set Search Center</label>
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="startInput" placeholder="Enter city or area (e.g. Mysuru)" style="flex: 2;">
+        <button class="btn" id="myLocBtn" style="flex: 1; background:#0f172a; color:white; padding:12px; border-radius:10px; border:none; cursor:pointer; font-weight:700;">📍 GPS</button>
+        <!-- ADD THIS SEARCH BUTTON -->
+        <button class="btn" id="manualSearchBtn" style="flex: 1; background:#2563eb; color:white; padding:12px; border-radius:10px; border:none; cursor:pointer; font-weight:700; display: flex; align-items: center; justify-content: center; gap: 5px;">
+            🔍 Search
+        </button>
+    </div>
+</div>
+
+    <div class="input-group" style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 10px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 700; color: #1e293b; font-size: 0.9rem;">Exploration Range</span>
+            <span id="radiusLabel" style="color: #2563eb; font-weight: 800; font-size: 0.9rem;">5 km</span>
+        </div>
+        <input type="range" id="radiusSlider" min="1" max="30" value="5" style="width: 100%; cursor: pointer;">
+        <p style="font-size: 0.75rem; color: #64748b; margin-top: 6px;">
+            Adjust distance to find hidden gems and stays.
+        </p>
+    </div>
+
+<button class="btn" id="discoverBtn" style="background:#2563eb; color:white; padding:16px; border-radius:12px; border:none; cursor:pointer; font-weight:800; font-size: 1rem; width: 100%;">🔍 Discover Places</button>
+
+<button type="button" id="clearMapBtn" style="background:#64748b; color:white; padding:10px; border-radius:8px; border:none; margin-top:10px;">🗑️ Clear Map</button>
+
+    <div id="navBridgeHUD" style="display:none; margin-top: 15px; background: #eff6ff; border: 2px solid #2563eb; padding: 15px; border-radius: 16px; text-align: center; animation: slideUp 0.3s ease-out;">
+        <div style="font-size: 0.7rem; color: #2563eb; font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Destination Selected</div>
+        <div id="selectedPlaceDisplay" style="font-size: 1.1rem; font-weight: 800; color: #1c3c72; margin-bottom: 12px;">Beach Name</div>
+        <button id="startNavBtn" style="background:#10b981; color:white; padding:14px; border-radius:10px; border:none; width:100%; cursor:pointer; font-weight:800; font-size:1.1rem; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">🚀 Start Journey</button>
+    </div>
+
+    <div class="filters-wrapper">
+        <label style="font-weight:700; color:#444; display:block; margin: 20px 0 10px 0;">Quick Filters:</label>
+        </div>
+
+
+
+       <div class="filters-wrapper">
+    <label style="font-weight:700; color:#444; display:block; margin: 15px 0 10px 0;">
+        Find Nearby Services:
+    </label>
+
+<div class="filter-grid">
+    <div class="filter-btn" data-query="hotel" data-emoji="🏨">
+        <div class="emoji">🏨</div><span>Stay</span>
+    </div>
+    <div class="filter-btn" data-query="oyo lodge hostel guest house" data-emoji="🎒">
+        <div class="emoji">🎒</div><span>Budget Stay</span>
+    </div>
+    <div class="filter-btn" data-query="luxury premium resort" data-emoji="🌴">
+        <div class="emoji">🌴</div><span>Resort</span>
+    </div>
+
+    <div class="filter-btn" data-query="restaurant" data-emoji="🍽️">
+        <div class="emoji">🍽️</div><span>Food</span>
+    </div>
+    <div class="filter-btn" data-query="cafe" data-emoji="☕">
+        <div class="emoji">☕</div><span>Cafe</span>
+    </div>
+    <div class="filter-btn" data-query="bakery" data-emoji="🥐">
+        <div class="emoji">🥐</div><span>Bakery</span>
+    </div>
+    <div class="filter-btn" data-query="supermarket grocery store" data-emoji="🛒">
+        <div class="emoji">🛒</div><span>Grocery</span>
+    </div>
+    <div class="filter-btn" data-query="bar pub" data-emoji="🍻">
+        <div class="emoji">🍻</div><span>Bar</span>
+    </div>
+
+    <div class="filter-btn" data-query="hospital" data-emoji="🏥">
+        <div class="emoji">🏥</div><span>Hospital</span>
+    </div>
+    <div class="filter-btn" data-query="police station" data-emoji="🚓">
+        <div class="emoji">🚓</div><span>Police</span>
+    </div>
+    <div class="filter-btn" data-query="pharmacy" data-emoji="💊">
+        <div class="emoji">💊</div><span>Pharmacy</span>
+    </div>
+
+    <div class="filter-btn" data-query="bus station" data-emoji="🚌">
+        <div class="emoji">🚌</div><span>Bus</span>
+    </div>
+    <div class="filter-btn" data-query="railway station" data-emoji="🚂">
+        <div class="emoji">🚂</div><span>Train</span>
+    </div>
+    <div class="filter-btn" data-query="airport" data-emoji="✈️">
+        <div class="emoji">✈️</div><span>Airport</span>
+    </div>
+
+    <div class="filter-btn" data-query="gas station" data-emoji="⛽">
+        <div class="emoji">⛽</div><span>Petrol</span>
+    </div>
+    <div class="filter-btn" data-query="electric vehicle charging station" data-emoji="🔌">
+        <div class="emoji">🔌</div><span>EV Station</span>
+    </div>
+    <div class="filter-btn" data-query="parking" data-emoji="🅿️">
+        <div class="emoji">🅿️</div><span>Parking</span>
+    </div>
+    <div class="filter-btn" data-query="car repair mechanic" data-emoji="🔧">
+        <div class="emoji">🔧</div><span>Mechanic</span>
+    </div>
+    <div class="filter-btn" data-query="car wash" data-emoji="🧽">
+        <div class="emoji">🧽</div><span>Car Wash</span>
+    </div>
+
+    <div class="filter-btn" data-query="atm" data-emoji="🏧">
+        <div class="emoji">🏧</div><span>ATM</span>
+    </div>
+    <div class="filter-btn" data-query="bank" data-emoji="🏦">
+        <div class="emoji">🏦</div><span>Bank</span>
+    </div>
+    <div class="filter-btn" data-query="post office" data-emoji="📮">
+        <div class="emoji">📮</div><span>Post</span>
+    </div>
+    <div class="filter-btn" data-query="public toilet restroom" data-emoji="🚻">
+        <div class="emoji">🚻</div><span>Restroom</span>
+    </div>
+
+    <div class="filter-btn" data-query="beach" data-emoji="🏖️">
+        <div class="emoji">🏖️</div><span>Beach</span>
+    </div>
+    <div class="filter-btn" data-query="park" data-emoji="🌳">
+        <div class="emoji">🌳</div><span>Park</span>
+    </div>
+    <div class="filter-btn" data-query="viewpoint" data-emoji="🔭">
+        <div class="emoji">🔭</div><span>View</span>
+    </div>
+    <div class="filter-btn" data-query="mountain peak" data-emoji="⛰️">
+        <div class="emoji">⛰️</div><span>Hills</span>
+    </div>
+    <div class="filter-btn" data-query="waterfall" data-emoji="🌊">
+        <div class="emoji">🌊</div><span>Waterfall</span>
+    </div>
+
+    <div class="filter-btn" data-query="historical monument" data-emoji="🏰">
+        <div class="emoji">🏰</div><span>Heritage</span>
+    </div>
+    <div class="filter-btn" data-query="museum" data-emoji="🏛️">
+        <div class="emoji">🏛️</div><span>Museum</span>
+    </div>
+    <div class="filter-btn" data-query="cinema" data-emoji="🎬">
+        <div class="emoji">🎬</div><span>Cinema</span>
+    </div>
+    <div class="filter-btn" data-query="shopping center" data-emoji="🛍️">
+        <div class="emoji">🛍️</div><span>Mall</span>
+    </div>
+    <div class="filter-btn" data-query="nightclub" data-emoji="💃">
+        <div class="emoji">💃</div><span>Nightlife</span>
+    </div>
+    <div class="filter-btn" data-query="zoo aquarium" data-emoji="🦓">
+        <div class="emoji">🦓</div><span>Zoo</span>
+    </div>
+
+    <div class="filter-btn" data-query="gym fitness center" data-emoji="🏋️">
+        <div class="emoji">🏋️</div><span>Gym</span>
+    </div>
+    <div class="filter-btn" data-query="spa massage" data-emoji="💆">
+        <div class="emoji">💆</div><span>Spa</span>
+    </div>
+    <div class="filter-btn" data-query="temple hindu" data-emoji="🛕">
+        <div class="emoji">🛕</div><span>Temple</span>
+    </div>
+    <div class="filter-btn" data-query="mosque muslim" data-emoji="🕌">
+        <div class="emoji">🕌</div><span>Mosque</span>
+    </div>
+    <div class="filter-btn" data-query="church christian" data-emoji="⛪">
+        <div class="emoji">⛪</div><span>Church</span>
+    </div>
+</div>
+
+
+            </div>
+        </div>
+    
+
+    <div id="voiceControl" style="margin: 20px 0; display: flex; align-items: center; gap: 10px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+        <span style="font-size: 0.95rem; font-weight: 700; color:#1c3c72;">🎙️ Voice Guidance:</span>
+        <label class="switch">
+            <input type="checkbox" id="voiceToggle" checked>
+            <span class="slider"></span>
+        </label>
+        <span id="voiceStatusLabel" style="font-size: 0.85rem; font-weight: 600; color: #10b981;">Active</span>
+    </div>
+
+<div class="stays-map-wrapper">
+  <div id="staysMap"></div>
+</div>
+
+
+<div id="nav-instruction-box" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: rgba(28, 60, 114, 0.95); color: white; padding: 18px; border-radius: 16px; z-index: 10000; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+    <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.8; letter-spacing: 1.5px; margin-bottom: 6px; font-weight:700;">Instruction</div>
+    <div id="nav-text" style="font-size: 1.15rem; font-weight: 700; margin-bottom: 15px; line-height: 1.4;">Calculating Route...</div>
+    <div style="display: flex; gap: 10px; justify-content: center;">
+        <button onclick="recalculateRoute()" style="background: #38bdf8; color: #011627; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.85rem;">🔄 Recalculate</button>
+        <button onclick="stopNavigation()" style="background: #ef4444; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.85rem;">🛑 Stop</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+<script src="js/navbar.js"></script>
+<script src="js/stays.js"></script>
+
+<script>
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('userToken');
+        window.location.href = 'login.html';
+    });
+</script>
+<div id="pageTransition" class="page-transition"></div>
+<script src="js/voice-alerts.js"></script>
+    <script src="js/prediction.js"></script> 
+     
+</body>
+</html>

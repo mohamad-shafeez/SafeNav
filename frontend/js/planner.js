@@ -4,8 +4,8 @@
 
 // Global variable to store the logged-in user's info
 let currentUser = null;
-
-const API_BASE_URL = 'https://safenav-18sk.onrender.com'; // Your actual live URL! // Change this after deployment
+// FOR TESTING: Force it to use your local Python server
+const API_BASE_URL = 'http://localhost:5000'; // Your actual live URL! // Change this after deployment
 
 document.addEventListener('DOMContentLoaded', function() {
     // 🛡️ THE LOGIN WALL: Check if user is authenticated
@@ -371,7 +371,7 @@ async function generateItinerary() {
         // 👉 Secure AI Caller
         async function callSafenavAI(finalPrompt) {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/planner/generate`, {
+                const response = await fetch(`${CONFIG.BACKEND_URL}/api/planner/generate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ prompt: finalPrompt })

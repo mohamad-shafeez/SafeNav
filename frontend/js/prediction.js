@@ -2,19 +2,22 @@
 // PREDICTION.JS - SaaS HARDENED & SYNCED
 // ==========================================
 
+let marker = null; 
 let isMuted = false;
 let radarWatchId = null;
 let hasAlerted = false;
 // 👉 DYNAMIC URL TOGGLE: Automatically switches between Local and Production
-// This automatically uses your localhost for now, but is ready for Render later!
-const API_BASE_URL = 'https://safenav-18sk.onrender.com';
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:5000' 
+    : 'https://safenav-18sk.onrender.com';
 
-let map;
+
 let locationMarker;
 let dangerCircle;
 let currentWeatherLayer = null;
 let radarLayer = null; 
 let hydrationInterval = null;
+
 
 const OWM_API_KEY = "2e698fd333a893b698fb23ac8de09b7f"; 
 
@@ -419,8 +422,8 @@ if (searchInput) {
                                 searchInput.value = place.display_name.split(',')[0]; // Put short name in box
                                 searchResults.style.display = 'none';
                                 
-                                const lat = float(place.lat);
-                                const lng = float(place.lon);
+                                const lat = parseFloat(place.lat);
+                                const lng = parseFloat(place.lon);
                                 
                                 // Move map and set marker!
                                 map.flyTo([lat, lng], 13);
@@ -451,6 +454,9 @@ if (searchInput) {
 // ==========================================
 // 🎯 DYNAMIC RADIUS SLIDER LOGIC
 // ==========================================
+// ==========================================
+// 🎯 DYNAMIC RADIUS SLIDER LOGIC
+// ==========================================
 const radiusSlider = document.getElementById('radiusSlider');
 const radiusLabel = document.getElementById('radiusLabel');
 
@@ -464,9 +470,12 @@ if (radiusSlider) {
     radiusSlider.addEventListener('change', function() {
         const radiusInMeters = parseInt(this.value) * 1000;
         
-        // If we already have a marker/circle on the map, update it!
-        if (marker && dangerCircle) {
-            const latLng = marker.getLatLng();
+        // 👉 CRITICAL FIX: Safely grab whichever marker the user created
+        const activeMarker = locationMarker || marker; 
+        
+        // If we have an active marker and circle, update it!
+        if (activeMarker && dangerCircle) {
+            const latLng = activeMarker.getLatLng();
             map.removeLayer(dangerCircle);
             
             // Re-draw the circle with the new radius
@@ -488,6 +497,7 @@ if (radiusSlider) {
  
 
 // 1. UI Toggle Logic
+// 1. UI Toggle Logic (UPDATED FOR RADAR ENGINE)
 const radarToggle = document.getElementById('radarToggle');
 const radarSettings = document.getElementById('radarSettings');
 const radarStatus = document.getElementById('radarStatus');
@@ -495,11 +505,50 @@ const radarStatus = document.getElementById('radarStatus');
 if (radarToggle) {
     radarToggle.addEventListener('change', function() {
         if (this.checked) {
+            // 1. Show the settings UI
             radarSettings.style.display = 'block';
-            startLiveRadar();
+            
+            // 2. Find the active target marker on the map
+            const targetMarker = locationMarker || (typeof marker !== 'undefined' ? marker : null);
+            
+            if (!targetMarker) {
+                alert("Please scan a target location first so the radar knows what to track!");
+                this.checked = false;
+                radarSettings.style.display = 'none';
+                return;
+            }
+            
+            // 3. Extract the target coordinates
+            const targetLat = targetMarker.getLatLng().lat;
+            const targetLng = targetMarker.getLatLng().lng;
+            
+            // 4. Calculate the total danger boundary (Storm size + User warning buffer)
+            const sliderRadiusKm = parseFloat(document.getElementById('radiusSlider').value) || 0;
+            const userWarningKm = parseFloat(document.getElementById('alertThreshold').value) || 0;
+            const dangerBoundaryKm = sliderRadiusKm + userWarningKm;
+          // 5. UPDATE THE UI
+            if (radarStatus) {
+                radarStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Initializing Radar...`;
+                radarStatus.style.color = '#3b82f6';
+            }
+            
+            // 🧪 FORCE SIMULATOR ON (For Testing Only)
+            if (typeof enableSimulator === 'function') {
+                enableSimulator(); 
+            }
+            
+            // 🚀 6. FIRE THE NEW BATTERY-SAFE ENGINE
+            RadarEngine.start(targetLat, targetLng, dangerBoundaryKm);
         } else {
+            // 🛑 STOP THE ENGINE
             radarSettings.style.display = 'none';
-            stopLiveRadar();
+            RadarEngine.stop();
+            
+            // Update UI
+            if (radarStatus) {
+                radarStatus.innerHTML = `<i class="fas fa-satellite"></i> Radar is OFF`;
+                radarStatus.style.color = '#f59e0b'; // Yellow
+            }
         }
     });
 }
@@ -544,87 +593,174 @@ function calculateDistanceKM(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// 4. The Live Tracking Core
-function startLiveRadar() {
-    if (!marker) {
-        alert("Please search for a Target Location first so the radar knows what to track!");
-        radarToggle.checked = false;
-        radarSettings.style.display = 'none';
-        return;
+// 4. The Live Tracking Core (🔋 BATTERY OPTIMIZED PWA ENGINE)
+
+// Keep the screen awake for PWA execution constraints
+async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+        } catch (err) {
+            console.warn("Wake Lock failed or denied:", err);
+        }
+    }
+}
+
+// ==========================================
+// 🔋 ADAPTIVE RADAR ENGINE (BATTERY SAFE)
+// ==========================================
+// ==========================================
+// 🔋 ADAPTIVE RADAR ENGINE (BATTERY SAFE)
+// ==========================================
+
+// ==========================================
+// 🔋 ADAPTIVE RADAR ENGINE (IRONCLAD VERSION)
+// ==========================================
+
+const RadarEngine = (function() {
+    let radarTimeoutId = null;
+    let isTracking = false;
+    let hasAlerted = false;
+    let wakeLock = null;
+
+    const CONFIG = {
+        baseInterval: 30000,
+        mediumInterval: 15000,
+        dangerInterval: 5000,
+        gpsTimeout: 10000,
+        maxCachedAge: 15000
+    };
+
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try { wakeLock = await navigator.wakeLock.request('screen'); } 
+            catch (err) { console.warn("Wake Lock denied by OS:", err); }
+        }
     }
 
-    if (!navigator.geolocation) {
-        alert("Your browser does not support Live GPS Tracking.");
-        return;
+    function releaseWakeLock() {
+        if (wakeLock !== null) {
+            wakeLock.release().catch(err => console.error(err));
+            wakeLock = null;
+        }
     }
 
-    hasAlerted = false; // Reset the warning flag
-    radarStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Connecting to Satellites...`;
-    radarStatus.style.color = '#3b82f6'; // Blue
+    // 🧠 THE CORE MATH & TELEMETRY LOGIC
+    function processRadarData(coords, targetLat, targetLng, dangerBoundaryKm) {
+        const radarStatus = document.getElementById('radarStatus');
+        const userLat = coords.latitude;
+        const userLng = coords.longitude;
+        const accuracy = coords.accuracy || 0; 
+        const speed = coords.speed || 0; // m/s
 
-    // 🚀 Start watching the user's GPS position
-    radarWatchId = navigator.geolocation.watchPosition(
-        (position) => {
+        // 🛡️ AUTO-SHELTER DETECTION (The "No-Weakness" Moat)
+        // If accuracy degrades heavily (>40m) and speed is near zero, they are indoors.
+        if (accuracy > 40 && speed < 0.5 && !window.SIMULATOR_ACTIVE) {
+            console.log(`[Radar] Auto-Shelter Activated. Accuracy: ${accuracy}m. Pausing risk accumulation.`);
+            if (radarStatus) {
+                radarStatus.innerHTML = `<i class="fas fa-house-user"></i> Sheltered (Indoor Mode)`;
+                radarStatus.style.color = '#8b5cf6'; // Purple for shielded
+            }
+            // Loop at max battery-saving interval while indoors
+            radarTimeoutId = setTimeout(() => { executeTrackingCycle(targetLat, targetLng, dangerBoundaryKm); }, CONFIG.baseInterval);
+            return; // 🛑 Halt outdoor danger math
+        }
+
+        // 🌍 OUTDOOR TRACKING MODE
+        if (radarStatus && !hasAlerted) {
             radarStatus.innerHTML = `<i class="fas fa-satellite-dish"></i> Tracking Active (Live)`;
             radarStatus.style.color = '#10b981'; // Green
-            
-            const userLat = position.coords.latitude;
-            const userLng = position.coords.longitude;
-            
-            const targetLat = marker.getLatLng().lat;
-            const targetLng = marker.getLatLng().lng;
-
-            // Calculate distance to target
-            const distanceToTarget = calculateDistanceKM(userLat, userLng, targetLat, targetLng);
-            
-            // Get Thresholds
-            const sliderRadiusKm = parseFloat(document.getElementById('radiusSlider').value);
-            const userWarningKm = parseFloat(document.getElementById('alertThreshold').value);
-            
-            // Total danger boundary = The size of the storm + how early they want to be warned
-            const dangerBoundary = sliderRadiusKm + userWarningKm;
-
-            // 🚨 TRIGGER ALERT IF THEY CROSS THE BOUNDARY
-            if (distanceToTarget <= dangerBoundary && !hasAlerted) {
-                hasAlerted = true; // Make sure it only fires once!
-                
-                const alertType = document.getElementById('alertType').value;
-                const warningMsg = `Warning! You are approaching a high-risk environmental zone.`;
-                
-                if (alertType === 'voice') {
-                    playVoiceAlert(warningMsg);
-                } else if (alertType === 'beep') {
-                    playBeep();
-                }
-                
-                // Always show the visual popup
-                showError(warningMsg); 
-                
-                radarStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> DANGER ZONE REACHED`;
-                radarStatus.style.color = '#ef4444'; // Red
-            }
-        },
-        (error) => {
-            console.error("Radar Error:", error);
-            radarStatus.innerHTML = `<i class="fas fa-times-circle"></i> GPS Signal Lost`;
-            radarStatus.style.color = '#ef4444';
-        },
-        {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 10000
         }
-    );
-}
 
-function stopLiveRadar() {
-    if (radarWatchId !== null) {
-        navigator.geolocation.clearWatch(radarWatchId);
-        radarWatchId = null;
+        const distanceKm = calculateDistanceKM(userLat, userLng, targetLat, targetLng);
+        console.log(`[Radar Engine] Ping! Distance to danger: ${distanceKm.toFixed(2)} km`);
+
+        let nextInterval;
+        if (distanceKm > 15) nextInterval = CONFIG.baseInterval;
+        else if (distanceKm > 5) nextInterval = CONFIG.mediumInterval;
+        else nextInterval = CONFIG.dangerInterval;
+
+        // 🚨 TRIGGER ALERT
+        if (distanceKm <= dangerBoundaryKm && !hasAlerted) {
+            hasAlerted = true;
+            const alertType = document.getElementById('alertType')?.value || 'voice';
+            const warningMsg = `Warning! You are approaching a high-risk environmental zone.`;
+            
+            if (alertType === 'voice') playVoiceAlert(warningMsg);
+            else if (alertType === 'beep') playBeep();
+            
+            if (typeof showError === 'function') showError(warningMsg); 
+            
+            if(radarStatus) {
+                radarStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> DANGER ZONE REACHED`;
+                radarStatus.style.color = '#ef4444';
+            }
+
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    new Notification("🚨 SafeNav Alert", { body: warningMsg, requireInteraction: true });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") new Notification("🚨 SafeNav Alert", { body: warningMsg, requireInteraction: true });
+                    });
+                }
+            }
+        }
+
+        radarTimeoutId = setTimeout(() => {
+            executeTrackingCycle(targetLat, targetLng, dangerBoundaryKm);
+        }, nextInterval);
     }
-    radarStatus.innerHTML = `<i class="fas fa-satellite"></i> Radar is OFF`;
-    radarStatus.style.color = '#f59e0b'; // Yellow
-}
+
+    function executeTrackingCycle(targetLat, targetLng, dangerBoundaryKm) {
+        if (!isTracking) return; 
+
+        // 🧪 DEV SIMULATOR INJECTION
+        if (window.SIMULATOR_ACTIVE) {
+            window.simLat += (targetLat - window.simLat) * 0.15; 
+            window.simLng += (targetLng - window.simLng) * 0.15;
+            
+            if (window.fakeUserMarker) window.fakeUserMarker.setLatLng([window.simLat, window.simLng]);
+            else window.fakeUserMarker = L.circleMarker([window.simLat, window.simLng], { color: '#fff', weight: 2, fillColor: '#3b82f6', fillOpacity: 1, radius: 8 }).addTo(map).bindPopup("Fake User").openPopup();
+            
+            // Pass perfect fake telemetry
+            const fakeCoords = { latitude: window.simLat, longitude: window.simLng, accuracy: 10, speed: 1.5 };
+            return processRadarData(fakeCoords, targetLat, targetLng, dangerBoundaryKm);
+        }
+
+        // 🌍 NATIVE GPS POLLING
+        navigator.geolocation.getCurrentPosition(
+            (position) => { processRadarData(position.coords, targetLat, targetLng, dangerBoundaryKm); },
+            (error) => {
+                console.error("GPS Polling Error:", error);
+                radarTimeoutId = setTimeout(() => { executeTrackingCycle(targetLat, targetLng, dangerBoundaryKm); }, CONFIG.baseInterval);
+            },
+            { enableHighAccuracy: true, maximumAge: 0, timeout: CONFIG.gpsTimeout } // High accuracy required for indoor detection
+        );
+    }
+
+    return {
+        start: function(targetLat, targetLng, dangerBoundaryKm) {
+            if (isTracking) return;
+            isTracking = true;
+            hasAlerted = false;
+            requestWakeLock();
+            executeTrackingCycle(targetLat, targetLng, dangerBoundaryKm);
+            console.log("SafeNav: Ironclad Radar Initialized.");
+        },
+        stop: function() {
+            isTracking = false;
+            if (radarTimeoutId !== null) { clearTimeout(radarTimeoutId); radarTimeoutId = null; }
+            releaseWakeLock();
+            if (window.SIMULATOR_ACTIVE) {
+                window.SIMULATOR_ACTIVE = false;
+                if (window.fakeUserMarker) map.removeLayer(window.fakeUserMarker);
+                window.fakeUserMarker = null;
+            }
+            console.log("SafeNav: Radar offline.");
+        }
+    };
+})();
 // ==========================================
 // 💾 SAVE & LOAD RADAR PREFERENCES
 // ==========================================
@@ -676,3 +812,17 @@ if (typeof firebase !== 'undefined' && firebase.auth) {
         }
     });
 }
+// ==========================================
+// 🧪 DEV-MODE SIMULATOR (BULLETPROOF VERSION)
+// ==========================================
+window.enableSimulator = function() {
+    const targetMarker = locationMarker || (typeof marker !== 'undefined' ? marker : null);
+    if (!targetMarker) return alert("Please drop a target location pin first!");
+
+    window.SIMULATOR_ACTIVE = true;
+    window.simLat = targetMarker.getLatLng().lat - 0.18; // Start ~20km away
+    window.simLng = targetMarker.getLatLng().lng - 0.18;
+    
+    console.warn("⚠️ DEV SIMULATOR ACTIVATED. Bypassing Native GPS.");
+    alert("Simulator Activated! Turn on the Live Radar toggle to begin the test.");
+};

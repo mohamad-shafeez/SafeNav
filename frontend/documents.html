@@ -2,49 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚀 TravelMate Vault Pro | Secure Document Intelligence Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🚀 TravelMate Vault | Secure Documents</title>
     
-    <!-- Meta Tags for Professional SEO -->
-    <meta name="description" content="Ultra-secure AI-powered travel document management with real-time validation, biometric encryption, and multi-language voice assistance">
-    <meta name="keywords" content="travel documents, secure vault, AI validation, biometric encryption, document management">
-    <meta name="author" content="TravelMate Security Systems">
-    
-    <!-- Favicon -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SafeNav">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="icon" href="assets/icon-192.png" type="image/png">
+
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
     
-    <!-- Font Awesome Pro Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- Animate.css for animations -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    
-    <!-- AOS (Animate On Scroll) -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
     <link rel="stylesheet" href="css/vault.css">
+    <link rel="stylesheet" href="css/navbar.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/tools.css">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('✅ Service Worker Registered on Vault/Documents', reg.scope))
+                    .catch(err => console.warn('⚠️ SW Failed', err));
+            });
+        }
+    </script>
 </head>
 <body>
     <div id="navbar-placeholder"></div>
-    <!-- Voice Assistant Panel -->
-    <div id="voiceAssistant" class="voice-assistant-panel">
-        <div class="voice-header">
-            <h3><i class="fas fa-robot"></i> AI Voice Assistant</h3>
-            <button class="close-voice"><i class="fas fa-times"></i></button>
+    
+    <div id="voiceAssistant" class="voice-assistant-panel glass-panel" style="position: fixed; z-index: 1000;">
+        <div class="voice-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--nav-border); padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 style="margin: 0;"><i class="fas fa-robot text-primary"></i> AI Voice Assistant</h3>
+            <button class="close-voice icon-btn" style="border: none;"><i class="fas fa-times"></i></button>
         </div>
         
         <div class="voice-controls">
-            <div class="voice-mode-selector">
-                <button class="voice-mode active" data-mode="command">Command Mode</button>
-                <button class="voice-mode" data-mode="narration">Narration Mode</button>
-                <button class="voice-mode" data-mode="assist">Assist Mode</button>
+            <div class="voice-mode-selector" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="voice-mode active btn-outline-danger" data-mode="command">Command</button>
+                <button class="voice-mode btn-outline-danger" data-mode="narration">Narration</button>
+                <button class="voice-mode btn-outline-danger" data-mode="assist">Assist</button>
             </div>
             
-            <div class="language-selector">
-                <select id="voiceLanguage">
+            <div class="language-selector" style="margin-bottom: 15px;">
+                <select id="voiceLanguage" class="premium-input">
                     <option value="en-US">English (US)</option>
                     <option value="en-GB">English (UK)</option>
                     <option value="es-ES">Español</option>
@@ -56,20 +65,20 @@
                 </select>
             </div>
             
-            <button id="voiceCommandBtn" class="voice-command-btn">
+            <button id="voiceCommandBtn" class="voice-command-btn btn-primary" style="width: 100%; margin-bottom: 15px;">
                 <i class="fas fa-microphone"></i>
                 <span>Start Voice Command</span>
             </button>
             
-            <div class="voice-status">
+            <div class="voice-status" style="text-align: center; color: gray; font-size: 0.9rem;">
                 <span id="voiceStatus">Ready for commands</span>
                 <div class="voice-visualizer" id="voiceVisualizer"></div>
             </div>
         </div>
         
-        <div class="voice-commands-list">
-            <h4>Available Commands:</h4>
-            <ul>
+        <div class="voice-commands-list" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--nav-border);">
+            <h4 style="margin: 0 0 10px 0; font-size: 0.9rem;">Available Commands:</h4>
+            <ul style="padding-left: 20px; color: gray; font-size: 0.85rem; line-height: 1.6;">
                 <li>"Scan my documents"</li>
                 <li>"Show passport"</li>
                 <li>"Validate all"</li>
@@ -80,95 +89,68 @@
         </div>
     </div>
 
-    <!-- Main Container -->
-    <div class="vault-container" data-aos="fade-up">
-        <!-- Header with Dashboard -->
-        <header class="vault-header">
-            <div class="header-left">
-                <h1><i class="fas fa-shield-alt"></i> TravelMate <span class="pro-badge">PRO</span> Vault</h1>
-                <p class="subtitle">Military-Grade Document Security with AI Intelligence</p>
+    <main class="main-container">
+        
+        <header class="page-header" style="margin: 2rem 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 15px;">
+            <div>
+                <h1 style="color: var(--primary-blue); margin-bottom: 0.5rem; font-size: 1.8rem;"><i class="fas fa-folder-open"></i> My Documents</h1>
+                <p class="subtitle" style="color: gray; margin: 0;">Secure, encrypted storage with AI validation</p>
             </div>
             
-            <div class="header-right">
-                <div class="user-profile">
-                    <img src="https://ui-avatars.com/api/?name=Travel+User&background=2563eb&color=fff" alt="User">
-                    <span>Traveler</span>
-                    <i class="fas fa-chevron-down"></i>
+            <div class="header-stats" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div class="stat-item" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; border: 1px solid rgba(16, 185, 129, 0.2);">
+                    <i class="fas fa-lock"></i> <span id="encryptedCount">0</span> Encrypted
                 </div>
-                
-                <div class="header-stats">
-                    <div class="stat-item">
-                        <i class="fas fa-lock"></i>
-                        <span id="encryptedCount">0</span> Encrypted
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="validatedCount">0</span> Validated
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-clock"></i>
-                        <span id="expiringCount">0</span> Expiring
-                    </div>
+                <div class="stat-item" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <i class="fas fa-check-circle"></i> <span id="validatedCount">0</span> Validated
+                </div>
+                <div class="stat-item" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; border: 1px solid rgba(239, 68, 68, 0.2);">
+                    <i class="fas fa-clock"></i> <span id="expiringCount">0</span> Expiring
                 </div>
             </div>
         </header>
 
-        <!-- Voice Control Bar -->
-        <div class="voice-control-bar">
-            <div class="voice-toggle-group">
-                <button id="voiceToggleBtn" class="voice-toggle-btn active">
+        <div class="voice-control-bar glass-panel" style="margin-bottom: 2rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+            <div class="voice-toggle-group" style="display: flex; gap: 15px; align-items: center;">
+                <button id="voiceToggleBtn" class="voice-toggle-btn active btn-primary" style="background: #10b981; border-color: #10b981;">
                     <i class="fas fa-microphone-alt"></i>
                     <span>Voice: ENABLED</span>
                     <div class="voice-indicator"></div>
                 </button>
                 
-                <div class="voice-features">
-                    <button class="voice-feature-btn" id="voiceScan">
-                        <i class="fas fa-search"></i> Scan
-                    </button>
-                    <button class="voice-feature-btn" id="voiceValidate">
-                        <i class="fas fa-check-double"></i> Validate
-                    </button>
-                    <button class="voice-feature-btn" id="voiceExport">
-                        <i class="fas fa-file-export"></i> Export
-                    </button>
-                    <button class="voice-feature-btn" id="voiceEmergency">
-                        <i class="fas fa-bell"></i> Emergency
-                    </button>
+                <div class="voice-features" style="display: flex; gap: 10px;">
+                    <button class="voice-feature-btn btn-outline-danger" id="voiceScan"><i class="fas fa-search"></i> Scan</button>
+                    <button class="voice-feature-btn btn-outline-danger" id="voiceValidate"><i class="fas fa-check-double"></i> Validate</button>
+                    <button class="voice-feature-btn btn-outline-danger" id="voiceExport"><i class="fas fa-file-export"></i> Export</button>
+                    <button class="voice-feature-btn btn-outline-danger" id="voiceEmergency" style="color: #ef4444; border-color: #ef4444;"><i class="fas fa-bell"></i> Emergency</button>
                 </div>
             </div>
             
-            <div class="ai-status">
-                <div class="ai-indicator active"></div>
-                <span>AI Assistant: ONLINE</span>
-                <span class="ai-model">GPT-4 Vision Ready</span>
-            </div>
+           
         </div>
 
-        <!-- Main Dashboard Grid -->
         <div class="dashboard-grid">
-            <!-- Left Column -->
+            
             <div class="dashboard-column">
-                <!-- Upload Card -->
-                <div class="dashboard-card upload-card" data-aos="fade-right">
-                    <div class="card-header">
-                        <h3><i class="fas fa-cloud-upload-alt"></i> Secure Upload</h3>
-                        <div class="card-badge">AES-256 + Biometric</div>
+                
+                <div class="dashboard-card upload-card glass-panel" data-aos="fade-right">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-cloud-upload-alt text-primary"></i> Secure Upload</h3>
+                        <div class="card-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">AES-256 + Biometric</div>
                     </div>
                     
                     <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
-
-                        <div class="upload-area" id="dropArea">
-                            <i class="fas fa-file-upload"></i>
-                            <p>Drag & drop documents or click to browse</p>
-                            <span class="upload-info">Supports PDF, JPG, PNG, DOCX (Max 50MB)</span>
-                            <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.docx">
+                        <div class="upload-area" id="dropArea" style="border: 2px dashed var(--nav-border); border-radius: 12px; padding: 40px 20px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: 0.3s; background: rgba(0,0,0,0.02);">
+                            <i class="fas fa-file-upload" style="font-size: 3rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
+                            <p style="margin: 0 0 5px 0; font-weight: 500;">Drag & drop documents or click to browse</p>
+                            <span class="upload-info" style="font-size: 0.85rem; color: gray;">Supports PDF, JPG, PNG, DOCX (Max 50MB)</span>
+                            <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.docx" hidden>
                         </div>
                         
                         <div class="upload-controls">
-                            <div class="form-group">
-                                <label for="docType"><i class="fas fa-tag"></i> Document Type</label>
-                                <select id="docType" class="modern-select" required>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="docType" style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;"><i class="fas fa-tag"></i> Document Type</label>
+                                <select id="docType" class="modern-select premium-input" required>
                                     <option value="">Select Document Type</option>
                                     <optgroup label="Identification">
                                         <option value="PASSPORT">🇺🇳 Passport</option>
@@ -205,22 +187,20 @@
                                 </select>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="docTags"><i class="fas fa-hashtag"></i> Smart Tags</label>
-                                <input type="text" id="docTags" 
-                                       placeholder="Enter tags (comma separated) or voice input..."
-                                       data-role="tagsinput">
-                                <small>AI will auto-suggest relevant tags</small>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="docTags" style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;"><i class="fas fa-hashtag"></i> Smart Tags</label>
+                                <input type="text" id="docTags" class="premium-input" placeholder="Enter tags (comma separated) or voice input..." data-role="tagsinput" style="margin-bottom: 5px;">
+                                <small style="color: gray; font-size: 0.75rem;">AI will auto-suggest relevant tags</small>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="expiryDate"><i class="fas fa-calendar-times"></i> Expiry Date</label>
-                                <input type="date" id="expiryDate">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="expiryDate" style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;"><i class="fas fa-calendar-times"></i> Expiry Date</label>
+                                <input type="date" id="expiryDate" class="premium-input">
                             </div>
                             
-                            <div class="form-group">
-                                <label for="encryptionLevel"><i class="fas fa-lock"></i> Encryption Level</label>
-                                <select id="encryptionLevel" class="modern-select">
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="encryptionLevel" style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;"><i class="fas fa-lock"></i> Encryption Level</label>
+                                <select id="encryptionLevel" class="modern-select premium-input">
                                     <option value="standard">Standard (AES-256)</option>
                                     <option value="military">Military Grade</option>
                                     <option value="biometric">Biometric + Encryption</option>
@@ -228,124 +208,118 @@
                                 </select>
                             </div>
                             
-                            <div class="form-actions">
-                                <button type="submit" class="btn-primary">
+                            <div class="form-actions" style="display: flex; flex-direction: column; gap: 10px;">
+                                <button type="submit" class="btn-primary" style="width: 100%;">
                                     <i class="fas fa-shield-alt"></i> Upload & Secure Encrypt
                                 </button>
-                                <button type="button" id="scanExisting" class="btn-secondary">
-                                    <i class="fas fa-search"></i> AI Scan Existing
-                                </button>
-                                <button type="button" id="voiceUpload" class="btn-voice">
-                                    <i class="fas fa-microphone"></i> Voice Upload
-                                </button>
+                                <div style="display: flex; gap: 10px;">
+                                    <button type="button" id="scanExisting" class="btn-outline-danger" style="flex: 1; justify-content: center;">
+                                        <i class="fas fa-search"></i> AI Scan
+                                    </button>
+                                    <button type="button" id="voiceUpload" class="btn-outline-danger" style="flex: 1; justify-content: center;">
+                                        <i class="fas fa-microphone"></i> Voice
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
                 </div>
 
-                <!-- Real-Time AI Scan Dashboard -->
-                <div class="dashboard-card scan-card" data-aos="fade-right" data-aos-delay="100">
-                    <div class="card-header">
-                        <h3><i class="fas fa-brain"></i> AI Intelligence Engine</h3>
-                        <div class="card-badge">Real-Time Analysis</div>
+                <div class="dashboard-card scan-card glass-panel" data-aos="fade-right" data-aos-delay="100">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-brain text-primary"></i> AI Intelligence Engine</h3>
+                        <div class="card-badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Real-Time Analysis</div>
                     </div>
                     
                     <div class="ai-scan-container">
-                        <div class="scan-header">
-                            <div class="scan-status">
-                                <div class="status-indicator" id="scanStatusIndicator"></div>
-                                <span id="scanStatusText">Ready to Scan</span>
+                        <div class="scan-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div class="scan-status" style="display: flex; align-items: center; gap: 8px;">
+                                <div class="status-indicator" id="scanStatusIndicator" style="width: 12px; height: 12px; border-radius: 50%; background: gray;"></div>
+                                <span id="scanStatusText" style="font-weight: 500;">Ready to Scan</span>
                             </div>
-                            <button id="startScan" class="btn-scan">
+                            <button id="startScan" class="btn-primary" style="height: 38px; padding: 0 15px;">
                                 <i class="fas fa-play"></i> Start Deep Scan
                             </button>
                         </div>
                         
-                        <div class="scan-progress">
-                            <div class="progress-info">
+                        <div class="scan-progress" style="margin-bottom: 20px;">
+                            <div class="progress-info" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px;">
                                 <span>Document Integrity</span>
-                                <span id="integrityPercent">0%</span>
+                                <span id="integrityPercent" style="font-weight: bold;">0%</span>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="integrityProgress"></div>
+                            <div class="progress-bar" style="height: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 15px;">
+                                <div class="progress-fill" id="integrityProgress" style="height: 100%; width: 0%; background: var(--primary-blue); transition: width 0.3s;"></div>
                             </div>
                             
-                            <div class="progress-info">
+                            <div class="progress-info" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px;">
                                 <span>Data Extraction</span>
-                                <span id="extractionPercent">0%</span>
+                                <span id="extractionPercent" style="font-weight: bold;">0%</span>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="extractionProgress"></div>
+                            <div class="progress-bar" style="height: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 15px;">
+                                <div class="progress-fill" id="extractionProgress" style="height: 100%; width: 0%; background: #10b981; transition: width 0.3s;"></div>
                             </div>
                             
-                            <div class="progress-info">
+                            <div class="progress-info" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px;">
                                 <span>Security Validation</span>
-                                <span id="securityPercent">0%</span>
+                                <span id="securityPercent" style="font-weight: bold;">0%</span>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="securityProgress"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="scan-metrics">
-                            <div class="metric">
-                                <div class="metric-value" id="confidenceScore">0%</div>
-                                <div class="metric-label">Confidence Score</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value" id="riskLevel">LOW</div>
-                                <div class="metric-label">Risk Level</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value" id="validationScore">0/10</div>
-                                <div class="metric-label">Validation Score</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value" id="aiProcessing">0ms</div>
-                                <div class="metric-label">AI Processing</div>
+                            <div class="progress-bar" style="height: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden;">
+                                <div class="progress-fill" id="securityProgress" style="height: 100%; width: 0%; background: #8b5cf6; transition: width 0.3s;"></div>
                             </div>
                         </div>
                         
-                        <div class="scan-results">
-                            <h4><i class="fas fa-clipboard-check"></i> Scan Results</h4>
+                        <div class="scan-metrics" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div class="metric" style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); padding: 15px; border-radius: 12px; text-align: center;">
+                                <div class="metric-value" id="confidenceScore" style="font-size: 1.5rem; font-weight: bold; color: var(--primary-blue);">0%</div>
+                                <div class="metric-label" style="font-size: 0.8rem; color: gray; margin-top: 5px;">Confidence Score</div>
+                            </div>
+                            <div class="metric" style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); padding: 15px; border-radius: 12px; text-align: center;">
+                                <div class="metric-value" id="riskLevel" style="font-size: 1.5rem; font-weight: bold; color: #10b981;">LOW</div>
+                                <div class="metric-label" style="font-size: 0.8rem; color: gray; margin-top: 5px;">Risk Level</div>
+                            </div>
+                            <div class="metric" style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); padding: 15px; border-radius: 12px; text-align: center;">
+                                <div class="metric-value" id="validationScore" style="font-size: 1.5rem; font-weight: bold; color: var(--text-color);">0/10</div>
+                                <div class="metric-label" style="font-size: 0.8rem; color: gray; margin-top: 5px;">Validation Score</div>
+                            </div>
+                            <div class="metric" style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); padding: 15px; border-radius: 12px; text-align: center;">
+                                <div class="metric-value" id="aiProcessing" style="font-size: 1.5rem; font-weight: bold; color: var(--text-color);">0ms</div>
+                                <div class="metric-label" style="font-size: 0.8rem; color: gray; margin-top: 5px;">AI Processing</div>
+                            </div>
+                        </div>
+                        
+                        <div class="scan-results" style="border-top: 1px solid var(--nav-border); padding-top: 15px;">
+                            <h4 style="margin: 0 0 15px 0;"><i class="fas fa-clipboard-check text-success"></i> Scan Results</h4>
                             <div class="results-grid" id="scanResults">
-                                <!-- Dynamic results will appear here -->
+                                <p style="color: gray; font-size: 0.85rem; text-align: center; margin: 0;">Initiate a scan to see results</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column -->
             <div class="dashboard-column">
-                <!-- Document Vault -->
-                <div class="dashboard-card vault-card" data-aos="fade-left">
-                    <div class="card-header">
-                        <h3><i class="fas fa-database"></i> Secure Document Vault</h3>
-                        <div class="card-actions">
-                            <button id="refreshVault" class="icon-btn" title="Refresh">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
-                            <button id="exportAll" class="icon-btn" title="Export All">
-                                <i class="fas fa-file-export"></i>
-                            </button>
-                            <button id="bulkActions" class="icon-btn" title="Bulk Actions">
-                                <i class="fas fa-layer-group"></i>
-                            </button>
+                
+                <div class="dashboard-card vault-card glass-panel" data-aos="fade-left">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-database text-primary"></i> Secure Document Vault</h3>
+                        <div class="card-actions" style="display: flex; gap: 8px;">
+                            <button id="refreshVault" class="icon-btn" title="Refresh" style="width: 35px; height: 35px;"><i class="fas fa-sync-alt"></i></button>
+                            <button id="exportAll" class="icon-btn" title="Export All" style="width: 35px; height: 35px;"><i class="fas fa-file-export"></i></button>
+                            <button id="bulkActions" class="icon-btn" title="Bulk Actions" style="width: 35px; height: 35px;"><i class="fas fa-layer-group"></i></button>
                         </div>
                     </div>
                     
-                    <div class="vault-filters">
-                        <div class="filter-group">
-                            <input type="text" placeholder="Search documents..." class="search-input" id="vaultSearch">
-                            <select class="filter-select" id="categoryFilter">
+                    <div class="vault-filters" style="margin-bottom: 20px;">
+                        <div class="filter-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <input type="text" placeholder="Search documents..." class="search-input premium-input" id="vaultSearch" style="flex: 1; min-width: 150px;">
+                            <select class="filter-select premium-input" id="categoryFilter" style="width: auto;">
                                 <option value="">All Categories</option>
                                 <option value="identification">Identification</option>
                                 <option value="travel">Travel Documents</option>
                                 <option value="medical">Medical</option>
                                 <option value="financial">Financial</option>
                             </select>
-                            <select class="filter-select" id="statusFilter">
+                            <select class="filter-select premium-input" id="statusFilter" style="width: auto;">
                                 <option value="">All Status</option>
                                 <option value="valid">✅ Valid</option>
                                 <option value="expiring">⚠️ Expiring</option>
@@ -355,201 +329,184 @@
                         </div>
                     </div>
                     
-                    <div class="vault-tabs">
-                        <button class="vault-tab active" data-tab="encrypted">
-                            <i class="fas fa-lock"></i> Encrypted
-                            <span class="tab-badge" id="encryptedBadge">0</span>
+                    <div class="vault-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
+                        <button class="vault-tab active btn-outline-danger" data-tab="encrypted" style="white-space: nowrap;">
+                            <i class="fas fa-lock"></i> Encrypted <span class="tab-badge" id="encryptedBadge" style="background: var(--bg-color); padding: 2px 6px; border-radius: 10px; margin-left: 5px; font-size: 0.75rem;">0</span>
                         </button>
-                        <button class="vault-tab" data-tab="general">
-                            <i class="fas fa-file"></i> General
-                            <span class="tab-badge" id="generalBadge">0</span>
+                        <button class="vault-tab btn-outline-danger" data-tab="general" style="white-space: nowrap;">
+                            <i class="fas fa-file"></i> General <span class="tab-badge" id="generalBadge" style="background: var(--bg-color); padding: 2px 6px; border-radius: 10px; margin-left: 5px; font-size: 0.75rem;">0</span>
                         </button>
-                        <button class="vault-tab" data-tab="validated">
-                            <i class="fas fa-check-circle"></i> Validated
-                            <span class="tab-badge" id="validatedBadge">0</span>
+                        <button class="vault-tab btn-outline-danger" data-tab="validated" style="white-space: nowrap;">
+                            <i class="fas fa-check-circle"></i> Validated <span class="tab-badge" id="validatedBadge" style="background: var(--bg-color); padding: 2px 6px; border-radius: 10px; margin-left: 5px; font-size: 0.75rem;">0</span>
                         </button>
-                        <button class="vault-tab" data-tab="expiring">
-                            <i class="fas fa-clock"></i> Expiring
-                            <span class="tab-badge" id="expiringBadge">0</span>
+                        <button class="vault-tab btn-outline-danger" data-tab="expiring" style="white-space: nowrap;">
+                            <i class="fas fa-clock"></i> Expiring <span class="tab-badge" id="expiringBadge" style="background: var(--bg-color); padding: 2px 6px; border-radius: 10px; margin-left: 5px; font-size: 0.75rem;">0</span>
                         </button>
                     </div>
                     
-                    <div class="vault-content">
+                    <div class="vault-content" style="min-height: 200px; background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); border-radius: 12px; padding: 20px;">
                         <div class="vault-section active" id="encryptedSection">
-                            <div class="section-header">
-                                <h4><i class="fas fa-shield-alt"></i> Encrypted Documents</h4>
-                                <span class="section-info">Military-grade encryption applied</span>
+                            <div class="section-header" style="margin-bottom: 15px;">
+                                <h4 style="margin: 0 0 5px 0;"><i class="fas fa-shield-alt text-primary"></i> Encrypted Documents</h4>
+                                <span class="section-info" style="font-size: 0.8rem; color: gray;">Military-grade encryption applied</span>
                             </div>
                             <div class="documents-grid" id="encryptedGrid">
-                                <!-- Encrypted documents will appear here -->
-                                <div class="empty-state">
-                                    <i class="fas fa-lock"></i>
-                                    <p>No encrypted documents yet</p>
+                                <div class="empty-state" style="text-align: center; padding: 40px 0; color: gray;">
+                                    <i class="fas fa-lock" style="font-size: 2.5rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                                    <p style="margin: 0 0 5px 0;">No encrypted documents yet</p>
                                     <small>Upload documents and enable encryption</small>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="vault-section" id="generalSection">
-                            <div class="section-header">
-                                <h4><i class="fas fa-folder-open"></i> General Documents</h4>
-                                <span class="section-info">Standard security documents</span>
+                        <div class="vault-section" id="generalSection" style="display: none;">
+                            <div class="section-header" style="margin-bottom: 15px;">
+                                <h4 style="margin: 0 0 5px 0;"><i class="fas fa-folder-open text-primary"></i> General Documents</h4>
+                                <span class="section-info" style="font-size: 0.8rem; color: gray;">Standard security documents</span>
                             </div>
                             <div class="documents-list" id="generalList">
-                                <!-- General documents will appear here -->
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Analytics & Security Dashboard -->
-                <div class="dashboard-card analytics-card" data-aos="fade-left" data-aos-delay="100">
-                    <div class="card-header">
-                        <h3><i class="fas fa-chart-line"></i> Security Analytics</h3>
-                        <div class="card-badge">Live Monitoring</div>
+                <div class="dashboard-card analytics-card glass-panel" data-aos="fade-left" data-aos-delay="100">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-chart-line text-primary"></i> Security Analytics</h3>
+                        <div class="card-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Live Monitoring</div>
                     </div>
                     
-                    <div class="analytics-grid">
-                        <div class="analytics-widget">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-user-shield"></i> Security Score</h5>
+                    <div class="analytics-grid" style="display: grid; gap: 20px;">
+                        <div class="analytics-widget" style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); border-radius: 12px; padding: 15px;">
+                            <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h5 style="margin: 0; font-size: 1rem;"><i class="fas fa-user-shield text-primary"></i> Security Score</h5>
                                 <div class="score-circle" data-score="85">
                                     <svg width="80" height="80">
-                                        <circle cx="40" cy="40" r="35"></circle>
-                                        <circle cx="40" cy="40" r="35" class="score-progress"></circle>
-                                        <text x="40" y="45" text-anchor="middle" class="score-text">85%</text>
+                                        <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="6"></circle>
+                                        <circle cx="40" cy="40" r="35" class="score-progress" fill="none" stroke="#10b981" stroke-width="6" stroke-dasharray="220" stroke-dashoffset="33" transform="rotate(-90 40 40)"></circle>
+                                        <text x="40" y="45" text-anchor="middle" class="score-text" fill="var(--text-color)" font-weight="bold">85%</text>
                                     </svg>
                                 </div>
                             </div>
-                            <div class="widget-metrics">
+                            <div class="widget-metrics" style="display: flex; justify-content: space-between; font-size: 0.85rem; color: gray;">
                                 <div class="metric-item">
-                                    <span>Encryption Rate</span>
-                                    <span class="metric-value" id="encryptionRate">0%</span>
+                                    <span>Encryption Rate</span><br>
+                                    <span class="metric-value" id="encryptionRate" style="font-weight: bold; color: var(--text-color); font-size: 1rem;">0%</span>
                                 </div>
-                                <div class="metric-item">
-                                    <span>Validation Rate</span>
-                                    <span class="metric-value" id="validationRate">0%</span>
+                                <div class="metric-item" style="text-align: right;">
+                                    <span>Validation Rate</span><br>
+                                    <span class="metric-value" id="validationRate" style="font-weight: bold; color: var(--text-color); font-size: 1rem;">0%</span>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="analytics-widget">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-calendar-exclamation"></i> Expiry Alerts</h5>
+                        <div class="analytics-widget" style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); border-radius: 12px; padding: 15px;">
+                            <div class="widget-header" style="margin-bottom: 15px;">
+                                <h5 style="margin: 0; font-size: 1rem;"><i class="fas fa-calendar-exclamation text-primary"></i> Expiry Alerts</h5>
                             </div>
                             <div class="expiry-list" id="expiryAlerts">
-                                <!-- Expiry alerts will appear here -->
-                                <div class="expiry-item critical">
-                                    <i class="fas fa-passport"></i>
-                                    <div class="expiry-info">
-                                        <span>Passport Expiry</span>
-                                        <small>30 days remaining</small>
+                                <div class="expiry-item critical" style="display: flex; align-items: center; gap: 10px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px;">
+                                    <i class="fas fa-passport" style="color: #ef4444; font-size: 1.5rem;"></i>
+                                    <div class="expiry-info" style="flex: 1;">
+                                        <span style="display: block; font-weight: 500; font-size: 0.9rem;">Passport Expiry</span>
+                                        <small style="color: #ef4444;">30 days remaining</small>
                                     </div>
-                                    <span class="expiry-badge">CRITICAL</span>
+                                    <span class="expiry-badge" style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">CRITICAL</span>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="analytics-widget">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-bell"></i> Quick Actions</h5>
+                        <div class="analytics-widget" style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); border-radius: 12px; padding: 15px;">
+                            <div class="widget-header" style="margin-bottom: 15px;">
+                                <h5 style="margin: 0; font-size: 1rem;"><i class="fas fa-bell text-primary"></i> Quick Actions</h5>
                             </div>
-                            <div class="quick-actions">
-                                <button class="action-btn" id="emergencyExport">
+                            <div class="quick-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button class="action-btn btn-outline-danger" id="emergencyExport" style="font-size: 0.8rem; padding: 8px;">
                                     <i class="fas fa-download"></i> Emergency Export
                                 </button>
-                                <button class="action-btn" id="backupNow">
+                                <button class="action-btn btn-outline-danger" id="backupNow" style="font-size: 0.8rem; padding: 8px;">
                                     <i class="fas fa-cloud-upload-alt"></i> Cloud Backup
                                 </button>
-                                <button class="action-btn" id="validateAll">
+                                <button class="action-btn btn-outline-danger" id="validateAll" style="font-size: 0.8rem; padding: 8px;">
                                     <i class="fas fa-check-double"></i> Validate All
                                 </button>
-                                <button class="action-btn" id="encryptAll">
+                                <button class="action-btn btn-outline-danger" id="encryptAll" style="font-size: 0.8rem; padding: 8px;">
                                     <i class="fas fa-lock"></i> Encrypt All
                                 </button>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="threat-monitor">
-                        <h5><i class="fas fa-radar"></i> Threat Monitor</h5>
-                        <div class="threat-level">
-                            <div class="threat-indicator" id="threatIndicator"></div>
-                            <span id="threatStatus">No threats detected</span>
+                    <div class="threat-monitor" style="margin-top: 20px; border-top: 1px solid var(--nav-border); padding-top: 20px;">
+                        <h5 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fas fa-radar text-primary"></i> Threat Monitor</h5>
+                        <div class="threat-level" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 8px;">
+                            <div class="threat-indicator" id="threatIndicator" style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981;"></div>
+                            <span id="threatStatus" style="color: #10b981; font-weight: 500; font-size: 0.9rem;">No threats detected</span>
                         </div>
-                        <div class="threat-log" id="threatLog">
-                            <!-- Threat log entries will appear here -->
+                        <div class="threat-log" id="threatLog" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: gray; max-height: 100px; overflow-y: auto;">
+                            <div>> System secure. Vault locked.</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Emergency Panel -->
-        <div class="emergency-panel" id="emergencyPanel">
-            <div class="emergency-header">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h3>Emergency Access Mode</h3>
-                <button class="close-emergency"><i class="fas fa-times"></i></button>
+        <div class="emergency-panel glass-panel" id="emergencyPanel" style="display: none; border-color: #ef4444; background: rgba(239, 68, 68, 0.05); margin-top: 20px;">
+            <div class="emergency-header" style="display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 15px; margin-bottom: 15px;">
+                <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 2rem;"></i>
+                <h3 style="margin: 0; color: #ef4444;">Emergency Access Mode</h3>
+                <button class="close-emergency icon-btn" style="margin-left: auto; border: none; background: transparent; color: #ef4444;"><i class="fas fa-times"></i></button>
             </div>
             <div class="emergency-content">
-                <p>In case of emergency, these documents will be shared with emergency contacts</p>
-                <div class="emergency-actions">
-                    <button class="emergency-btn" id="shareEmergency">
-                        <i class="fas fa-share-alt"></i> Share with Emergency Contacts
+                <p style="color: var(--text-color); margin-bottom: 20px;">In case of emergency, these documents will be shared with your predefined emergency contacts securely.</p>
+                <div class="emergency-actions" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="emergency-btn btn-primary" id="shareEmergency" style="background: #ef4444; border: none;">
+                        <i class="fas fa-share-alt"></i> Share with Contacts
                     </button>
-                    <button class="emergency-btn" id="exportEmergency">
-                        <i class="fas fa-file-pdf"></i> Generate Emergency PDF
+                    <button class="emergency-btn btn-outline-danger" id="exportEmergency" style="color: #ef4444; border-color: #ef4444;">
+                        <i class="fas fa-file-pdf"></i> Generate PDF
                     </button>
-                    <button class="emergency-btn" id="callEmergency">
+                    <button class="emergency-btn btn-outline-danger" id="callEmergency" style="color: #ef4444; border-color: #ef4444;">
                         <i class="fas fa-phone-alt"></i> Call Emergency Services
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Voice Command Log -->
-        <div class="voice-log" id="voiceLog">
-            <div class="log-header">
-                <h4><i class="fas fa-comment-alt"></i> Voice Command History</h4>
-                <button class="clear-log"><i class="fas fa-trash"></i></button>
+        <div class="voice-log glass-panel" id="voiceLog" style="margin-top: 20px; display: none;">
+            <div class="log-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="margin: 0;"><i class="fas fa-comment-alt text-primary"></i> Voice Command History</h4>
+                <button class="clear-log icon-btn" style="width: 30px; height: 30px; border: none;"><i class="fas fa-trash"></i></button>
             </div>
-            <div class="log-content" id="voiceLogContent">
-                <!-- Voice commands will appear here -->
+            <div class="log-content" id="voiceLogContent" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: gray;">
             </div>
+        </div>
+        
+    </main>
+
+    <div id="toastContainer" class="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <div id="loadingOverlay" class="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; color: white; backdrop-filter: blur(5px);">
+        <div class="loading-content" style="text-align: center; color: white;">
+            <div class="loading-spinner" style="width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.2); border-top: 5px solid var(--primary-blue); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px auto;"></div>
+            <p id="loadingText" style="font-family: 'Poppins', sans-serif; font-weight: 500;">Processing your request...</p>
         </div>
     </div>
 
-    <!-- Toast Notifications Container -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <p id="loadingText">Processing your request...</p>
-            <div class="loading-progress">
-                <div class="loading-bar"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript Libraries -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
-    <!-- Main Application Script -->
-    <script src="js/vault.js"></script>
-    
-    <!-- Initialize AOS -->
     <script>
+        // Keep AOS for the individual cards cascading in
         AOS.init({
             duration: 800,
             once: false,
             offset: 100
         });
     </script>
+    
+    <script src="js/vault.js"></script>
     <script src="js/navbar.js"></script>
 </body>
 </html>

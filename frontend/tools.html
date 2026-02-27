@@ -2,94 +2,139 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AI Smart Assistant - Multilingual Tools</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Smart Assistant - Multilingual Tools | SafeNav</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SafeNav">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="icon" href="assets/icon-192.png" type="image/png">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navbar.css">
     <link rel="stylesheet" href="css/tools.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('✅ Service Worker Registered on Tools', reg.scope))
+                    .catch(err => console.warn('⚠️ SW Failed', err));
+            });
+        }
+    </script>
 </head>
 <body>
-    <div id="navbar-placeholder"></div>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <i class="fas fa-robot"></i>
-                <span>AI Smart Assistant</span>
-            </div>
-            <div class="nav-links">
-                <a href="#" class="nav-link active"><i class="fas fa-comments"></i> Chat</a>
-                <a href="#" class="nav-link"><i class="fas fa-language"></i> Translator</a>
-                <a href="#" class="nav-link"><i class="fas fa-camera"></i> OCR</a>
-                <a href="#" class="nav-link"><i class="fas fa-exchange-alt"></i> Currency</a>
-            </div>
-            <div class="nav-right">
-                <div class="theme-toggle" id="themeToggle">
-                    <i class="fas fa-moon"></i>
-                </div>
-                <button class="btn-premium">
-                    <i class="fas fa-crown"></i> Premium
-                </button>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Main Container -->
-    <main class="main-container">
-        <header class="page-header">
-            <h1><i class="fas fa-magic"></i> AI Smart Tools Suite</h1>
-            <p class="subtitle">Multilingual Assistant with Voice, Image & Text Intelligence</p>
+    <div id="navbar-placeholder"></div>
+
+    <main class="main-container" data-aos="fade-in">
+        <header class="page-header" style="margin: 2rem 0;">
+            <h1 style="color: var(--primary-blue); margin-bottom: 0.5rem;"><i class="fas fa-magic"></i> AI Smart Tools Suite</h1>
+            <p class="subtitle" style="color: gray;">Multilingual Assistant with Voice, Image & Text Intelligence</p>
         </header>
 
         <div class="dashboard-grid">
-            <!-- AI Chat Section -->
-            <section class="dashboard-card card-chat">
-                <div class="card-header">
-                    <h2><i class="fas fa-comments"></i> AI Chat Assistant</h2>
-                    <div class="card-badge">Gemini AI</div>
+            
+            <section class="glass-panel" data-aos="fade-up" data-aos-delay="50">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-comments text-primary"></i> AI Chat Assistant</h2>
+                    <div style="background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Gemini AI</div>
                 </div>
                 
                 <div class="chat-container">
-                    <div class="chat-window" id="chatWindow">
-                        <div class="chat-message ai">
-                            <div class="avatar">AI</div>
-                            <div class="message-content">
-                                <p>Hello! I'm your AI assistant. I can chat in multiple languages, translate, and help with various tasks. How can I assist you today?</p>
-                                <span class="message-time">Just now</span>
+                    <div class="chat-window" id="chatWindow" style="min-height: 250px; background: rgba(0,0,0,0.02); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--nav-border); overflow-y: auto;">
+                        <div class="chat-message ai" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <div class="avatar" style="background: var(--primary-blue); color: white; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%;"><i class="fas fa-robot"></i></div>
+                            <div class="message-content" style="background: var(--nav-bg); padding: 10px 15px; border-radius: 12px; border: 1px solid var(--nav-border); flex: 1;">
+                                <p style="margin: 0; font-size: 0.95rem;">Hello! I'm your AI assistant. I can chat in multiple languages, translate, and help with various tasks. How can I assist you today?</p>
+                                <span class="message-time" style="font-size: 0.75rem; color: gray; display: block; margin-top: 5px;">Just now</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="chat-input-area">
-                        <div class="input-group">
-                            <div class="lang-selector">
-                                <i class="fas fa-globe"></i>
-                                <select id="chatLang" class="lang-dropdown">
-                                    <option value="en">English</option>
-                                    <option value="hi">Hindi</option>
-                                    <option value="ta">Tamil</option>
-                                    <option value="te">Telugu</option>
-                                </select>
-                            </div>
-                            <input type="text" id="chatInput" placeholder="Type your message here..." class="chat-input">
-                            <div class="input-actions">
-                                <button class="btn-icon" id="voiceInputBtn" title="Voice input">
-                                    <i class="fas fa-microphone"></i>
-                                </button>
-                                <button class="btn-icon" id="sendChatBtn" onclick="sendChat()">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
-                            </div>
+                   <div class="chat-input-area">
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <select id="chatLang" class="premium-input" style="width: 130px; margin-bottom: 0;">
+                                <option value="en">🇺🇸 English</option>
+                                <option value="hi">🇮🇳 Hindi (हिन्दी)</option>
+                                <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
+                                <option value="te">🇮🇳 Telugu (తెలుగు)</option>
+                                <option value="kn">🇮🇳 Kannada (ಕನ್ನಡ)</option>
+                                <option value="ml">🇮🇳 Malayalam (മലയാളം)</option>
+                                <option value="bn">🇮🇳 Bengali (বাংলা)</option>
+                                <option value="mr">🇮🇳 Marathi (मराठी)</option>
+                                <option value="gu">🇮🇳 Gujarati (ગુજરાતી)</option>
+                                <option value="pa">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</option>
+                                <option value="ur">🇵🇰 Urdu (اردو)</option>
+                                <option value="es">🇪🇸 Spanish (Español)</option>
+                                <option value="fr">🇫🇷 French (Français)</option>
+                                <option value="de">🇩🇪 German (Deutsch)</option>
+                                <option value="it">🇮🇹 Italian (Italiano)</option>
+                                <option value="pt">🇵🇹 Portuguese (Português)</option>
+                                <option value="ru">🇷🇺 Russian (Русский)</option>
+                                <option value="zh">🇨🇳 Chinese (中文)</option>
+                                <option value="ja">🇯🇵 Japanese (日本語)</option>
+                                <option value="ko">🇰🇷 Korean (한국어)</option>
+                                <option value="ar">🇸🇦 Arabic (العربية)</option>
+                                <option value="tr">🇹🇷 Turkish (Türkçe)</option>
+                                <option value="vi">🇻🇳 Vietnamese (Tiếng Việt)</option>
+                                <option value="th">🇹🇭 Thai (ไทย)</option>
+                                <option value="id">🇮🇩 Indonesian (Bahasa Indonesia)</option>
+
+                                <option value="or">🇮🇳 Odia (ଓଡ଼ିଆ)</option>
+                                <option value="as">🇮🇳 Assamese (অসমীয়া)</option>
+                                <option value="sa">🇮🇳 Sanskrit (संस्कृतम्)</option>
+                                <option value="ne">🇳🇵 Nepali (नेपाली)</option>
+                                <option value="si">🇱🇰 Sinhala (සිංහල)</option>
+                                <option value="uk">🇺🇦 Ukrainian (Українська)</option>
+                                <option value="nl">🇳🇱 Dutch (Nederlands)</option>
+                                <option value="pl">🇵🇱 Polish (Polski)</option>
+                                <option value="cs">🇨🇿 Czech (Čeština)</option>
+                                <option value="el">🇬🇷 Greek (Ελληνικά)</option>
+                                <option value="sv">🇸🇪 Swedish (Svenska)</option>
+                                <option value="da">🇩🇰 Danish (Dansk)</option>
+                                <option value="fi">🇫🇮 Finnish (Suomi)</option>
+                                <option value="no">🇳🇴 Norwegian (Norsk)</option>
+                                <option value="hu">🇭🇺 Hungarian (Magyar)</option>
+                                <option value="ro">🇷🇴 Romanian (Română)</option>
+                                <option value="ms">🇲🇾 Malay (Bahasa Melayu)</option>
+                                <option value="tl">🇵🇭 Filipino (Tagalog)</option>
+                                <option value="my">🇲🇲 Burmese (မြန်မာစာ)</option>
+                                <option value="km">🇰🇭 Khmer (ភាសាខ្មែរ)</option>
+                                <option value="fa">🇮🇷 Persian (فارسی)</option>
+                                <option value="he">🇮🇱 Hebrew (עברית)</option>
+                                <option value="sw">🇰🇪 Swahili (Kiswahili)</option>
+                                <option value="am">🇪🇹 Amharic (አማርኛ)</option>
+                                <option value="zu">🇿🇦 Zulu (isiZulu)</option>
+                            </select>
+                            <input type="text" id="chatInput" placeholder="Type your message here..." class="premium-input" style="flex: 1; margin-bottom: 0;">
+                            
+                            <button class="btn-primary" id="voiceInputBtn" title="Voice input" style="padding: 0 15px;">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button class="btn-primary" id="sendChatBtn" onclick="sendChat()" style="padding: 0 15px;">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
                         </div>
-                        <div class="quick-actions">
-                            <button class="quick-btn" onclick="quickChat('Translate "Hello" to Hindi')">
+                        
+                        <div class="quick-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-outline-danger" style="height: 35px; font-size: 0.85rem;" onclick="quickChat('Translate Hello to Hindi')">
                                 <i class="fas fa-language"></i> Translation
                             </button>
-                            <button class="quick-btn" onclick="quickChat('Explain quantum computing')">
+                            <button class="btn-outline-danger" style="height: 35px; font-size: 0.85rem;" onclick="quickChat('Explain quantum computing')">
                                 <i class="fas fa-lightbulb"></i> Explain
                             </button>
-                            <button class="quick-btn" onclick="quickChat('Summarize this text:')">
+                            <button class="btn-outline-danger" style="height: 35px; font-size: 0.85rem;" onclick="quickChat('Summarize this text:')">
                                 <i class="fas fa-file-alt"></i> Summarize
                             </button>
                         </div>
@@ -97,74 +142,157 @@
                 </div>
             </section>
 
-            <!-- Live Voice Translator -->
-            <section class="dashboard-card card-translate">
-                <div class="card-header">
-                    <h2><i class="fas fa-microphone-alt"></i> Live Voice Translator</h2>
-                    <div class="card-badge">Real-time</div>
+            <section class="glass-panel" data-aos="fade-up" data-aos-delay="100">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-microphone-alt text-success"></i> Live Voice Translator</h2>
+                    <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Real-time</div>
                 </div>
                 
                 <div class="translator-container">
-                    <div class="language-selectors">
-                        <div class="lang-select-box">
-                            <label><i class="fas fa-arrow-down"></i> From</label>
-                            <select id="voiceFrom" class="lang-select">
-                                <option value="en">English</option>
-                                <option value="hi">Hindi</option>
-                                <option value="ta">Tamil</option>
-                                <option value="te">Telugu</option>
-                                <option value="kn">Kannada</option>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.85rem; color: gray;"><i class="fas fa-arrow-down"></i> From</label>
+                            <select id="voiceFrom" class="premium-input" style="margin-bottom: 0;">
+                                <option value="en">🇺🇸 English</option>
+                                <option value="hi">🇮🇳 Hindi (हिन्दी)</option>
+                                <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
+                                <option value="te">🇮🇳 Telugu (తెలుగు)</option>
+                                <option value="kn">🇮🇳 Kannada (ಕನ್ನಡ)</option>
+                                <option value="ml">🇮🇳 Malayalam (മലയാളം)</option>
+                                <option value="bn">🇮🇳 Bengali (বাংলা)</option>
+                                <option value="mr">🇮🇳 Marathi (मराठी)</option>
+                                <option value="gu">🇮🇳 Gujarati (ગુજરાતી)</option>
+                                <option value="pa">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</option>
+                                <option value="ur">🇵🇰 Urdu (اردو)</option>
+                                <option value="es">🇪🇸 Spanish (Español)</option>
+                                <option value="fr">🇫🇷 French (Français)</option>
+                                <option value="de">🇩🇪 German (Deutsch)</option>
+                                <option value="it">🇮🇹 Italian (Italiano)</option>
+                                <option value="pt">🇵🇹 Portuguese (Português)</option>
+                                <option value="ru">🇷🇺 Russian (Русский)</option>
+                                <option value="zh">🇨🇳 Chinese (中文)</option>
+                                <option value="ja">🇯🇵 Japanese (日本語)</option>
+                                <option value="ko">🇰🇷 Korean (한국어)</option>
+                                <option value="ar">🇸🇦 Arabic (العربية)</option>
+                                <option value="tr">🇹🇷 Turkish (Türkçe)</option>
+                                <option value="vi">🇻🇳 Vietnamese (Tiếng Việt)</option>
+                                <option value="th">🇹🇭 Thai (ไทย)</option>
+                                <option value="id">🇮🇩 Indonesian (Bahasa Indonesia)</option>
+
+                                <option value="or">🇮🇳 Odia (ଓଡ଼ିଆ)</option>
+                                <option value="as">🇮🇳 Assamese (অসমীয়া)</option>
+                                <option value="sa">🇮🇳 Sanskrit (संस्कृतम्)</option>
+                                <option value="ne">🇳🇵 Nepali (नेपाली)</option>
+                                <option value="si">🇱🇰 Sinhala (සිංහල)</option>
+                                <option value="uk">🇺🇦 Ukrainian (Українська)</option>
+                                <option value="nl">🇳🇱 Dutch (Nederlands)</option>
+                                <option value="pl">🇵🇱 Polish (Polski)</option>
+                                <option value="cs">🇨🇿 Czech (Čeština)</option>
+                                <option value="el">🇬🇷 Greek (Ελληνικά)</option>
+                                <option value="sv">🇸🇪 Swedish (Svenska)</option>
+                                <option value="da">🇩🇰 Danish (Dansk)</option>
+                                <option value="fi">🇫🇮 Finnish (Suomi)</option>
+                                <option value="no">🇳🇴 Norwegian (Norsk)</option>
+                                <option value="hu">🇭🇺 Hungarian (Magyar)</option>
+                                <option value="ro">🇷🇴 Romanian (Română)</option>
+                                <option value="ms">🇲🇾 Malay (Bahasa Melayu)</option>
+                                <option value="tl">🇵🇭 Filipino (Tagalog)</option>
+                                <option value="my">🇲🇲 Burmese (မြန်မာစာ)</option>
+                                <option value="km">🇰🇭 Khmer (ភាសាខ្មែរ)</option>
+                                <option value="fa">🇮🇷 Persian (فارسی)</option>
+                                <option value="he">🇮🇱 Hebrew (עברית)</option>
+                                <option value="sw">🇰🇪 Swahili (Kiswahili)</option>
+                                <option value="am">🇪🇹 Amharic (አማርኛ)</option>
+                                <option value="zu">🇿🇦 Zulu (isiZulu)</option>
                             </select>
                         </div>
                         
-                        <div class="swap-btn-container">
-                            <button class="swap-btn" onclick="swapLanguages()">
-                                <i class="fas fa-exchange-alt"></i>
-                            </button>
-                        </div>
+                        <button class="icon-btn" onclick="swapLanguages()" style="margin-top: 20px; border: 1px solid var(--nav-border);">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
                         
-                        <div class="lang-select-box">
-                            <label><i class="fas fa-arrow-up"></i> To</label>
-                            <select id="voiceTo" class="lang-select">
-                                <option value="hi">Hindi</option>
-                                <option value="en">English</option>
-                                <option value="ta">Tamil</option>
-                                <option value="te">Telugu</option>
-                                <option value="kn">Kannada</option>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.85rem; color: gray;"><i class="fas fa-arrow-up"></i> To</label>
+                            <select id="voiceTo" class="premium-input" style="margin-bottom: 0;">
+                                <option value="hi" selected>🇮🇳 Hindi (हिन्दी)</option>
+                                <option value="en">🇺🇸 English</option>
+                                <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
+                                <option value="te">🇮🇳 Telugu (తెలుగు)</option>
+                                <option value="kn">🇮🇳 Kannada (ಕನ್ನಡ)</option>
+                                <option value="ml">🇮🇳 Malayalam (മലയാളം)</option>
+                                <option value="bn">🇮🇳 Bengali (বাংলা)</option>
+                                <option value="mr">🇮🇳 Marathi (मराठी)</option>
+                                <option value="gu">🇮🇳 Gujarati (ગુજરાતી)</option>
+                                <option value="pa">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</option>
+                                <option value="ur">🇵🇰 Urdu (اردو)</option>
+                                <option value="es">🇪🇸 Spanish (Español)</option>
+                                <option value="fr">🇫🇷 French (Français)</option>
+                                <option value="de">🇩🇪 German (Deutsch)</option>
+                                <option value="it">🇮🇹 Italian (Italiano)</option>
+                                <option value="pt">🇵🇹 Portuguese (Português)</option>
+                                <option value="ru">🇷🇺 Russian (Русский)</option>
+                                <option value="zh">🇨🇳 Chinese (中文)</option>
+                                <option value="ja">🇯🇵 Japanese (日本語)</option>
+                                <option value="ko">🇰🇷 Korean (한국어)</option>
+                                <option value="ar">🇸🇦 Arabic (العربية)</option>
+                                <option value="tr">🇹🇷 Turkish (Türkçe)</option>
+                                <option value="vi">🇻🇳 Vietnamese (Tiếng Việt)</option>
+                                <option value="th">🇹🇭 Thai (ไทย)</option>
+                                <option value="id">🇮🇩 Indonesian (Bahasa Indonesia)</option>
+
+                                <option value="or">🇮🇳 Odia (ଓଡ଼ିଆ)</option>
+                                <option value="as">🇮🇳 Assamese (অসমীয়া)</option>
+                                <option value="sa">🇮🇳 Sanskrit (संस्कृतम्)</option>
+                                <option value="ne">🇳🇵 Nepali (नेपाली)</option>
+                                <option value="si">🇱🇰 Sinhala (සිංහල)</option>
+                                <option value="uk">🇺🇦 Ukrainian (Українська)</option>
+                                <option value="nl">🇳🇱 Dutch (Nederlands)</option>
+                                <option value="pl">🇵🇱 Polish (Polski)</option>
+                                <option value="cs">🇨🇿 Czech (Čeština)</option>
+                                <option value="el">🇬🇷 Greek (Ελληνικά)</option>
+                                <option value="sv">🇸🇪 Swedish (Svenska)</option>
+                                <option value="da">🇩🇰 Danish (Dansk)</option>
+                                <option value="fi">🇫🇮 Finnish (Suomi)</option>
+                                <option value="no">🇳🇴 Norwegian (Norsk)</option>
+                                <option value="hu">🇭🇺 Hungarian (Magyar)</option>
+                                <option value="ro">🇷🇴 Romanian (Română)</option>
+                                <option value="ms">🇲🇾 Malay (Bahasa Melayu)</option>
+                                <option value="tl">🇵🇭 Filipino (Tagalog)</option>
+                                <option value="my">🇲🇲 Burmese (မြန်မာစာ)</option>
+                                <option value="km">🇰🇭 Khmer (ភាសាខ្មែរ)</option>
+                                <option value="fa">🇮🇷 Persian (فارسی)</option>
+                                <option value="he">🇮🇱 Hebrew (עברית)</option>
+                                <option value="sw">🇰🇪 Swahili (Kiswahili)</option>
+                                <option value="am">🇪🇹 Amharic (አማርኛ)</option>
+                                <option value="zu">🇿🇦 Zulu (isiZulu)</option>
                             </select>
                         </div>
                     </div>
-                    
-                    <div class="voice-controls">
-                        <div class="mic-container">
-                            <button class="mic-btn" id="micBtn" onclick="toggleMic()">
-                                <div class="mic-icon">
-                                    <i class="fas fa-microphone"></i>
-                                </div>
-                                <span class="mic-text">Start Speaking</span>
-                            </button>
-                            <div class="mic-status" id="micStatus">Ready</div>
-                        </div>
-                        
-                        <div class="voice-actions">
-                            <button class="action-btn" onclick="speakTranslation()">
-                                <i class="fas fa-volume-up"></i> Speak
-                            </button>
-                            <button class="action-btn" onclick="copyTranslation()">
-                                <i class="fas fa-copy"></i> Copy
-                            </button>
-                            <button class="action-btn" onclick="clearTranslation()">
-                                <i class="fas fa-trash"></i> Clear
-                            </button>
-                        </div>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <button id="micBtn" onclick="toggleMic()" style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary-blue); color: white; border: none; font-size: 2rem; cursor: pointer; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); transition: transform 0.2s;">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <div id="micStatus" style="margin-top: 15px; font-weight: 600; color: gray;">Ready to speak</div>
                     </div>
                     
-                    <div class="translation-output">
-                        <label>Translated Text:</label>
-                        <div class="output-box" id="voiceResult" contenteditable="true">
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;">
+                        <button class="btn-outline-danger" style="height: 40px; font-size: 0.9rem;" onclick="speakTranslation()">
+                            <i class="fas fa-volume-up"></i> Speak
+                        </button>
+                        <button class="btn-outline-danger" style="height: 40px; font-size: 0.9rem;" onclick="copyTranslation()">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <button class="btn-outline-danger" style="height: 40px; font-size: 0.9rem; color: #ef4444; border-color: #ef4444;" onclick="clearTranslation()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;">Translated Text:</label>
+                        <div id="voiceResult" contenteditable="true" style="width: 100%; min-height: 100px; padding: 15px; background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); border-radius: 12px; font-size: 1rem; color: var(--text-color); box-sizing: border-box;">
                             Your translated text will appear here...
                         </div>
-                        <div class="output-stats">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: gray; margin-top: 8px;">
                             <span id="charCount">Characters: 0</span>
                             <span id="wordCount">Words: 0</span>
                         </div>
@@ -172,77 +300,110 @@
                 </div>
             </section>
 
-            <!-- Image OCR Translator -->
-            <section class="dashboard-card card-ocr">
-                <div class="card-header">
-                    <h2><i class="fas fa-camera"></i> Image Text Translator</h2>
-                    <div class="card-badge">OCR + AI</div>
+            <section class="glass-panel" data-aos="fade-up" data-aos-delay="150">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-camera text-primary"></i> Image Text Translator</h2>
+                    <div style="background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">OCR + AI</div>
                 </div>
                 
                 <div class="ocr-container">
-                    <div class="upload-options">
-                        <div class="upload-card camera-card" onclick="openCamera()">
-                            <div class="upload-icon">
-                                <i class="fas fa-camera"></i>
-                            </div>
-                            <h3>Live Camera</h3>
-                            <p>Capture & translate instantly</p>
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                        <div onclick="openCamera()" style="flex: 1; text-align: center; padding: 20px; background: var(--nav-bg); border: 2px dashed var(--primary-blue); border-radius: 12px; cursor: pointer; transition: 0.3s;">
+                            <i class="fas fa-camera" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 10px;"></i>
+                            <h3 style="margin: 0; font-size: 1rem;">Live Camera</h3>
+                            <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: gray;">Capture instantly</p>
                         </div>
                         
-                        <div class="upload-card file-card">
-                            <div class="upload-icon">
-                                <i class="fas fa-upload"></i>
-                            </div>
-                            <h3>Upload Image</h3>
-                            <p>JPG, PNG, WebP</p>
+                        <label for="imageUpload" style="flex: 1; text-align: center; padding: 20px; background: var(--nav-bg); border: 2px dashed var(--nav-border); border-radius: 12px; cursor: pointer; transition: 0.3s;">
+                            <i class="fas fa-upload" style="font-size: 2rem; color: gray; margin-bottom: 10px;"></i>
+                            <h3 style="margin: 0; font-size: 1rem;">Upload Image</h3>
+                            <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: gray;">JPG, PNG, WebP</p>
                             <input type="file" id="imageUpload" accept="image/*" hidden onchange="processImage(this)">
-                            <label for="imageUpload" class="upload-label">Choose File</label>
-                        </div>
+                        </label>
                     </div>
                     
-                    <div class="ocr-preview" id="imagePreview">
-                        <div class="preview-placeholder">
-                            <i class="fas fa-image"></i>
-                            <p>No image selected</p>
+                    <div id="imagePreview" style="width: 100%; min-height: 150px; background: rgba(0,0,0,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; overflow: hidden;">
+                        <div style="text-align: center; color: gray;">
+                            <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <p style="margin: 0;">No image selected</p>
                         </div>
                     </div>
-                    
-                    <div class="ocr-controls">
-                        <div class="lang-select-box">
-                            <label><i class="fas fa-language"></i> Translate to:</label>
-                            <select id="imageLang" class="lang-select">
-                                <option value="en">English</option>
-                                <option value="hi">Hindi</option>
-                                <option value="ta">Tamil</option>
-                                <option value="te">Telugu</option>
-                                <option value="kn">Kannada</option>
-                            </select>
-                        </div>
-                        
-                        <div class="ocr-actions">
-                            <button class="ocr-btn primary" onclick="extractText()" id="extractBtn">
-                                <i class="fas fa-search"></i> Extract Text
-                            </button>
-                            <button class="ocr-btn secondary" onclick="clearImage()">
-                                <i class="fas fa-redo"></i> Clear
-                            </button>
-                        </div>
+               <div style="margin-bottom: 20px;">
+                        <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;"><i class="fas fa-language"></i> Translate to:</label>
+                        <select id="imageLang" class="premium-input">
+                            <option value="en" selected>🇺🇸 English</option>
+                            <option value="hi">🇮🇳 Hindi (हिन्दी)</option>
+                            <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
+                            <option value="te">🇮🇳 Telugu (తెలుగు)</option>
+                            <option value="kn">🇮🇳 Kannada (ಕನ್ನಡ)</option>
+                            <option value="ml">🇮🇳 Malayalam (മലയാളം)</option>
+                            <option value="bn">🇮🇳 Bengali (বাংলা)</option>
+                            <option value="mr">🇮🇳 Marathi (मराठी)</option>
+                            <option value="gu">🇮🇳 Gujarati (ગુજરાતી)</option>
+                            <option value="es">🇪🇸 Spanish (Español)</option>
+                            <option value="fr">🇫🇷 French (Français)</option>
+                            <option value="de">🇩🇪 German (Deutsch)</option>
+                            <option value="zh">🇨🇳 Chinese (中文)</option>
+                            <option value="ar">🇸🇦 Arabic (العربية)</option>
+                            <option value="ru">🇷🇺 Russian (Русский)</option>
+
+                            <option value="pa">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</option>
+                            <option value="or">🇮🇳 Odia (ଓଡ଼ିଆ)</option>
+                            <option value="as">🇮🇳 Assamese (অসমীয়া)</option>
+                            <option value="ur">🇵🇰 Urdu (اردو)</option>
+                            <option value="sa">🇮🇳 Sanskrit (संस्कृतम्)</option>
+                            <option value="ne">🇳🇵 Nepali (नेपाली)</option>
+                            <option value="si">🇱🇰 Sinhala (සිංහල)</option>
+                            <option value="it">🇮🇹 Italian (Italiano)</option>
+                            <option value="pt">🇵🇹 Portuguese (Português)</option>
+                            <option value="uk">🇺🇦 Ukrainian (Українська)</option>
+                            <option value="nl">🇳🇱 Dutch (Nederlands)</option>
+                            <option value="pl">🇵🇱 Polish (Polski)</option>
+                            <option value="cs">🇨🇿 Czech (Čeština)</option>
+                            <option value="el">🇬🇷 Greek (Ελληνικά)</option>
+                            <option value="sv">🇸🇪 Swedish (Svenska)</option>
+                            <option value="da">🇩🇰 Danish (Dansk)</option>
+                            <option value="fi">🇫🇮 Finnish (Suomi)</option>
+                            <option value="no">🇳🇴 Norwegian (Norsk)</option>
+                            <option value="hu">🇭🇺 Hungarian (Magyar)</option>
+                            <option value="ro">🇷🇴 Romanian (Română)</option>
+                            <option value="ja">🇯🇵 Japanese (日本語)</option>
+                            <option value="ko">🇰🇷 Korean (한국어)</option>
+                            <option value="vi">🇻🇳 Vietnamese (Tiếng Việt)</option>
+                            <option value="th">🇹🇭 Thai (ไทย)</option>
+                            <option value="id">🇮🇩 Indonesian (Bahasa Indonesia)</option>
+                            <option value="ms">🇲🇾 Malay (Bahasa Melayu)</option>
+                            <option value="tl">🇵🇭 Filipino (Tagalog)</option>
+                            <option value="my">🇲🇲 Burmese (မြန်မာစာ)</option>
+                            <option value="km">🇰🇭 Khmer (ភាសាខ្មែរ)</option>
+                            <option value="fa">🇮🇷 Persian (فارسی)</option>
+                            <option value="he">🇮🇱 Hebrew (עברית)</option>
+                            <option value="tr">🇹🇷 Turkish (Türkçe)</option>
+                            <option value="sw">🇰🇪 Swahili (Kiswahili)</option>
+                            <option value="am">🇪🇹 Amharic (አማርኛ)</option>
+                            <option value="zu">🇿🇦 Zulu (isiZulu)</option>
+                        </select>
                     </div>
                     
-                    <div class="ocr-results">
-                        <div class="results-header">
-                            <h3><i class="fas fa-file-alt"></i> Detected & Translated Text</h3>
-                            <div class="result-actions">
-                                <button class="icon-btn" onclick="copyOcrText()">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                                <button class="icon-btn" onclick="speakOcrText()">
-                                    <i class="fas fa-volume-up"></i>
-                                </button>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn-primary" onclick="extractText()" id="extractBtn" style="flex: 2;">
+                            <i class="fas fa-search"></i> Extract Text
+                        </button>
+                        <button class="btn-outline-danger" onclick="clearImage()" style="flex: 1;">
+                            <i class="fas fa-redo"></i> Clear
+                        </button>
+                    </div>
+                    
+                    <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); border-radius: 12px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0; font-size: 1rem;"><i class="fas fa-file-alt"></i> Detected & Translated</h3>
+                            <div>
+                                <button class="icon-btn" onclick="copyOcrText()" style="width: 30px; height: 30px; border: none;"><i class="fas fa-copy"></i></button>
+                                <button class="icon-btn" onclick="speakOcrText()" style="width: 30px; height: 30px; border: none;"><i class="fas fa-volume-up"></i></button>
                             </div>
                         </div>
-                        <textarea id="imageResult" class="result-textarea" placeholder="Text will appear here after processing..."></textarea>
-                        <div class="result-stats">
+                        <textarea id="imageResult" class="premium-input" style="height: 120px; resize: vertical;" placeholder="Text will appear here after processing..."></textarea>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: gray;">
                             <span id="ocrCharCount">Characters: 0</span>
                             <span id="ocrWordCount">Words: 0</span>
                             <span id="ocrTime">Time: 0s</span>
@@ -251,230 +412,442 @@
                 </div>
             </section>
 
-            <!-- Currency Converter -->
-            <section class="dashboard-card card-currency">
-                <div class="card-header">
-                    <h2><i class="fas fa-money-bill-wave"></i> Currency Converter</h2>
-                    <div class="card-badge">Live Rates</div>
+            <section class="glass-panel" data-aos="fade-up" data-aos-delay="200">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-money-bill-wave text-success"></i> Currency Converter</h2>
+                    <div style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Live Rates</div>
                 </div>
                 
                 <div class="currency-container">
-                    <div class="amount-input">
-                        <label><i class="fas fa-coins"></i> Amount</label>
-                        <div class="input-with-icon">
-                            <span class="currency-symbol" id="fromSymbol">$</span>
-                            <input type="number" id="amount" placeholder="Enter amount" min="0" step="0.01">
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;"><i class="fas fa-coins"></i> Amount</label>
+                        <div style="display: flex; align-items: center; position: relative;">
+                            <span id="fromSymbol" style="position: absolute; left: 15px; font-weight: bold; color: var(--text-color);">$</span>
+                            <input type="number" id="amount" class="premium-input" placeholder="Enter amount" min="0" step="0.01" style="padding-left: 35px; margin-bottom: 0;">
                         </div>
                     </div>
                     
-                    <div class="currency-selectors">
-                        <div class="currency-box">
-                            <label>From Currency</label>
-                            <select id="fromCurrency" class="currency-select">
-                                <!-- Will be populated by JS -->
-                            </select>
-                        </div>
-                        
-                        <div class="swap-btn-container">
-                            <button class="swap-btn" onclick="swapCurrencies()">
-                                <i class="fas fa-exchange-alt"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="currency-box">
-                            <label>To Currency</label>
-                            <select id="toCurrency" class="currency-select">
-                                <!-- Will be populated by JS -->
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <button class="convert-btn" onclick="convertCurrency()">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+    <div style="flex: 1;">
+        <label style="font-size: 0.85rem; color: gray;">From Currency</label>
+        <select id="fromCurrency" class="premium-input" style="margin-bottom: 0;">
+            <option value="USD">USD - US Dollar</option>
+            <option value="EUR">EUR - Euro</option>
+            <option value="GBP">GBP - British Pound</option>
+            <option value="JPY">JPY - Japanese Yen</option>
+            <option value="CHF">CHF - Swiss Franc</option>
+            <option value="CAD">CAD - Canadian Dollar</option>
+            <option value="AUD">AUD - Australian Dollar</option>
+            <option value="INR">INR - Indian Rupee</option>
+            <option value="CNY">CNY - Chinese Yuan</option>
+            <option value="HKD">HKD - Hong Kong Dollar</option>
+            <option value="SGD">SGD - Singapore Dollar</option>
+            <option value="KRW">KRW - South Korean Won</option>
+            <option value="TWD">TWD - New Taiwan Dollar</option>
+            <option value="IDR">IDR - Indonesian Rupiah</option>
+            <option value="MYR">MYR - Malaysian Ringgit</option>
+            <option value="THB">THB - Thai Baht</option>
+            <option value="PHP">PHP - Philippine Peso</option>
+            <option value="VND">VND - Vietnamese Dong</option>
+            <option value="PKR">PKR - Pakistani Rupee</option>
+            <option value="BDT">BDT - Bangladeshi Taka</option>
+            <option value="LKR">LKR - Sri Lankan Rupee</option>
+            <option value="NPR">NPR - Nepalese Rupee</option>
+            <option value="AED">AED - UAE Dirham</option>
+            <option value="SAR">SAR - Saudi Riyal</option>
+            <option value="ILS">ILS - Israeli New Shekel</option>
+            <option value="QAR">QAR - Qatari Riyal</option>
+            <option value="KWD">KWD - Kuwaiti Dinar</option>
+            <option value="OMR">OMR - Omani Rial</option>
+            <option value="BHD">BHD - Bahraini Dinar</option>
+            <option value="SEK">SEK - Swedish Krona</option>
+            <option value="NOK">NOK - Norwegian Krone</option>
+            <option value="DKK">DKK - Danish Krone</option>
+            <option value="PLN">PLN - Polish Zloty</option>
+            <option value="CZK">CZK - Czech Koruna</option>
+            <option value="HUF">HUF - Hungarian Forint</option>
+            <option value="RON">RON - Romanian Leu</option>
+            <option value="RUB">RUB - Russian Ruble</option>
+            <option value="TRY">TRY - Turkish Lira</option>
+            <option value="MXN">MXN - Mexican Peso</option>
+            <option value="BRL">BRL - Brazilian Real</option>
+            <option value="ARS">ARS - Argentine Peso</option>
+            <option value="CLP">CLP - Chilean Peso</option>
+            <option value="COP">COP - Colombian Peso</option>
+            <option value="PEN">PEN - Peruvian Sol</option>
+            <option value="ZAR">ZAR - South African Rand</option>
+            <option value="EGP">EGP - Egyptian Pound</option>
+            <option value="NGN">NGN - Nigerian Naira</option>
+            <option value="KES">KES - Kenyan Shilling</option>
+            <option value="NZD">NZD - New Zealand Dollar</option>
+        </select>
+    </div>
+
+    <button class="icon-btn" onclick="swapCurrencies()" style="margin-top: 20px; border: 1px solid var(--nav-border);">
+        <i class="fas fa-exchange-alt"></i>
+    </button>
+
+    <div style="flex: 1;">
+        <label style="font-size: 0.85rem; color: gray;">To Currency</label>
+        <select id="toCurrency" class="premium-input" style="margin-bottom: 0;">
+            <option value="INR" selected>INR - Indian Rupee</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="EUR">EUR - Euro</option>
+            <option value="GBP">GBP - British Pound</option>
+            <option value="JPY">JPY - Japanese Yen</option>
+            <option value="CHF">CHF - Swiss Franc</option>
+            <option value="CAD">CAD - Canadian Dollar</option>
+            <option value="AUD">AUD - Australian Dollar</option>
+            <option value="CNY">CNY - Chinese Yuan</option>
+            <option value="HKD">HKD - Hong Kong Dollar</option>
+            <option value="SGD">SGD - Singapore Dollar</option>
+            <option value="KRW">KRW - South Korean Won</option>
+            <option value="TWD">TWD - New Taiwan Dollar</option>
+            <option value="IDR">IDR - Indonesian Rupiah</option>
+            <option value="MYR">MYR - Malaysian Ringgit</option>
+            <option value="THB">THB - Thai Baht</option>
+            <option value="PHP">PHP - Philippine Peso</option>
+            <option value="VND">VND - Vietnamese Dong</option>
+            <option value="PKR">PKR - Pakistani Rupee</option>
+            <option value="BDT">BDT - Bangladeshi Taka</option>
+            <option value="LKR">LKR - Sri Lankan Rupee</option>
+            <option value="NPR">NPR - Nepalese Rupee</option>
+            <option value="AED">AED - UAE Dirham</option>
+            <option value="SAR">SAR - Saudi Riyal</option>
+            <option value="ILS">ILS - Israeli New Shekel</option>
+            <option value="QAR">QAR - Qatari Riyal</option>
+            <option value="KWD">KWD - Kuwaiti Dinar</option>
+            <option value="OMR">OMR - Omani Rial</option>
+            <option value="BHD">BHD - Bahraini Dinar</option>
+            <option value="SEK">SEK - Swedish Krona</option>
+            <option value="NOK">NOK - Norwegian Krone</option>
+            <option value="DKK">DKK - Danish Krone</option>
+            <option value="PLN">PLN - Polish Zloty</option>
+            <option value="CZK">CZK - Czech Koruna</option>
+            <option value="HUF">HUF - Hungarian Forint</option>
+            <option value="RON">RON - Romanian Leu</option>
+            <option value="RUB">RUB - Russian Ruble</option>
+            <option value="TRY">TRY - Turkish Lira</option>
+            <option value="MXN">MXN - Mexican Peso</option>
+            <option value="BRL">BRL - Brazilian Real</option>
+            <option value="ARS">ARS - Argentine Peso</option>
+            <option value="CLP">CLP - Chilean Peso</option>
+            <option value="COP">COP - Colombian Peso</option>
+            <option value="PEN">PEN - Peruvian Sol</option>
+            <option value="ZAR">ZAR - South African Rand</option>
+            <option value="EGP">EGP - Egyptian Pound</option>
+            <option value="NGN">NGN - Nigerian Naira</option>
+            <option value="KES">KES - Kenyan Shilling</option>
+            <option value="NZD">NZD - New Zealand Dollar</option>
+        </select>
+    </div>
+</div>
+                    <button class="btn-primary w-100" onclick="convertCurrency()" style="margin-bottom: 20px;">
                         <i class="fas fa-sync-alt"></i> Convert Now
                     </button>
                     
-                    <div class="conversion-result">
-                        <div class="result-box" id="rateResult">
-                            <div class="result-placeholder">
-                                <i class="fas fa-chart-line"></i>
-                                <p>Conversion results will appear here</p>
-                            </div>
+                    <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--nav-border); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                        <div id="rateResult">
+                            <i class="fas fa-chart-line" style="font-size: 2rem; color: gray; margin-bottom: 10px;"></i>
+                            <p style="margin: 0; color: gray;">Conversion results will appear here</p>
                         </div>
                         
-                        <div class="rate-info">
-                            <div class="rate-item">
-                                <span class="rate-label">Exchange Rate:</span>
-                                <span class="rate-value" id="exchangeRate">-</span>
-                            </div>
-                            <div class="rate-item">
-                                <span class="rate-label">Last Updated:</span>
-                                <span class="rate-value" id="lastUpdated">-</span>
-                            </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: gray; margin-top: 15px; border-top: 1px solid var(--nav-border); padding-top: 10px;">
+                            <span>Rate: <strong id="exchangeRate" style="color: var(--text-color);">-</strong></span>
+                            <span>Updated: <strong id="lastUpdated" style="color: var(--text-color);">-</strong></span>
                         </div>
                     </div>
                     
-                    <div class="popular-currencies">
-                        <h4><i class="fas fa-fire"></i> Quick Convert</h4>
-                        <div class="quick-currencies">
-                            <button class="quick-currency" onclick="quickConvert('USD', 'INR')">
-                                USD → INR
-                            </button>
-                            <button class="quick-currency" onclick="quickConvert('EUR', 'INR')">
-                                EUR → INR
-                            </button>
-                            <button class="quick-currency" onclick="quickConvert('GBP', 'INR')">
-                                GBP → INR
-                            </button>
-                            <button class="quick-currency" onclick="quickConvert('JPY', 'INR')">
-                                JPY → INR
-                            </button>
+                    <div>
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem;"><i class="fas fa-fire" style="color: #f59e0b;"></i> Quick Convert</h4>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-outline-danger" style="height: 35px; font-size: 0.8rem; padding: 0 10px;" onclick="quickConvert('USD', 'INR')">USD → INR</button>
+                            <button class="btn-outline-danger" style="height: 35px; font-size: 0.8rem; padding: 0 10px;" onclick="quickConvert('EUR', 'INR')">EUR → INR</button>
+                            <button class="btn-outline-danger" style="height: 35px; font-size: 0.8rem; padding: 0 10px;" onclick="quickConvert('GBP', 'INR')">GBP → INR</button>
+                            <button class="btn-outline-danger" style="height: 35px; font-size: 0.8rem; padding: 0 10px;" onclick="quickConvert('AED', 'INR')">AED → INR</button>
+                            <button class="btn-outline-danger" style="height: 35px; font-size: 0.8rem; padding: 0 10px;" onclick="quickConvert('JPY', 'INR')">JPY → INR</button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Additional Features -->
-            <section class="dashboard-card card-features">
-                <div class="card-header">
-                    <h2><i class="fas fa-star"></i> Additional Features</h2>
+            <section class="glass-panel" data-aos="fade-up" data-aos-delay="250">
+                <div style="margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-star text-primary"></i> Premium Features</h2>
                 </div>
                 
-                <div class="features-grid">
-                    <div class="feature-card" onclick="openDocumentTranslator()">
-                        <div class="feature-icon doc">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div onclick="openDocumentTranslator()" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--nav-border); border-radius: 12px; cursor: pointer; transition: 0.3s;">
+                        <div style="width: 50px; height: 50px; background: var(--primary-blue); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                             <i class="fas fa-file-word"></i>
                         </div>
-                        <h3>Document Translator</h3>
-                        <p>Translate PDF, DOC, TXT files</p>
-                    </div>
-                    
-                    <div class="feature-card" onclick="openConversationMode()">
-                        <div class="feature-icon conv">
-                            <i class="fas fa-comment-dots"></i>
+                        <div>
+                            <h3 style="margin: 0 0 5px 0; font-size: 1rem;">Document Translator</h3>
+                            <p style="margin: 0; font-size: 0.85rem; color: gray;">Translate PDF, DOC, TXT files instantly</p>
                         </div>
-                        <h3>Conversation Mode</h3>
-                        <p>Real-time bilingual chat</p>
                     </div>
                     
-                   
+                    <div onclick="openConversationMode()" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(16, 185, 129, 0.05); border: 1px solid var(--nav-border); border-radius: 12px; cursor: pointer; transition: 0.3s;">
+                        <div style="width: 50px; height: 50px; background: #10b981; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0 0 5px 0; font-size: 1rem;">Conversation Mode</h3>
+                            <p style="margin: 0; font-size: 0.85rem; color: gray;">Real-time bilingual split-screen chat</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
 
     <div class="toast" id="toast"></div>
 
-    <div id="conversationModal" class="modal">
-        <div class="modal-content conversation-box">
-            <div class="modal-header">
-                <button class="btn-back-icon" onclick="closeConversationMode()">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <h2><i class="fas fa-user-friends"></i> Conversation Mode</h2>
-                <span class="close-btn" onclick="closeConversationMode()">&times;</span>
-            </div>
-            
-            <div class="conversation-split">
-                <div class="person-panel" id="panelA">
-                    <div class="panel-header">
-                        <span class="avatar-icon">A</span>
-                        <select id="convoLangA" class="lang-pill">
-                            <option value="en">🇺🇸 English</option>
-                            <option value="hi">🇮🇳 Hindi</option>
-                            <option value="kn">🇮🇳 Kannada</option>
-                            <option value="ta">🇮🇳 Tamil</option>
-                            <option value="te">🇮🇳 Telugu</option>
-                            <option value="ml">🇮🇳 Malayalam</option>
-                            <option value="bn">🇮🇳 Bengali</option>
-                            <option value="es">🇪🇸 Spanish</option>
-                            <option value="fr">🇫🇷 French</option>
-                            <option value="de">🇩🇪 German</option>
-                            <option value="ja">🇯🇵 Japanese</option>
-                            <option value="zh">🇨🇳 Chinese</option>
-                            <option value="ar">🇸🇦 Arabic</option>
-                            <option value="ru">🇷🇺 Russian</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mic-container-big">
-                        <div class="mic-big" onclick="toggleConvoMic('A')" id="micBtnA">
-                            <i class="fas fa-microphone"></i>
-                        </div>
-                        <div class="mic-pulse" id="pulseA"></div>
-                    </div>
-
-                    <p class="status-text" id="statusA">Tap Mic to Speak</p>
-                    <div class="transcript-box" id="resultA">...</div>
-                </div>
-
-                <div class="person-panel" id="panelB">
-                    <div class="panel-header">
-                        <span class="avatar-icon">B</span>
-                        <select id="convoLangB" class="lang-pill">
-                            <option value="hi" selected>🇮🇳 Hindi</option>
-                            <option value="en">🇺🇸 English</option>
-                            <option value="kn">🇮🇳 Kannada</option>
-                            <option value="ta">🇮🇳 Tamil</option>
-                            <option value="te">🇮🇳 Telugu</option>
-                            <option value="ml">🇮🇳 Malayalam</option>
-                            <option value="bn">🇮🇳 Bengali</option>
-                            <option value="es">🇪🇸 Spanish</option>
-                            <option value="fr">🇫🇷 French</option>
-                            <option value="de">🇩🇪 German</option>
-                            <option value="ja">🇯🇵 Japanese</option>
-                            <option value="zh">🇨🇳 Chinese</option>
-                            <option value="ar">🇸🇦 Arabic</option>
-                            <option value="ru">🇷🇺 Russian</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mic-container-big">
-                        <div class="mic-big" onclick="toggleConvoMic('B')" id="micBtnB">
-                            <i class="fas fa-microphone"></i>
-                        </div>
-                        <div class="mic-pulse" id="pulseB"></div>
-                    </div>
-
-                    <p class="status-text" id="statusB">Tap Mic to Speak</p>
-                    <div class="transcript-box" id="resultB">...</div>
-                </div>
-            </div>
-        </div>
+    <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; color: white; backdrop-filter: blur(5px);">
+        <div style="width: 50px; height: 50px; border: 5px solid #334155; border-top: 5px solid var(--primary-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
+        <h3 id="loadingText" style="font-family: 'Poppins', sans-serif; margin: 0;">Processing...</h3>
     </div>
-<div id="docModal" class="modal">
-    <div class="modal-content doc-box">
-        <div class="modal-header">
-            <h2><i class="fas fa-file-alt"></i> Document Translator</h2>
-            <span class="close-btn" onclick="closeDocTranslator()">&times;</span>
+
+    <div id="conversationModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 10000; overflow: hidden; flex-direction: column;">
+        <div style="padding: 15px; border-bottom: 1px solid var(--nav-border); display: flex; justify-content: space-between; align-items: center; background: var(--nav-bg);">
+            <button class="icon-btn" onclick="closeConversationMode()" style="border: none;"><i class="fas fa-arrow-left"></i></button>
+            <h2 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-user-friends text-primary"></i> Live Conversation</h2>
+            <div style="width: 40px;"></div> 
         </div>
         
-        <div class="doc-upload-area" id="dropZone">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <h3>Drag & Drop or Click to Upload</h3>
-            <p>Supports: .PDF, .TXT (Max 5MB)</p>
-            <input type="file" id="docInput" hidden accept=".pdf,.txt">
-        </div>
+      <div style="flex: 1; display: flex; flex-direction: column;">
+            <div id="panelA" style="flex: 1; background: rgba(59, 130, 246, 0.05); border-bottom: 2px solid var(--primary-blue); padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <select id="convoLangA" class="premium-input" style="width: auto; margin-bottom: 20px; text-align: center;">
+                    <option value="en">🇺🇸 English</option>
+                    <option value="hi">🇮🇳 Hindi</option>
+                    <option value="kn">🇮🇳 Kannada</option>
+                    <option value="ta">🇮🇳 Tamil</option>
+                    <option value="te">🇮🇳 Telugu</option>
+                    <option value="ml">🇮🇳 Malayalam</option>
+                    <option value="bn">🇮🇳 Bengali</option>
+                    <option value="es">🇪🇸 Spanish</option>
+                    <option value="fr">🇫🇷 French</option>
+                    <option value="de">🇩🇪 German</option>
+                    <option value="ja">🇯🇵 Japanese</option>
+                    <option value="zh">🇨🇳 Chinese</option>
+                    <option value="ar">🇸🇦 Arabic</option>
+                    <option value="ru">🇷🇺 Russian</option>
+                    <option value="mr">🇮🇳 Marathi (मराठी)</option>
+                    <option value="gu">🇮🇳 Gujarati (ગુજરાતી)</option>
+                    <option value="pa">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</option>
+                    <option value="or">🇮🇳 Odia (ଓଡ଼ିଆ)</option>
+                    <option value="as">🇮🇳 Assamese (অসমীয়া)</option>
+                    <option value="ur">🇵🇰 Urdu (اردو)</option>
+                    <option value="sa">🇮🇳 Sanskrit (संस्कृतम्)</option>
+                    <option value="ne">🇳🇵 Nepali (नेपाली)</option>
+                    <option value="si">🇱🇰 Sinhala (සිංහල)</option>
+                    <option value="it">🇮🇹 Italian (Italiano)</option>
+                    <option value="pt">🇵🇹 Portuguese (Português)</option>
+                    <option value="uk">🇺🇦 Ukrainian (Українська)</option>
+                    <option value="nl">🇳🇱 Dutch (Nederlands)</option>
+                    <option value="pl">🇵🇱 Polish (Polski)</option>
+                    <option value="cs">🇨🇿 Czech (Čeština)</option>
+                    <option value="el">🇬🇷 Greek (Ελληνικά)</option>
+                    <option value="sv">🇸🇪 Swedish (Svenska)</option>
+                    <option value="da">🇩🇰 Danish (Dansk)</option>
+                    <option value="fi">🇫🇮 Finnish (Suomi)</option>
+                    <option value="no">🇳🇴 Norwegian (Norsk)</option>
+                    <option value="hu">🇭🇺 Hungarian (Magyar)</option>
+                    <option value="ro">🇷🇴 Romanian (Română)</option>
+                    <option value="ko">🇰🇷 Korean (한국어)</option>
+                    <option value="vi">🇻🇳 Vietnamese (Tiếng Việt)</option>
+                    <option value="th">🇹🇭 Thai (ไทย)</option>
+                    <option value="id">🇮🇩 Indonesian (Bahasa Indonesia)</option>
+                    <option value="ms">🇲🇾 Malay (Bahasa Melayu)</option>
+                    <option value="tl">🇵🇭 Filipino (Tagalog)</option>
+                    <option value="my">🇲🇲 Burmese (မြန်မာစာ)</option>
+                    <option value="km">🇰🇭 Khmer (ភាសាខ្មែរ)</option>
+                    <option value="fa">🇮🇷 Persian (فارسی)</option>
+                    <option value="he">🇮🇱 Hebrew (עברית)</option>
+                    <option value="tr">🇹🇷 Turkish (Türkçe)</option>
+                    <option value="sw">🇰🇪 Swahili (Kiswahili)</option>
+                    <option value="am">🇪🇹 Amharic (አማርኛ)</option>
+                    <option value="zu">🇿🇦 Zulu (isiZulu)</option>
+                </select>
+                
+                <button onclick="toggleConvoMic('A')" id="micBtnA" style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary-blue); color: white; border: none; font-size: 2rem; cursor: pointer; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); margin-bottom: 15px;">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <p id="statusA" style="margin: 0 0 15px 0; color: gray; font-size: 0.9rem;">Tap Mic to Speak</p>
+                <div id="resultA" style="width: 100%; max-width: 400px; min-height: 80px; background: var(--nav-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--nav-border); text-align: center; overflow-y: auto;">...</div>
+            </div>
 
-        <div class="doc-controls">
-            <label>Translate to:</label>
-            <select id="docLang" class="lang-pill-small">
-                <option value="en">🇺🇸 English</option>
-                <option value="hi">🇮🇳 Hindi</option>
-                <option value="es">🇪🇸 Spanish</option>
-                <option value="fr">🇫🇷 French</option>
-                <option value="ta">🇮🇳 Tamil</option>
-            </select>
-            <button class="btn-primary" onclick="uploadAndTranslateDoc()">Translate Document</button>
+            <div id="panelB" style="flex: 1; background: rgba(16, 185, 129, 0.05); padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div id="resultB" style="width: 100%; max-width: 400px; min-height: 80px; background: var(--nav-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--nav-border); text-align: center; overflow-y: auto; margin-bottom: 15px;">...</div>
+                <p id="statusB" style="margin: 0 0 15px 0; color: gray; font-size: 0.9rem;">Tap Mic to Speak</p>
+                
+                <button onclick="toggleConvoMic('B')" id="micBtnB" style="width: 80px; height: 80px; border-radius: 50%; background: #10b981; color: white; border: none; font-size: 2rem; cursor: pointer; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4); margin-bottom: 20px;">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                
+                <select id="convoLangB" class="premium-input" style="width: auto; margin-bottom: 0; text-align: center;">
+                    <option value="hi" selected>🇮🇳 Hindi</option>
+                    <option value="en">🇺🇸 English</option>
+                    <option value="kn">🇮🇳 Kannada</option>
+                    <option value="ta">🇮🇳 Tamil</option>
+                    <option value="te">🇮🇳 Telugu</option>
+                    <option value="ml">🇮🇳 Malayalam</option>
+                    <option value="bn">🇮🇳 Bengali</option>
+                    <option value="es">🇪🇸 Spanish</option>
+                    <option value="fr">🇫🇷 French</option>
+                    <option value="de">🇩🇪 German</option>
+                    <option value="ja">🇯🇵 Japanese</option>
+                    <option value="zh">🇨🇳 Chinese</option>
+                    <option value="ar">🇸🇦 Arabic</option>
+                    <option value="ru">🇷🇺 Russian</option>
+                    <option value="mr">🇮🇳 Marathi (मराठी)</option>
+                    <option value="gu">🇮🇳 Gujarati (ગુજરાતી)</option>
+                    <option value="pa">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</option>
+                    <option value="or">🇮🇳 Odia (ଓଡ଼ିଆ)</option>
+                    <option value="as">🇮🇳 Assamese (অসমীয়া)</option>
+                    <option value="ur">🇵🇰 Urdu (اردو)</option>
+                    <option value="sa">🇮🇳 Sanskrit (संस्कृतम्)</option>
+                    <option value="ne">🇳🇵 Nepali (नेपाली)</option>
+                    <option value="si">🇱🇰 Sinhala (සිංහල)</option>
+                    <option value="it">🇮🇹 Italian (Italiano)</option>
+                    <option value="pt">🇵🇹 Portuguese (Português)</option>
+                    <option value="uk">🇺🇦 Ukrainian (Українська)</option>
+                    <option value="nl">🇳🇱 Dutch (Nederlands)</option>
+                    <option value="pl">🇵🇱 Polish (Polski)</option>
+                    <option value="cs">🇨🇿 Czech (Čeština)</option>
+                    <option value="el">🇬🇷 Greek (Ελληνικά)</option>
+                    <option value="sv">🇸🇪 Swedish (Svenska)</option>
+                    <option value="da">🇩🇰 Danish (Dansk)</option>
+                    <option value="fi">🇫🇮 Finnish (Suomi)</option>
+                    <option value="no">🇳🇴 Norwegian (Norsk)</option>
+                    <option value="hu">🇭🇺 Hungarian (Magyar)</option>
+                    <option value="ro">🇷🇴 Romanian (Română)</option>
+                    <option value="ko">🇰🇷 Korean (한국어)</option>
+                    <option value="vi">🇻🇳 Vietnamese (Tiếng Việt)</option>
+                    <option value="th">🇹🇭 Thai (ไทย)</option>
+                    <option value="id">🇮🇩 Indonesian (Bahasa Indonesia)</option>
+                    <option value="ms">🇲🇾 Malay (Bahasa Melayu)</option>
+                    <option value="tl">🇵🇭 Filipino (Tagalog)</option>
+                    <option value="my">🇲🇲 Burmese (မြန်မာစာ)</option>
+                    <option value="km">🇰🇭 Khmer (ភាសាខ្មែរ)</option>
+                    <option value="fa">🇮🇷 Persian (فارسی)</option>
+                    <option value="he">🇮🇱 Hebrew (עברית)</option>
+                    <option value="tr">🇹🇷 Turkish (Türkçe)</option>
+                    <option value="sw">🇰🇪 Swahili (Kiswahili)</option>
+                    <option value="am">🇪🇹 Amharic (አማርኛ)</option>
+                    <option value="zu">🇿🇦 Zulu (isiZulu)</option>
+                </select>
+            </div>
         </div>
+    
+    <div id="docModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: var(--bg-color); width: 90%; max-width: 500px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+            <div style="padding: 20px; border-bottom: 1px solid var(--nav-border); display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-file-alt text-primary"></i> Document Translator</h2>
+                <button class="icon-btn" onclick="closeDocTranslator()" style="border: none;"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div style="padding: 20px;">
+                <div id="dropZone" style="border: 2px dashed var(--nav-border); border-radius: 12px; padding: 30px 20px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: 0.3s background;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
+                    <h3 style="margin: 0 0 5px 0;">Drag & Drop or Click to Upload</h3>
+                    <p style="margin: 0; color: gray; font-size: 0.85rem;">Supports: .PDF, .TXT (Max 5MB)</p>
+                    <input type="file" id="docInput" hidden accept=".pdf,.txt">
+                </div>
 
-        <div class="doc-result" id="docResult" style="display:none;">
-            <h3>Translation:</h3>
-            <div class="result-text" id="docOutput"></div>
-            <button class="btn-secondary" onclick="downloadDoc()">Download .txt</button>
+                <div style="margin-bottom: 20px;">
+                        <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;">Translate to:</label>
+                        <select id="docLang" class="premium-input">
+                            <option value="en">🇺🇸 English</option>
+                            <option value="hi">🇮🇳 Hindi</option>
+                            <option value="es">🇪🇸 Spanish</option>
+                            <option value="fr">🇫🇷 French</option>
+                            <option value="ta">🇮🇳 Tamil</option>
+                            <option value="te">🇮🇳 Telugu</option>
+                            <option value="kn">🇮🇳 Kannada</option>
+                            <option value="ml">🇮🇳 Malayalam</option>
+                            <option value="zh">🇨🇳 Chinese</option>
+                            <option value="ja">🇯🇵 Japanese</option>
+                            <option value="ar">🇸🇦 Arabic</option>
+                            <option value="bn">🇮🇳 Bengali (বাংলা)</option>
+                            <option value="mr">🇮🇳 Marathi (मराठी)</option>
+                            <option value="gu">🇮🇳 Gujarati (ગુજરાતી)</option>
+                            <option value="pa">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</option>
+                            <option value="or">🇮🇳 Odia (ଓଡ଼ିଆ)</option>
+                            <option value="as">🇮🇳 Assamese (অসমীয়া)</option>
+                            <option value="ur">🇵🇰 Urdu (اردو)</option>
+                            <option value="sa">🇮🇳 Sanskrit (संस्कृतम्)</option>
+                            <option value="ne">🇳🇵 Nepali (नेपाली)</option>
+                            <option value="si">🇱🇰 Sinhala (සිංහල)</option>
+                            <option value="de">🇩🇪 German (Deutsch)</option>
+                            <option value="it">🇮🇹 Italian (Italiano)</option>
+                            <option value="pt">🇵🇹 Portuguese (Português)</option>
+                            <option value="ru">🇷🇺 Russian (Русский)</option>
+                            <option value="uk">🇺🇦 Ukrainian (Українська)</option>
+                            <option value="nl">🇳🇱 Dutch (Nederlands)</option>
+                            <option value="pl">🇵🇱 Polish (Polski)</option>
+                            <option value="cs">🇨🇿 Czech (Čeština)</option>
+                            <option value="el">🇬🇷 Greek (Ελληνικά)</option>
+                            <option value="sv">🇸🇪 Swedish (Svenska)</option>
+                            <option value="da">🇩🇰 Danish (Dansk)</option>
+                            <option value="fi">🇫🇮 Finnish (Suomi)</option>
+                            <option value="no">🇳🇴 Norwegian (Norsk)</option>
+                            <option value="hu">🇭🇺 Hungarian (Magyar)</option>
+                            <option value="ro">🇷🇴 Romanian (Română)</option>
+                            <option value="ko">🇰🇷 Korean (한국어)</option>
+                            <option value="vi">🇻🇳 Vietnamese (Tiếng Việt)</option>
+                            <option value="th">🇹🇭 Thai (ไทย)</option>
+                            <option value="id">🇮🇩 Indonesian (Bahasa Indonesia)</option>
+                            <option value="ms">🇲🇾 Malay (Bahasa Melayu)</option>
+                            <option value="tl">🇵🇭 Filipino (Tagalog)</option>
+                            <option value="my">🇲🇲 Burmese (မြန်မာစာ)</option>
+                            <option value="km">🇰🇭 Khmer (ភាសាខ្央)</option>
+                            <option value="fa">🇮🇷 Persian (فارسی)</option>
+                            <option value="he">🇮🇱 Hebrew (עברית)</option>
+                            <option value="tr">🇹🇷 Turkish (Türkçe)</option>
+                            <option value="sw">🇰🇪 Swahili (Kiswahili)</option>
+                            <option value="am">🇪🇹 Amharic (አማርኛ)</option>
+                            <option value="zu">🇿🇦 Zulu (isiZulu)</option>
+                        </select>
+                    </div>
+                
+                <button class="btn-primary w-100" onclick="uploadAndTranslateDoc()"><i class="fas fa-language"></i> Translate Document</button>
+
+                <div id="docResult" style="display:none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--nav-border);">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1rem;">Translation Result:</h3>
+                    <div id="docOutput" class="premium-input" style="height: 150px; overflow-y: auto; margin-bottom: 15px; font-size: 0.9rem;"></div>
+                    <button class="btn-outline-danger w-100" onclick="downloadDoc()"><i class="fas fa-download"></i> Download as .txt</button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
- <script src="js/navbar.js" defer></script>
+
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding-bottom: 80px;
+        }
+        
+        @media (min-width: 768px) {
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: false,
+            offset: 50
+        });
+    </script>
+    
+    <script src="js/navbar.js" defer></script>
     <script src="js/tools.js"></script>
-    <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; color: white;">
-    <div class="loader-spinner" style="width: 50px; height: 50px; border: 5px solid #334155; border-top: 5px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
-    <h3 id="loadingText" style="font-family: 'Inter', sans-serif;">Processing...</h3>
-</div>
+    
 </body>
 </html>

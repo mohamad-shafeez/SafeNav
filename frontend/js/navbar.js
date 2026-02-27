@@ -1,80 +1,72 @@
-// ============================================
-// navbar.js - 
-// ============================================
-
 document.addEventListener("DOMContentLoaded", () => {
-    
-    // 1. Find the placeholder in your HTML pages
-    const navPlaceholder = document.getElementById("navbar-placeholder");
+    const placeholder = document.getElementById("navbar-placeholder");
 
-    if (navPlaceholder) {
-        // 2. Fetch the Premium Navbar HTML
+    // Check if the page uses the dynamic placeholder
+    if (placeholder) {
         fetch("navbar.html")
             .then(response => {
-                if (!response.ok) throw new Error("Navbar file not found");
+                if (!response.ok) throw new Error("Navbar failed to load");
                 return response.text();
             })
-            .then(data => {
-                // 3. Insert HTML into the page
-                navPlaceholder.innerHTML = data;
+            .then(html => {
+                // 1. Inject the HTML
+                placeholder.innerHTML = html;
                 
-                // 4. RUN LOGIC (Important: Must happen after HTML is inserted)
-                initializeNavbarLogic();
+                // 2. Run all your original logic NOW that the navbar actually exists on the page
+                initNavbarFeatures();
             })
             .catch(error => console.error("Error loading navbar:", error));
+    } else {
+        // Fallback: If a page still has the hardcoded navbar, just run the logic immediately
+        initNavbarFeatures();
     }
 });
 
-// ============================================
-// Helper Function: The "Premium" Features
-// ============================================
-function initializeNavbarLogic() {
-    
-    // A. Mobile Hamburger Toggle
+// All of your exact original logic, safely wrapped in a function
+function initNavbarFeatures() {
+    // 1. Mobile Toggle Logic
     const toggle = document.getElementById('navbarToggle');
     const menu = document.getElementById('navMenu');
 
     if (toggle && menu) {
         toggle.addEventListener('click', () => {
             menu.classList.toggle('active');
-            
-            // Optional: Close menu when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!menu.contains(e.target) && !toggle.contains(e.target)) {
-                    menu.classList.remove('active');
-                }
-            });
         });
     }
 
-    // B. Highlight "Active" Page (The Blue Line)
-    const currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
-    const navLinks = document.querySelectorAll('.nav-link');
-
-    navLinks.forEach(link => {
-        // Get the href value (e.g., "route.html")
-        const linkHref = link.getAttribute('href');
-        
-        // If it matches the current URL, add class 'active-page'
-        if (linkHref === currentPath) {
+    // 2. Active Page Highlight
+    const current = window.location.pathname.split('/').pop() || 'dashboard.html';
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.getAttribute('href') === current) {
             link.classList.add('active-page');
+        } else {
+            link.classList.remove('active-page'); // Clean up others just in case
         }
     });
 
-    // C. Theme Toggle (Optional)
-    const themeBtn = document.getElementById('themeToggle');
-    if (themeBtn) {
-        // Load saved theme
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            themeBtn.textContent = '☀️';
-        }
+    // 3. Global Dark Mode Toggle ("One button lights up all")
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
 
-        themeBtn.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            themeBtn.textContent = isDark ? '☀️' : '🌙';
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    // Check LocalStorage for saved theme
+    const savedTheme = localStorage.getItem('safenav_theme');
+    if (savedTheme === 'dark') {
+        body.classList.add('dark-mode');
+        if(themeToggle) themeToggle.textContent = '☀️';
+    }
+
+    // Toggle click event
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('safenav_theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                localStorage.setItem('safenav_theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
         });
     }
 }

@@ -360,12 +360,13 @@ window.saveUserProfile = async function() {
     const user = firebase.auth().currentUser;
     if (!user) return alert("You must be logged in to save settings.");
 
-    const saveBtn = document.querySelector('.profile-drawer .generate-btn');
+    // FIX 1: Look for the new 'btn-primary' class instead of the old 'generate-btn'
+    const saveBtn = document.querySelector('.profile-drawer .btn-primary');
     const originalText = saveBtn.innerHTML;
     saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
     saveBtn.disabled = true;
 
-  const profileData = {
+    const profileData = {
         name: document.getElementById('profName').value.trim(),
         country: document.getElementById('profCountry').value.trim(),
         currency: document.getElementById('profCurrency').value,
@@ -399,15 +400,17 @@ window.saveUserProfile = async function() {
         
         if (profileData.name) {
             await user.updateProfile({ displayName: profileData.name });
+            // Update the top right avatar image immediately
             document.getElementById('navAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name)}&background=2563eb&color=fff`;
         }
 
         saveBtn.innerHTML = `<i class="fas fa-check"></i> Intelligence Updated`;
-        saveBtn.style.background = '#10b981'; 
+        saveBtn.style.background = '#10b981'; // Turn green for success
         
         setTimeout(() => {
             saveBtn.innerHTML = originalText;
-            saveBtn.style.background = 'var(--primary)';
+            // FIX 2: Reset to our new blue variable
+            saveBtn.style.background = 'var(--primary-blue)';
             saveBtn.disabled = false;
         }, 2000);
 
@@ -416,6 +419,7 @@ window.saveUserProfile = async function() {
         alert("Failed to save profile. Please check your connection.");
         saveBtn.innerHTML = originalText;
         saveBtn.disabled = false;
+        saveBtn.style.background = 'var(--primary-blue)';
     }
 };
 // ==========================================
@@ -437,20 +441,22 @@ window.initLiveLocation = function() {
                 gpsBadge.style.background = '#10b98120';
                 gpsBadge.style.color = '#10b981';
 
-                try {
-                    // Use Free OpenStreetMap Nominatim API to get the real street address
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
-                    const data = await response.json();
-                    
-                    if (data && data.display_name) {
-                        addressText.innerHTML = `<i class="fas fa-map-marker-alt" style="color: var(--danger); margin-right: 5px;"></i> <strong>You are near:</strong><br>${data.display_name}`;
-                    } else {
-                        addressText.innerHTML = "Coordinates secured, but street name unavailable.";
-                    }
-                } catch (error) {
-                    console.error("Geocoding Error:", error);
-                    addressText.innerHTML = `Location locked at Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
-                }
+try {
+    // Swapped to BigDataCloud API which allows local browser testing without CORS blocks!
+    const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+    const data = await response.json();
+    
+    // BigDataCloud formats their data slightly differently
+    if (data && (data.city || data.locality)) {
+        const locationName = data.locality || data.city || data.principalSubdivision;
+        addressText.innerHTML = `<i class="fas fa-map-marker-alt" style="color: var(--danger-red); margin-right: 5px;"></i> <strong>You are near:</strong><br>${locationName}, ${data.countryName}`;
+    } else {
+        addressText.innerHTML = "Coordinates secured, but street name unavailable.";
+    }
+} catch (error) {
+    console.error("Geocoding Error:", error);
+    addressText.innerHTML = `Location locked at Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+}
             },
             (error) => {
                 console.warn("GPS Permission Denied or Failed:", error);
@@ -481,3 +487,12 @@ window.logoutUser = function() {
         });
     }
 };
+function toggleProfileDrawer() {
+    const drawer = document.getElementById('profileDrawer'); 
+    if (drawer) {
+        // Change 'active' to 'open' to match the CSS we just wrote!
+        drawer.classList.toggle('open');
+    } else {
+        console.warn("Profile drawer element not found in HTML");
+    }
+}

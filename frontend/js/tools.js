@@ -4,8 +4,9 @@ const API_BASE_URL = 'https://safenav-18sk.onrender.com';
 // but ideally move to backend later. For now, we focus on AI.
 const EXCHANGE_API_KEY = "767d15c92cbc866c2e3d4159";
 // ================= LANGUAGES SUPPORT =================
+// ================= LANGUAGES SUPPORT (MAX EXTENDED) =================
 const languages = {
-    // Indian Languages
+    // 🇮🇳 Indian Subcontinent & Regional
     en: { name: "English", native: "English", flag: "🇺🇸" },
     hi: { name: "Hindi", native: "हिन्दी", flag: "🇮🇳" },
     ta: { name: "Tamil", native: "தமிழ்", flag: "🇮🇳" },
@@ -16,43 +17,116 @@ const languages = {
     mr: { name: "Marathi", native: "मराठी", flag: "🇮🇳" },
     gu: { name: "Gujarati", native: "ગુજરાતી", flag: "🇮🇳" },
     pa: { name: "Punjabi", native: "ਪੰਜਾਬੀ", flag: "🇮🇳" },
-    ur: { name: "Urdu", native: "اردو", flag: "🇵🇰" },
     or: { name: "Odia", native: "ଓଡ଼ିଆ", flag: "🇮🇳" },
     as: { name: "Assamese", native: "অসমীয়া", flag: "🇮🇳" },
-    // Foreign Languages
+    ur: { name: "Urdu", native: "اردو", flag: "🇵🇰" },
+    sa: { name: "Sanskrit", native: "संस्कृतम्", flag: "🇮🇳" },
+    ne: { name: "Nepali", native: "नेपाली", flag: "🇳🇵" },
+    si: { name: "Sinhala", native: "සිංහල", flag: "🇱🇰" },
+
+    // 🌍 Europe & Americas
+    es: { name: "Spanish", native: "Español", flag: "🇪🇸" },
     fr: { name: "French", native: "Français", flag: "🇫🇷" },
     de: { name: "German", native: "Deutsch", flag: "🇩🇪" },
-    es: { name: "Spanish", native: "Español", flag: "🇪🇸" },
+    it: { name: "Italian", native: "Italiano", flag: "🇮🇹" },
+    pt: { name: "Portuguese", native: "Português", flag: "🇵🇹" },
+    ru: { name: "Russian", native: "Русский", flag: "🇷🇺" },
+    uk: { name: "Ukrainian", native: "Українська", flag: "🇺🇦" },
+    nl: { name: "Dutch", native: "Nederlands", flag: "🇳🇱" },
+    pl: { name: "Polish", native: "Polski", flag: "🇵🇱" },
+    cs: { name: "Czech", native: "Čeština", flag: "🇨🇿" },
+    el: { name: "Greek", native: "Ελληνικά", flag: "🇬🇷" },
+    sv: { name: "Swedish", native: "Svenska", flag: "🇸🇪" },
+    da: { name: "Danish", native: "Dansk", flag: "🇩🇰" },
+    fi: { name: "Finnish", native: "Suomi", flag: "🇫🇮" },
+    no: { name: "Norwegian", native: "Norsk", flag: "🇳🇴" },
+    hu: { name: "Hungarian", native: "Magyar", flag: "🇭🇺" },
+    ro: { name: "Romanian", native: "Română", flag: "🇷🇴" },
+
+    // 🌏 Asia Pacific
+    zh: { name: "Chinese", native: "中文", flag: "🇨🇳" },
     ja: { name: "Japanese", native: "日本語", flag: "🇯🇵" },
     ko: { name: "Korean", native: "한국어", flag: "🇰🇷" },
-    zh: { name: "Chinese", native: "中文", flag: "🇨🇳" },
-    ru: { name: "Russian", native: "Русский", flag: "🇷🇺" },
+    vi: { name: "Vietnamese", native: "Tiếng Việt", flag: "🇻🇳" },
+    th: { name: "Thai", native: "ไทย", flag: "🇹🇭" },
+    id: { name: "Indonesian", native: "Bahasa Indonesia", flag: "🇮🇩" },
+    ms: { name: "Malay", native: "Bahasa Melayu", flag: "🇲🇾" },
+    tl: { name: "Filipino", native: "Tagalog", flag: "🇵🇭" },
+    my: { name: "Burmese", native: "မြန်မာစာ", flag: "🇲🇲" },
+    km: { name: "Khmer", native: "ភាសាខ្មែរ", flag: "🇰🇭" },
+
+    // 🌍 Middle East & Africa
     ar: { name: "Arabic", native: "العربية", flag: "🇸🇦" },
-    pt: { name: "Portuguese", native: "Português", flag: "🇵🇹" },
-    it: { name: "Italian", native: "Italiano", flag: "🇮🇹" },
-    nl: { name: "Dutch", native: "Nederlands", flag: "🇳🇱" },
+    fa: { name: "Persian", native: "فارسی", flag: "🇮🇷" },
+    he: { name: "Hebrew", native: "עברית", flag: "🇮🇱" },
     tr: { name: "Turkish", native: "Türkçe", flag: "🇹🇷" },
-    pl: { name: "Polish", native: "Polski", flag: "🇵🇱" }
+    sw: { name: "Swahili", native: "Kiswahili", flag: "🇰🇪" },
+    am: { name: "Amharic", native: "አማርኛ", flag: "🇪🇹" },
+    zu: { name: "Zulu", native: "isiZulu", flag: "🇿🇦" }
 };
 
-// ================= CURRENCIES =================
+// ================= CURRENCIES (MAX EXTENDED) =================
 const currencies = {
+    // 🌍 Major Global Currencies
     USD: { name: "US Dollar", symbol: "$" },
-    INR: { name: "Indian Rupee", symbol: "₹" },
     EUR: { name: "Euro", symbol: "€" },
     GBP: { name: "British Pound", symbol: "£" },
     JPY: { name: "Japanese Yen", symbol: "¥" },
-    AUD: { name: "Australian Dollar", symbol: "A$" },
-    CAD: { name: "Canadian Dollar", symbol: "C$" },
     CHF: { name: "Swiss Franc", symbol: "CHF" },
+    CAD: { name: "Canadian Dollar", symbol: "C$" },
+    AUD: { name: "Australian Dollar", symbol: "A$" },
+
+    // 🌏 Asia & Indian Subcontinent
+    INR: { name: "Indian Rupee", symbol: "₹" },
     CNY: { name: "Chinese Yuan", symbol: "¥" },
+    HKD: { name: "Hong Kong Dollar", symbol: "HK$" },
     SGD: { name: "Singapore Dollar", symbol: "S$" },
-    AED: { name: "UAE Dirham", symbol: "د.إ" },
-    SAR: { name: "Saudi Riyal", symbol: "ر.س" },
+    KRW: { name: "South Korean Won", symbol: "₩" },
+    TWD: { name: "New Taiwan Dollar", symbol: "NT$" },
+    IDR: { name: "Indonesian Rupiah", symbol: "Rp" },
+    MYR: { name: "Malaysian Ringgit", symbol: "RM" },
+    THB: { name: "Thai Baht", symbol: "฿" },
+    PHP: { name: "Philippine Peso", symbol: "₱" },
+    VND: { name: "Vietnamese Dong", symbol: "₫" },
     PKR: { name: "Pakistani Rupee", symbol: "₨" },
     BDT: { name: "Bangladeshi Taka", symbol: "৳" },
     LKR: { name: "Sri Lankan Rupee", symbol: "Rs" },
-    NPR: { name: "Nepalese Rupee", symbol: "₨" }
+    NPR: { name: "Nepalese Rupee", symbol: "₨" },
+
+    // 🕌 Middle East
+    AED: { name: "UAE Dirham", symbol: "د.إ" },
+    SAR: { name: "Saudi Riyal", symbol: "ر.س" },
+    ILS: { name: "Israeli New Shekel", symbol: "₪" },
+    QAR: { name: "Qatari Riyal", symbol: "ر.ق" },
+    KWD: { name: "Kuwaiti Dinar", symbol: "د.ك" },
+    OMR: { name: "Omani Rial", symbol: "ر.ع." },
+    BHD: { name: "Bahraini Dinar", symbol: ".د.ב" },
+
+    // 🇪🇺 Europe (Non-Euro) & Surrounding
+    SEK: { name: "Swedish Krona", symbol: "kr" },
+    NOK: { name: "Norwegian Krone", symbol: "kr" },
+    DKK: { name: "Danish Krone", symbol: "kr" },
+    PLN: { name: "Polish Zloty", symbol: "zł" },
+    CZK: { name: "Czech Koruna", symbol: "Kč" },
+    HUF: { name: "Hungarian Forint", symbol: "Ft" },
+    RON: { name: "Romanian Leu", symbol: "lei" },
+    RUB: { name: "Russian Ruble", symbol: "₽" },
+    TRY: { name: "Turkish Lira", symbol: "₺" },
+
+    // 🌎 The Americas
+    MXN: { name: "Mexican Peso", symbol: "$" },
+    BRL: { name: "Brazilian Real", symbol: "R$" },
+    ARS: { name: "Argentine Peso", symbol: "$" },
+    CLP: { name: "Chilean Peso", symbol: "$" },
+    COP: { name: "Colombian Peso", symbol: "$" },
+    PEN: { name: "Peruvian Sol", symbol: "S/" },
+
+    // 🌍 Africa & Oceania
+    ZAR: { name: "South African Rand", symbol: "R" },
+    EGP: { name: "Egyptian Pound", symbol: "E£" },
+    NGN: { name: "Nigerian Naira", symbol: "₦" },
+    KES: { name: "Kenyan Shilling", symbol: "KSh" },
+    NZD: { name: "New Zealand Dollar", symbol: "NZ$" }
 };
 
 // ================= INITIALIZATION =================
@@ -947,24 +1021,66 @@ function downloadDoc() {
     a.click();
 }
 
-// ================= CONVERSATION MODE =================
-// 1. ROBUST LANGUAGE MAPPING (Fixes "Not Working" languages)
-// Browsers need 'hi-IN', not just 'hi'
+// ================= CONVERSATION MODE & SPEECH RECOGNITION =================
+// 1. ROBUST LANGUAGE MAPPING (BCP-47 Locale Codes)
 const langMap = {
+    // Indian & Regional
     'en': 'en-US',
     'hi': 'hi-IN',
-    'kn': 'kn-IN',
     'ta': 'ta-IN',
     'te': 'te-IN',
+    'kn': 'kn-IN',
     'ml': 'ml-IN',
     'bn': 'bn-IN',
+    'mr': 'mr-IN',
+    'gu': 'gu-IN',
+    'pa': 'pa-IN',
+    'or': 'or-IN',
+    'as': 'as-IN',
+    'ur': 'ur-PK',
+    'sa': 'sa-IN',
+    'ne': 'ne-NP',
+    'si': 'si-LK',
+
+    // Europe & Americas
     'es': 'es-ES',
     'fr': 'fr-FR',
     'de': 'de-DE',
-    'ja': 'ja-JP',
+    'it': 'it-IT',
+    'pt': 'pt-PT',
+    'ru': 'ru-RU',
+    'uk': 'uk-UA',
+    'nl': 'nl-NL',
+    'pl': 'pl-PL',
+    'cs': 'cs-CZ',
+    'el': 'el-GR',
+    'sv': 'sv-SE',
+    'da': 'da-DK',
+    'fi': 'fi-FI',
+    'no': 'nb-NO',
+    'hu': 'hu-HU',
+    'ro': 'ro-RO',
+
+    // Asia Pacific
     'zh': 'zh-CN',
+    'ja': 'ja-JP',
+    'ko': 'ko-KR',
+    'vi': 'vi-VN',
+    'th': 'th-TH',
+    'id': 'id-ID',
+    'ms': 'ms-MY',
+    'tl': 'fil-PH',
+    'my': 'my-MM',
+    'km': 'km-KH',
+
+    // Middle East & Africa
     'ar': 'ar-SA',
-    'ru': 'ru-RU'
+    'fa': 'fa-IR',
+    'he': 'he-IL',
+    'tr': 'tr-TR',
+    'sw': 'sw-KE',
+    'am': 'am-ET',
+    'zu': 'zu-ZA'
 };
 
 function openConversationMode() {

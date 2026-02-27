@@ -1,0 +1,1328 @@
+/* 
+ * route.css - Production-grade Navigation App Styles
+ * Butter-smooth 60fps, polished like Waze/Google Maps
+ * Fixes z-index/fullscreen bugs with GPU acceleration
+ */
+
+/* ==========================================================================
+   MAP CONTAINER & LEAFLET ENHANCEMENTS
+   ========================================================================== */
+#mapContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    isolation: isolate; /* Creates new stacking context */
+    transform: translate3d(0,0,0); /* GPU acceleration */
+    will-change: transform;
+    overflow: hidden;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    transform: translate3d(0,0,0);
+    will-change: transform;
+}
+
+/* Leaflet tile loading performance */
+.leaflet-tile {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    backface-visibility: hidden;
+}
+
+/* ==========================================================================
+   DYNAMIC MARKERS - BUTTER SMOOTH ANIMATIONS (60fps)
+   ========================================================================== */
+/* User navigation arrow - critical for smooth rotation */
+.gps-arrow {
+    transition: transform 0.3s linear !important;
+    will-change: transform !important;
+    transform-origin: center center !important;
+    backface-visibility: hidden !important;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)) !important;
+}
+
+.nav-arrow-icon {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    will-change: transform !important;
+    text-align: center;
+    line-height: 30px;
+    color: #2563eb;
+    text-shadow: 0 0 5px white, 0 0 10px rgba(255,255,255,0.7);
+}
+
+/* Premium start/end markers with smooth transitions */
+.start-marker-premium,
+.dest-marker-premium {
+    transition: transform 0.3s ease, filter 0.3s ease !important;
+    will-change: transform !important;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    animation: marker-float 3s ease-in-out infinite;
+}
+
+.start-marker-premium:hover,
+.dest-marker-premium:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3));
+}
+
+@keyframes marker-float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.05); }
+}
+
+/* ==========================================================================
+   HUD & OVERLAYS - ALWAYS ON TOP (Fullscreen fix)
+   ========================================================================== */
+#telemetryOverlay {
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    right: 20px !important;
+    z-index: 9999 !important;
+    backdrop-filter: blur(12px) saturate(180%);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 15px 25px;
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    transform: translate3d(0,0,0);
+    will-change: transform, opacity;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Dark mode support for telemetry */
+@media (prefers-color-scheme: dark) {
+    #telemetryOverlay {
+        background: rgba(15, 23, 42, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+    }
+}
+
+#aiCopilot {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 9999 !important;
+    backdrop-filter: blur(12px) saturate(200%);
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 30px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translate3d(0,0,0);
+    will-change: transform, opacity;
+    transition: all 0.3s ease;
+}
+
+#aiCopilot:hover {
+    background: rgba(0, 0, 0, 0.95);
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+/* ==========================================================================
+   CAMERA ALERTS & WARNINGS
+   ========================================================================== */
+#cameraAlertBox {
+    position: fixed !important;
+    top: 100px !important;
+    left: 50% !important;
+    transform: translateX(-50%) translate3d(0,0,0) !important;
+    z-index: 9998 !important;
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.95), rgba(253, 230, 138, 0.95));
+    border-left: 6px solid #f59e0b;
+    border-radius: 16px;
+    padding: 15px 20px;
+    max-width: 350px;
+    width: 90%;
+    box-shadow: 
+        0 20px 60px rgba(245, 158, 11, 0.3),
+        0 8px 20px rgba(0, 0, 0, 0.2);
+    animation: slide-down 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, opacity;
+}
+
+.camera-alert-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 10000 !important;
+    pointer-events: none;
+}
+
+.camera-alert {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 10001 !important;
+    background: rgba(239, 68, 68, 0.15);
+    backdrop-filter: blur(4px);
+    animation: pulse-red 0.8s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes pulse-red {
+    0% { 
+        background: rgba(239, 68, 68, 0.1);
+        box-shadow: inset 0 0 0 rgba(239, 68, 68, 0);
+    }
+    100% { 
+        background: rgba(239, 68, 68, 0.25);
+        box-shadow: inset 0 0 200px rgba(239, 68, 68, 0.4);
+    }
+}
+
+@keyframes slide-down {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+/* ==========================================================================
+   ARRIVAL POPUP & MODALS
+   ========================================================================== */
+.arrival-popup {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.9) !important;
+    z-index: 10002 !important;
+    backdrop-filter: blur(20px) saturate(200%);
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 28px;
+    padding: 40px 30px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 
+        0 40px 120px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    text-align: center;
+    animation: modal-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    will-change: transform, opacity;
+}
+
+@keyframes modal-appear {
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ==========================================================================
+   CONTROLS - BOTTOM BAR & BUTTONS
+   ========================================================================== */
+.bottom-controls {
+    position: fixed !important;
+    bottom: 30px !important;
+    left: 50% !important;
+    transform: translateX(-50%) translate3d(0,0,0) !important;
+    z-index: 9999 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 0 20px;
+    pointer-events: none; /* Let children handle clicks */
+}
+
+.bottom-controls > * {
+    pointer-events: auto; /* Restore click events */
+}
+
+#navActionBtn {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    border: none;
+    border-radius: 20px;
+    padding: 20px 40px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: white;
+    box-shadow: 
+        0 20px 60px rgba(37, 99, 235, 0.4),
+        0 8px 20px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, box-shadow, background;
+    min-width: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+#navActionBtn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 
+        0 25px 80px rgba(37, 99, 235, 0.5),
+        0 10px 30px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+#navActionBtn:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.1s;
+}
+
+/* Premium floating buttons */
+.premium-control {
+    position: fixed !important;
+    z-index: 9997 !important;
+    backdrop-filter: blur(12px) saturate(180%);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, box-shadow, background;
+    transform: translate3d(0,0,0);
+}
+
+.premium-control:hover {
+    transform: scale(1.08) translate3d(0,0,0);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 
+        0 15px 50px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Specific premium buttons positioning */
+#voiceToggleBtn {
+    top: 20px !important;
+    right: 20px !important;
+}
+
+#trafficToggleBtn {
+    bottom: 90px !important;
+    right: 30px !important;
+}
+
+#fullScreenBtn {
+    bottom: 30px !important;
+    right: 30px !important;
+}
+
+/* ==========================================================================
+   SEARCH SUGGESTIONS - SMOOTH DROPDOWN
+   ========================================================================== */
+.search-suggestions {
+    position: absolute !important;
+    z-index: 10001 !important;
+    backdrop-filter: blur(20px) saturate(200%);
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 16px;
+    box-shadow: 
+        0 30px 90px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: none;
+    animation: slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-origin: top center;
+    will-change: transform, opacity;
+    margin-top: 5px;
+}
+
+@keyframes slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.suggestion-item {
+    padding: 16px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    transition: all 0.2s ease;
+    font-weight: 500;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    will-change: background, transform;
+    transform: translate3d(0,0,0);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: rgba(241, 245, 249, 0.8);
+    transform: translateX(4px);
+    border-left: 4px solid #3b82f6;
+    padding-left: 16px; /* Compensate for border */
+}
+
+/* Dark mode support for search */
+@media (prefers-color-scheme: dark) {
+    .search-suggestions {
+        background: rgba(15, 23, 42, 0.98);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .suggestion-item {
+        color: #f1f5f9;
+        border-bottom-color: rgba(71, 85, 105, 0.5);
+    }
+    
+    .suggestion-item:hover {
+        background: rgba(30, 41, 59, 0.8);
+    }
+}
+
+/* ==========================================================================
+   FULLSCREEN FIXES - CRITICAL FOR HUD VISIBILITY
+   ========================================================================== */
+:fullscreen #telemetryOverlay,
+:fullscreen #aiCopilot,
+:fullscreen .bottom-controls,
+:fullscreen .premium-control,
+:-webkit-full-screen #telemetryOverlay,
+:-webkit-full-screen #aiCopilot,
+:-webkit-full-screen .bottom-controls,
+:-webkit-full-screen .premium-control,
+:-moz-full-screen #telemetryOverlay,
+:-moz-full-screen #aiCopilot,
+:-moz-full-screen .bottom-controls,
+:-moz-full-screen .premium-control {
+    z-index: 2147483647 !important; /* Max z-index for fullscreen */
+    position: fixed !important;
+}
+
+/* Premium cockpit layout in fullscreen */
+:fullscreen #telemetryOverlay {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    width: 100vw !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 90px !important;
+    border-radius: 0 !important;
+    background: rgba(15, 23, 42, 0.98) !important;
+    border-bottom: 2px solid #2563eb !important;
+    padding: 0 50px !important;
+    backdrop-filter: blur(20px) saturate(200%) !important;
+}
+
+:fullscreen .nav-stat {
+    flex: 1;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #f1f5f9;
+}
+
+:fullscreen .nav-stat:last-child {
+    border-right: none;
+}
+
+/* ==========================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .gps-arrow,
+    .nav-arrow-icon,
+    #navActionBtn,
+    .premium-control,
+    .search-suggestions,
+    .suggestion-item,
+    #cameraAlertBox,
+    .arrival-popup {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+/* Hardware acceleration layers */
+.hardware-accelerated {
+    transform: translate3d(0,0,0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* ==========================================================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================================================== */
+@media (max-width: 768px) {
+    #telemetryOverlay {
+        top: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        padding: 12px 15px !important;
+        border-radius: 16px !important;
+    }
+    
+    .nav-stat {
+        padding: 0 8px;
+    }
+    
+    #navActionBtn {
+        padding: 18px 30px;
+        font-size: 1.1rem;
+        min-width: 200px;
+    }
+    
+    .premium-control {
+        transform: scale(0.95);
+    }
+    
+    .premium-control:hover {
+        transform: scale(1);
+    }
+    
+    /* Stack bottom controls vertically on small screens */
+    .bottom-controls {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #telemetryOverlay {
+        flex-wrap: wrap;
+        height: auto;
+        gap: 10px;
+    }
+    
+    .nav-stat {
+        flex: 0 0 calc(50% - 10px);
+        border-right: none;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding-bottom: 10px;
+    }
+    
+    .nav-stat:nth-child(odd) {
+        border-right: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .nav-stat:nth-last-child(-n+2) {
+        border-bottom: none;
+    }
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Smooth visibility transitions */
+.fade-in {
+    animation: fade-in 0.3s ease forwards;
+}
+
+.fade-out {
+    animation: fade-out 0.3s ease forwards;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* ==========================================================================
+   DARK MODE ENHANCEMENTS
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+    .premium-control {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+    }
+    
+    #cameraAlertBox {
+        background: linear-gradient(135deg, rgba(120, 53, 15, 0.95), rgba(180, 83, 9, 0.95));
+        color: #fef3c7;
+    }
+    
+    #navActionBtn {
+        box-shadow: 
+            0 20px 60px rgba(37, 99, 235, 0.3),
+            0 8px 20px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Print styles */
+@media print {
+    #telemetryOverlay,
+    #aiCopilot,
+    .bottom-controls,
+    .premium-control,
+    #cameraAlertBox {
+        display: none !important;
+    }
+}
+/* 
+ * ADDITIONAL STYLES FOR MISSING ELEMENTS FROM HTML
+ * ==========================================================================
+ */
+
+/* ==========================================================================
+   PREMIUM LOADER OVERLAY (From HTML <style> section)
+   ========================================================================== */
+.page-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1e3a8a, #0f172a);
+    z-index: 99999 !important; /* Higher than everything */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s ease;
+    backdrop-filter: blur(10px);
+}
+
+.page-transition-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.transition-content {
+    text-align: center;
+    color: white;
+}
+
+.transition-loader {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: rotate 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+/* ==========================================================================
+   SPEED WARNING (From HTML #speedWarning)
+   ========================================================================== */
+#speedWarning {
+    position: fixed !important;
+    top: 80px !important;
+    left: 50% !important;
+    transform: translateX(-50%) translate3d(0,0,0) !important;
+    z-index: 9998 !important;
+    backdrop-filter: blur(12px);
+    background: rgba(254, 226, 226, 0.95);
+    border-left: 6px solid #ef4444;
+    border-radius: 16px;
+    padding: 15px 20px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 
+        0 20px 60px rgba(239, 68, 68, 0.3),
+        0 8px 20px rgba(0, 0, 0, 0.2);
+    animation: slide-down 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    will-change: transform, opacity;
+}
+
+#speedWarning i {
+    color: #ef4444 !important;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+#speedWarning strong {
+    color: #7f1d1d;
+}
+
+#speedWarning p {
+    margin: 5px 0 0;
+    font-size: 0.9rem;
+    color: #991b1b;
+}
+
+/* ==========================================================================
+   SIMULATE JOURNEY BUTTON (From HTML #simulateBtn)
+   ========================================================================== */
+#simulateBtn {
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+    border: none !important;
+    border-radius: 15px !important;
+    padding: 12px 25px !important;
+    color: white !important;
+    font-weight: 700 !important;
+    box-shadow: 
+        0 10px 30px rgba(139, 92, 246, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, box-shadow;
+    margin-top: 10px !important;
+}
+
+#simulateBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 15px 40px rgba(139, 92, 246, 0.4),
+        0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+#simulateBtn:active {
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   CANCEL NAVIGATION BUTTON (From HTML #cancelNavBtn)
+   ========================================================================== */
+#cancelNavBtn {
+    backdrop-filter: blur(10px);
+    background: rgba(254, 226, 226, 0.95) !important;
+    color: #dc2626 !important;
+    border: 2px solid #ef4444 !important;
+    border-radius: 15px !important;
+    padding: 12px 25px !important;
+    font-weight: 700 !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, background;
+    box-shadow: 
+        0 10px 30px rgba(239, 68, 68, 0.15),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#cancelNavBtn:hover {
+    transform: translateY(-2px);
+    background: rgba(254, 202, 202, 0.95) !important;
+    box-shadow: 
+        0 15px 40px rgba(239, 68, 68, 0.25),
+        0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+#cancelNavBtn:active {
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   SHARE ROUTE BUTTON (From HTML #shareRouteBtn)
+   ========================================================================== */
+#shareRouteBtn {
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+    border: none !important;
+    border-radius: 15px !important;
+    padding: 15px 25px !important;
+    color: white !important;
+    font-weight: 700 !important;
+    box-shadow: 
+        0 10px 40px rgba(139, 92, 246, 0.3),
+        0 4px 16px rgba(0, 0, 0, 0.15),
+        0 0 0 2px rgba(139, 92, 246, 0.2);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, box-shadow;
+    width: 100% !important;
+    display: none !important; /* Initially hidden */
+    animation: share-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes share-glow {
+    0% {
+        box-shadow: 
+            0 10px 40px rgba(139, 92, 246, 0.3),
+            0 4px 16px rgba(0, 0, 0, 0.15),
+            0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+    100% {
+        box-shadow: 
+            0 15px 50px rgba(139, 92, 246, 0.5),
+            0 6px 20px rgba(0, 0, 0, 0.2),
+            0 0 0 4px rgba(139, 92, 246, 0.4);
+    }
+}
+
+#shareRouteBtn:hover {
+    transform: translateY(-3px);
+    animation: none; /* Stop glow on hover for smooth transition */
+    box-shadow: 
+        0 20px 60px rgba(139, 92, 246, 0.6),
+        0 8px 24px rgba(0, 0, 0, 0.25),
+        0 0 0 4px rgba(139, 92, 246, 0.5);
+}
+
+/* ==========================================================================
+   PREMIUM TOAST NOTIFICATION (From HTML #premiumToast)
+   ========================================================================== */
+#premiumToast {
+    position: fixed !important;
+    bottom: 30px !important;
+    left: 50% !important;
+    transform: translateX(-50%) translate3d(0,0,0) !important;
+    z-index: 10000 !important;
+    backdrop-filter: blur(20px) saturate(200%);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+    color: white;
+    padding: 20px !important;
+    border-radius: 20px !important;
+    max-width: 450px !important;
+    width: 90% !important;
+    box-shadow: 
+        0 30px 90px rgba(0, 0, 0, 0.4),
+        0 10px 30px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex !important;
+    align-items: center;
+    gap: 15px;
+    will-change: transform, opacity;
+    pointer-events: auto;
+}
+
+#toastIcon {
+    font-size: 1.8rem !important;
+    flex-shrink: 0;
+}
+
+#toastTitle {
+    font-weight: 800 !important;
+    margin-bottom: 5px !important;
+    font-size: 1.1rem !important;
+    color: #f1f5f9;
+}
+
+#toastMessage {
+    font-size: 0.95rem !important;
+    opacity: 0.9 !important;
+    color: #cbd5e1;
+    line-height: 1.4;
+}
+
+/* ==========================================================================
+   RISK INDICATOR & EXPLANATION LIST (From HTML classes)
+   ========================================================================== */
+.risk-indicator {
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.9));
+    border-radius: 20px;
+    padding: 20px;
+    font-weight: 800;
+    font-size: 1.5rem;
+    text-align: center;
+    color: #1e40af;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    box-shadow: 
+        0 10px 30px rgba(30, 64, 175, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    will-change: transform, background;
+}
+
+.explanation-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0 0;
+}
+
+.explanation-list li {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    backdrop-filter: blur(10px);
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 12px;
+    border-left: 4px solid #10b981;
+    transition: all 0.3s ease;
+    will-change: transform, background;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.explanation-list li:before {
+    content: "✓";
+    color: #10b981;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.explanation-list li:hover {
+    transform: translateX(5px);
+    background: rgba(240, 253, 244, 0.9);
+    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.1);
+}
+
+/* ==========================================================================
+   INPUT FIELDS ENHANCEMENTS (From HTML .premium-input)
+   ========================================================================== */
+.premium-input {
+    backdrop-filter: blur(10px);
+    background: rgba(248, 250, 252, 0.9) !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    width: 100%;
+    will-change: transform, border-color;
+    transform: translate3d(0,0,0);
+}
+
+.premium-input:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 
+        0 0 0 4px rgba(37, 99, 235, 0.1),
+        0 5px 20px rgba(0, 0, 0, 0.05) !important;
+    transform: translateY(-1px);
+}
+
+/* Dark mode input support */
+@media (prefers-color-scheme: dark) {
+    .premium-input {
+        background: rgba(30, 41, 59, 0.9) !important;
+        border-color: #475569 !important;
+        color: #f1f5f9 !important;
+    }
+    
+    .premium-input:focus {
+        background: rgba(15, 23, 42, 0.95) !important;
+        border-color: #3b82f6 !important;
+    }
+}
+
+/* ==========================================================================
+   BUTTON ENHANCEMENTS (From HTML .btn classes)
+   ========================================================================== */
+.btn {
+    backdrop-filter: blur(8px);
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    will-change: transform, box-shadow;
+    cursor: pointer;
+    transform: translate3d(0,0,0);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #475569, #64748b) !important;
+    color: white !important;
+    box-shadow: 0 8px 25px rgba(71, 85, 105, 0.2);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(71, 85, 105, 0.3);
+}
+
+/* ==========================================================================
+   STAT CARD ENHANCEMENTS (From HTML .stat-card)
+   ========================================================================== */
+.stat-card {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.9));
+    border-radius: 20px !important;
+    padding: 20px !important;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    box-shadow: 
+        0 10px 30px rgba(30, 64, 175, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    will-change: transform, box-shadow;
+    transform: translate3d(0,0,0);
+}
+
+.stat-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 20px 50px rgba(30, 64, 175, 0.2),
+        0 8px 25px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.stat-value {
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    margin: 10px 0 !important;
+    line-height: 1.2;
+}
+
+.stat-label {
+    color: #64748b !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 5px !important;
+}
+
+/* Dark mode stat cards */
+@media (prefers-color-scheme: dark) {
+    .stat-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9)) !important;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .stat-label {
+        color: #94a3b8 !important;
+    }
+}
+
+/* ==========================================================================
+   CURRENT INSTRUCTION PANEL (From HTML #currentInstructionMain)
+   ========================================================================== */
+#currentInstructionMain {
+    backdrop-filter: blur(12px);
+    background: rgba(241, 245, 249, 0.9) !important;
+    padding: 20px !important;
+    border-radius: 16px !important;
+    font-weight: 600 !important;
+    min-height: 80px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 2px solid rgba(226, 232, 240, 0.5);
+    transition: all 0.3s ease;
+    will-change: background, border-color;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+#currentInstructionMain.active {
+    background: rgba(239, 246, 255, 0.95) !important;
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    animation: instruction-pulse 2s ease-in-out infinite;
+}
+
+@keyframes instruction-pulse {
+    0%, 100% { border-color: rgba(59, 130, 246, 0.3); }
+    50% { border-color: rgba(59, 130, 246, 0.6); }
+}
+
+/* ==========================================================================
+   INSTRUCTION LIST (From HTML #instructionListMain)
+   ========================================================================== */
+#instructionListMain {
+    backdrop-filter: blur(10px);
+    background: rgba(248, 250, 252, 0.9);
+    border-radius: 16px;
+    padding: 20px !important;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    margin: 0 !important;
+}
+
+#instructionListMain li {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
+    transition: all 0.3s ease;
+    will-change: transform, background;
+}
+
+#instructionListMain li:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.1);
+}
+
+#instructionListMain li:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   PREMIUM CARD ENHANCEMENT (From HTML .premium-card)
+   ========================================================================== */
+.premium-card {
+    backdrop-filter: blur(20px) saturate(180%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 24px !important;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.08),
+        0 8px 30px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    padding: 30px !important;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, box-shadow;
+    transform: translate3d(0,0,0);
+}
+
+.premium-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 30px 80px rgba(0, 0, 0, 0.12),
+        0 12px 40px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+/* Dark mode premium cards */
+@media (prefers-color-scheme: dark) {
+    .premium-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f1f5f9;
+    }
+}
+
+/* ==========================================================================
+   VOICE BUTTON PREMIUM (From HTML .voice-btn.premium)
+   ========================================================================== */
+.voice-btn.premium {
+    backdrop-filter: blur(15px);
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: white !important;
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.5rem !important;
+    border: none !important;
+    box-shadow: 
+        0 15px 40px rgba(16, 185, 129, 0.4),
+        0 6px 20px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    will-change: transform, box-shadow;
+    position: fixed !important;
+    z-index: 9997 !important;
+    top: 20px !important;
+    right: 20px !important;
+    animation: float 3s ease-in-out infinite !important;
+}
+
+.voice-btn.premium.muted {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    box-shadow: 
+        0 15px 40px rgba(239, 68, 68, 0.4),
+        0 6px 20px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.voice-btn.premium:hover {
+    transform: scale(1.15) rotate(10deg) !important;
+    box-shadow: 
+        0 20px 50px rgba(16, 185, 129, 0.6),
+        0 8px 25px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.voice-btn.premium.muted:hover {
+    box-shadow: 
+        0 20px 50px rgba(239, 68, 68, 0.6),
+        0 8px 25px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ==========================================================================
+   GRADIENT BUTTON ENHANCEMENT (From HTML .gradient-btn)
+   ========================================================================== */
+.gradient-btn {
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+    color: white !important;
+    border: none !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border-radius: 15px !important;
+    padding: 15px 30px !important;
+    font-weight: 600 !important;
+    box-shadow: 
+        0 10px 30px rgba(37, 99, 235, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.1) !important;
+    will-change: transform, box-shadow;
+    transform: translate3d(0,0,0);
+}
+
+.gradient-btn:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 
+        0 20px 50px rgba(37, 99, 235, 0.5),
+        0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.gradient-btn:active {
+    transform: translateY(0) !important;
+    transition-duration: 0.1s !important;
+}
+
+.gradient-btn:after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) !important;
+    transition: 0.5s !important;
+}
+
+.gradient-btn:hover:after {
+    left: 100% !important;
+}
+
+/* ==========================================================================
+   PAGE TRANSITIONS (From HTML .page classes)
+   ========================================================================== */
+.page {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    will-change: transform, opacity;
+}
+
+.page.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    position: relative;
+}
+
+/* ==========================================================================
+   MAIN CONTENT AREA (From HTML .main-content-area)
+   ========================================================================== */
+.main-content-area {
+    position: relative;
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    transform: translate3d(0,0,0);
+    will-change: transform;
+}
+
+/* ==========================================================================
+   PREMIUM MAP FRAME RESPONSIVE (From HTML .premium-map-frame)
+   ========================================================================== */
+.premium-map-frame {
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: 3px solid white;
+    position: relative;
+    height: 550px;
+    transition: height 0.3s ease;
+    transform: translate3d(0,0,0);
+    will-change: transform;
+}
+
+.premium-map-frame:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb, #8b5cf6, #10b981);
+    z-index: 1001;
+}
+
+/* Mobile adjustment */
+@media (max-width: 768px) {
+    .premium-map-frame {
+        height: 380px;
+        border-radius: 16px;
+    }
+}
+
+/* ==========================================================================
+   SCROLLBAR STYLING
+   ========================================================================== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    backdrop-filter: blur(10px);
+    background: rgba(241, 245, 249, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+}
+
+/* Dark mode scrollbar */
+@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-track {
+        background: rgba(30, 41, 59, 0.5);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #475569, #334155);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #334155, #1e293b);
+    }
+}

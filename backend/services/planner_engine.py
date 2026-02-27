@@ -15,7 +15,7 @@ GENAI_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_K
 # --- INITIALIZE AI ---
 if GENAI_API_KEY:
     genai.configure(api_key=GENAI_API_KEY)
-    ai_model = genai.GenerativeModel('gemini-1.5-flash')
+    ai_model = genai.GenerativeModel('gemini-2.0-flash')
 else:
     logging.error("🚨 CRITICAL: No Gemini API Key found in planner engine!")
     ai_model = None
