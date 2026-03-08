@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SafeNav | Urban Mobility Risk Router</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base typography */
+        body { font-family: 'Poppins', sans-serif; }
+        
+        /* Map takes up the entire background layer */
+        #map { height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        /* Glassmorphism for the control panel */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Custom sleek scrollbar for the mobile bottom sheet */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white overflow-hidden">
+
+    <div id="map"></div>
+
+    <main class="relative z-10 flex flex-col md:flex-row h-screen pointer-events-none">
+        
+        <div class="pointer-events-auto glass-panel w-full md:w-96 h-[65vh] md:h-full mt-auto md:mt-0 p-5 overflow-y-auto rounded-t-3xl md:rounded-none md:border-r border-slate-700 shadow-2xl flex flex-col gap-6">
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-emerald-400"><i class="fas fa-shield-alt"></i> SafeNav</h1>
+                    <p class="text-xs text-slate-400">Urban Mobility Risk Router</p>
+                </div>
+                <button class="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition"><i class="fas fa-bars"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="relative">
+                    <i class="fas fa-map-marker-alt absolute left-3 top-3 text-emerald-500"></i>
+                    <input type="text" id="startLocation" placeholder="Start Location" class="w-full bg-slate-800 text-white text-sm rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-slate-700">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-flag-checkered absolute left-3 top-3 text-red-400"></i>
+                    <input type="text" id="destination" placeholder="Destination" class="w-full bg-slate-800 text-white text-sm rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-slate-700">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="transportMode" class="bg-slate-800 text-white text-sm rounded-lg px-3 py-2.5 border border-slate-700 focus:outline-none">
+                        <option value="walk">🚶 Walking</option>
+                        <option value="cycle">🚲 Cycling</option>
+                        <option value="drive">🚗 Driving</option>
+                    </select>
+                    <select id="departureTime" class="bg-slate-800 text-white text-sm rounded-lg px-3 py-2.5 border border-slate-700 focus:outline-none">
+                        <option value="now">🕒 Leave Now</option>
+                        <option value="later">📅 Later</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr class="border-slate-700">
+
+            <div class="space-y-4">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Environmental Risk Factors</h3>
+                
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400"><i class="fas fa-smog"></i> AQI Sensitivity</span>
+                        <span id="aqiVal" class="text-emerald-400 font-bold">Medium</span>
+                    </div>
+                    <input type="range" id="aqiWeight" min="1" max="3" value="2" class="w-full accent-emerald-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400"><i class="fas fa-temperature-high"></i> Heat Sensitivity</span>
+                        <span id="heatVal" class="text-emerald-400 font-bold">Medium</span>
+                    </div>
+                    <input type="range" id="heatWeight" min="1" max="3" value="2" class="w-full accent-emerald-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400"><i class="fas fa-balance-scale"></i> Risk Tolerance</span>
+                        <span id="riskVal" class="text-yellow-400 font-bold">Balanced</span>
+                    </div>
+                    <input type="range" id="riskTolerance" min="1" max="3" value="2" class="w-full accent-yellow-500">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                        <span>Conservative</span>
+                        <span>Aggressive</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-800 p-3 rounded-lg border border-slate-700">
+                    <span class="text-sm text-slate-300"><i class="fas fa-exclamation-triangle text-red-400"></i> Avoid Hazard Zones</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="hazardToggle" class="sr-only peer" checked>
+                        <div class="w-9 h-5 bg-slate-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="space-y-3 mt-2" id="routeResults">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Recommended Routes</h3>
+                
+                <div class="bg-slate-800 border-2 border-emerald-500/50 p-3 rounded-xl cursor-pointer hover:bg-slate-700 transition">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2 py-1 rounded font-bold">Recommended</span>
+                            <h4 class="font-bold mt-1">Route A (Main Ave)</h4>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-emerald-400">18 min</div>
+                            <div class="text-xs text-slate-400">4.2 km</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs border-t border-slate-700 pt-2 mt-2">
+                        <span class="text-slate-400">Exposure Score:</span>
+                        <span class="font-bold text-emerald-400">45 (Low Risk)</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl cursor-pointer hover:bg-slate-700 transition opacity-80">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold">Route B (River Path)</h4>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-yellow-400">22 min</div>
+                            <div class="text-xs text-slate-400">4.5 km</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs border-t border-slate-700 pt-2 mt-2">
+                        <span class="text-slate-400">Exposure Score:</span>
+                        <span class="font-bold text-yellow-400">82 (Moderate)</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-900/50 transition mt-2">
+                <i class="fas fa-location-arrow"></i> Start Safe Navigation
+            </button>
+
+        </div>
+    </main>
+
+    <script>
+        // --- 1. Map Initialization ---
+        // Centered on Bangalore coordinates for urban testing
+        const map = L.map('map', {
+            zoomControl: false // Hide default zoom so it doesn't overlap the UI
+        }).setView([12.9716, 77.5946], 13); 
+
+        // Apply a dark theme map tile layer so it matches the Tailwind UI
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Move the zoom controls to the top right to stay out of the way
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // --- 2. State Management ---
+        // Grab the DOM elements for the sliders and their text labels
+        const sliders = {
+            aqi: document.getElementById('aqiWeight'),
+            heat: document.getElementById('heatWeight'),
+            risk: document.getElementById('riskTolerance')
+        };
+        
+        const labels = {
+            aqi: document.getElementById('aqiVal'),
+            heat: document.getElementById('heatVal'),
+            risk: document.getElementById('riskVal')
+        };
+
+        // Text mappings for the 1-3 slider values
+        const textMapping = { 1: 'Low', 2: 'Medium', 3: 'High' };
+        const riskMapping = { 1: 'Conservative', 2: 'Balanced', 3: 'Aggressive' };
+
+        // --- 3. The Reactive Engine ---
+        // This fires instantly whenever a user drags a slider or flips a toggle
+        function updateRoutingLogic() {
+            // Update the UI text dynamically
+            labels.aqi.innerText = textMapping[sliders.aqi.value];
+            labels.heat.innerText = textMapping[sliders.heat.value];
+            labels.risk.innerText = riskMapping[sliders.risk.value];
+
+            // Build the clean JSON payload to send to your Flask backend (planner.py)
+            const currentPayload = {
+                aqi_weight: parseInt(sliders.aqi.value),
+                heat_weight: parseInt(sliders.heat.value),
+                risk_tolerance: riskMapping[sliders.risk.value],
+                avoid_hazards: document.getElementById('hazardToggle').checked
+            };
+            
+            // Console log to verify the instant updates are working
+            console.log("🔥 Recomputing Routes with payload:", currentPayload);
+            
+            // TODO: Here is where we will write the fetch() call to trigger planner.py
+        }
+
+        // --- 4. Event Listeners ---
+        // Attach the update function to all sliders and the hazard toggle
+        Object.values(sliders).forEach(slider => {
+            slider.addEventListener('input', updateRoutingLogic);
+        });
+        document.getElementById('hazardToggle').addEventListener('change', updateRoutingLogic);
+
+        console.log("✅ SafeNav Map Engine Loaded Successfully.");
+    </script>
+</body>
+</html>

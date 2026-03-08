@@ -77,32 +77,7 @@ function initializeAnalytics() {
     setInterval(updateLiveAnalytics, 5000);
 }
 
-window.enhanceRouteWithAnalytics = function(route) {
-    const distance = parseFloat(route.distance_km);
-    const duration = parseInt(route.duration_min);
-    
-    let score = 85; 
-    if (distance > 100) score -= 5;
-    if (userPreferences.avoidHighways) score += 5;
-    score += Math.random() * 10 - 5; 
-    
-    const finalScore = Math.max(0, Math.min(100, Math.round(score)));
 
-    let desc = '';
-    let factors = [];
-    if (finalScore >= 90) { desc = 'Excellent safety rating'; factors = ['Well-lit roads', 'Low accident rate', 'Good visibility']; } 
-    else if (finalScore >= 75) { desc = 'Good safety rating'; factors = ['Standard safety features', 'Moderate traffic']; } 
-    else { desc = 'Requires caution'; factors = ['Some challenging sections', 'Higher traffic areas']; }
-
-    route.analytics = {
-        fuelCost: (distance * 0.08 * 1.2).toFixed(2),
-        safetyScore: finalScore,
-        safetyDescription: desc,
-        safetyFactors: factors,
-        trafficPrediction: (new Date().getHours() >= 16 && new Date().getHours() <= 18) ? 'Heavy' : 'Light'
-    };
-    return route;
-};
 
 function updateLiveAnalytics() {
     // Background analytics sync logic
@@ -227,38 +202,6 @@ document.getElementById("shareRouteBtn")?.addEventListener("click", window.handl
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(initPremiumFeatures, 1000);
 });
-// ==========================================
-// 🌦️ RESTORED PREMIUM LOGIC (Weather & Alternates UI)
-// ==========================================
-
-// 1. Weather Alerts System
-let weatherAlerts = [];
-function initializeWeatherAlerts() {
-    setInterval(updateWeatherAlerts, 300000); // 5 mins
-    setTimeout(updateWeatherAlerts, 15000); // Initial check after 15s
-}
-
-function updateWeatherAlerts() {
-    const conditions = [
-        { type: 'clear', icon: '☀️', message: 'Clear skies, perfect driving conditions' },
-        { type: 'rain', icon: '🌧️', message: 'Light rain expected, road may be slippery' },
-        { type: 'fog', icon: '🌫️', message: 'Fog advisory in effect, reduce speed' }
-    ];
-    
-    const randomCondition = conditions[Math.floor(Math.random() * conditions.length)];
-    
-    if (!weatherAlerts.length || weatherAlerts[weatherAlerts.length - 1].type !== randomCondition.type) {
-        weatherAlerts.push({ ...randomCondition, timestamp: Date.now() });
-        window.showPremiumToast('Weather Update', randomCondition.message, randomCondition.icon, 8000);
-        
-        if (window.isVoiceActive && window.speak) {
-            window.speak(`Weather update: ${randomCondition.message}`);
-        }
-    }
-}
-// Start it
-document.addEventListener("DOMContentLoaded", initializeWeatherAlerts);
-
 
 // 2. Advanced Alternative Routes UI Builder
 window.previewAlternativeRoute = function(id) {

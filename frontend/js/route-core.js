@@ -31,6 +31,11 @@ let currentAnimPos = { lat: 0, lng: 0, heading: 0 };
 let targetAnimPos = { lat: 0, lng: 0, heading: 0 };  
 let lastAnimTick = 0;
 
+// --- HAZARD STATE ---
+let hazardMarkers = []; // Stores the MapLibre markers
+let activeHazards = []; // Stores the raw data for the radar
+let hazardAlertTriggered = new Set(); // Prevents repeating the same voice alert
+
 // System & UI State
 let isFullscreen = false;
 let isVoiceActive = true;
@@ -256,6 +261,8 @@ function startGPSTracking() {
             // 🔥 REAL CAMERA DETECTION (Overpass API)
             scanForSpeedCameras(latitude, longitude);       
             if (isNavigating) checkCameraProximity(latitude, longitude);
+            // 🔥 REAL ACCIDENT PROXIMITY (TomTom API)
+            if (isNavigating) checkHazardProximity(latitude, longitude);
 
             lastPosition = { lat: latitude, lng: longitude };
             window.currentRealSpeed = speedKmh; 
@@ -367,6 +374,11 @@ window.calculateRoute = async function() {
 };
 
 async function calculateRouteOSRM(start, end) {
+    // 🛡️ ITEM 9: Loading State (Added before the fetch)
+    if (typeof window.showPremiumToast === 'function') {
+        window.showPremiumToast('⏳ Analyzing', 'Calculating optimal route...', 'info');
+    }
+
     try {
         const startLng = start.lng, startLat = start.lat;
         const endLng = end.lng, endLat = end.lat;
@@ -375,16 +387,42 @@ async function calculateRouteOSRM(start, end) {
         const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson&steps=true`;
         
         const response = await fetch(osrmUrl);
+        
+        // 🛡️ ITEM 1 & 8: Catch API Graceful Failure (If OSRM servers go down)
+        if (!response.ok) {
+            if (typeof window.showPremiumToast === 'function') {
+                window.showPremiumToast('⚠️ Route Unavailable', 'Routing service temporarily down. Please retry.', 'error', 5000);
+            }
+            return null; // Safely exit without crashing
+        }
+
         const data = await response.json();
         
         if (data.routes && data.routes.length > 0) {
             const route = data.routes[0];
+            window.currentRouteLine = turf.lineString(route.geometry.coordinates);
+            
             // 🔥 INJECT THE MATH ENGINE HERE: Updates the ETA UI immediately!
-if (route && route.summary) {
-    if (typeof window.updateTransportETAs === 'function') {
-        window.updateTransportETAs(route.summary.lengthInMeters, route.summary.travelTimeInSeconds);
-    }
-}
+            if (route && route.summary) {
+                if (typeof window.updateTransportETAs === 'function') {
+                    window.updateTransportETAs(route.summary.lengthInMeters, route.summary.travelTimeInSeconds);
+                }
+            }
+
+            // 🛡️ ITEM 4: "Clean State" UI (Confirming route loaded successfully)
+            if (typeof window.showPremiumToast === 'function') {
+                window.showPremiumToast('✅ Route Found', 'Path calculated successfully.', 'success', 4000);
+            }
+
+            // 🛡️ ITEM 6: Populate the Transparency Panel (Make it visible)
+            const panel = document.getElementById('safetyTransparencyPanel');
+            if (panel) {
+                panel.style.display = 'block';
+                // Because OSRM doesn't return weather/incidents directly, we just update the distance here
+                const distanceUI = document.getElementById('bd-distance');
+                if(distanceUI) distanceUI.innerText = `Distance: ${(route.distance / 1000).toFixed(1)} km`;
+            }
+
             return {
                 coordinates: route.geometry.coordinates, // Array of [lng, lat]
                 steps: route.legs[0].steps.map(step => ({
@@ -396,7 +434,13 @@ if (route && route.summary) {
                 duration_min: Math.round(route.duration / 60)
             };
         }
-    } catch (error) { console.error("❌ OSRM API Error:", error); }
+    } catch (error) { 
+        console.error("❌ OSRM API Error:", error); 
+        // 🛡️ Ultimate fallback if network is completely dead
+        if (typeof window.showPremiumToast === 'function') {
+            window.showPremiumToast('📡 Network Error', 'Could not reach routing servers. Check connection.', 'error');
+        }
+    }
     return null;
 }
 
@@ -491,16 +535,136 @@ window.simulateJourney = function() {
         }
 
         updateUserMarker(lat, lng, heading);
-        updateTelemetry(60, 100); 
         
         remainingKm = Math.max(0, (currentRouteData.distance_km - (pointIndex * 0.05))).toFixed(2);
         updateTelemetry(60, 100);
 
+        // 🔥 THE RADAR: Checks for real accidents as the simulator drives
+        checkHazardProximity(lat, lng);
+
         if(pointIndex % 10 === 0) checkRouteProgressSimulation(lat, lng);
 
         pointIndex++;
-    }, 200); 
+    }, 200);
 };
+
+// ============================
+// 🚨 REAL HAZARD OVERLAY
+// ============================
+function drawRealHazards(congestionPoints) {
+    if (!map) return;
+
+    // 1. Clear old markers
+    hazardMarkers.forEach(marker => marker.remove());
+    hazardMarkers = [];
+    activeHazards = [];
+    hazardAlertTriggered.clear();
+
+    if (!congestionPoints || congestionPoints.length === 0) return;
+
+    // 2. Draw new markers from Python
+    congestionPoints.forEach(hazard => {
+        // Create custom red dot element
+        const el = document.createElement('div');
+        el.className = 'hazard-marker';
+        el.innerHTML = `
+            <div style="background: #ef4444; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); animation: pulse 2s infinite;">
+                <i class="fa-solid fa-triangle-exclamation" style="color: white; font-size: 12px;"></i>
+            </div>
+        `;
+
+        // Add CSS animation for pulsing if it doesn't exist
+        if (!document.getElementById('hazardPulseStyles')) {
+            const style = document.createElement('style');
+            style.id = 'hazardPulseStyles';
+            style.innerHTML = `@keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }`;
+            document.head.appendChild(style);
+        }
+
+        // Add to map
+        const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([hazard.location.lng, hazard.location.lat])
+            .addTo(map);
+            
+        hazardMarkers.push(marker);
+        
+        // Save for the 500m Radar Check
+        activeHazards.push({
+            id: `${hazard.location.lat}-${hazard.location.lng}`,
+            lat: hazard.location.lat,
+            lng: hazard.location.lng,
+            type: hazard.type,
+            desc: hazard.description
+        });
+    });
+    
+    console.log(`⚠️ Rendered ${activeHazards.length} live hazards from TomTom.`);
+}
+
+function checkHazardProximity(userLat, userLng, accuracy = 0, speedMps = null) {
+    // 🛡️ 1. GPS ACCURACY FILTER
+    // If the phone is guessing its location by more than 60 meters, pause the radar to prevent false alarms.
+    if (accuracy > 60) {
+        console.warn(`📡 GPS accuracy too low (${Math.round(accuracy)}m). Radar paused.`);
+        return; 
+    }
+
+    const userPt = turf.point([userLng, userLat]);
+
+    // 🛡️ 2. OFF-ROUTE DETECTION
+    // If the user is more than 100 meters away from the blue line, suppress alerts.
+    if (window.currentRouteLine) {
+        const distToRouteKm = turf.pointToLineDistance(userPt, window.currentRouteLine);
+        if ((distToRouteKm * 1000) > 100) {
+            console.log("⚠️ Vehicle is off-route. Suppressing hazard alerts.");
+            // Optional: You can trigger a UI change here like document.getElementById('status').innerText = "Off Route";
+            return; 
+        }
+    }
+
+    if (!activeHazards || activeHazards.length === 0) return;
+
+    // 🛡️ 3. SPEED-ADAPTIVE ALERT RADIUS
+    // Convert meters per second (from GPS) to km/h. Default to 45 km/h if speed is null.
+    const speedKmh = speedMps ? (speedMps * 3.6) : (window.currentSimulatedSpeed || 45);
+    
+    let alertRadius = 500; // Default suburban
+    if (speedKmh > 80) alertRadius = 1000; // Highway: Alert earlier (1km)
+    else if (speedKmh < 40) alertRadius = 300; // City traffic: Alert later (300m)
+
+    activeHazards.forEach(hazard => {
+        if (hazardAlertTriggered.has(hazard.id)) return;
+
+        const hazardPt = turf.point([hazard.lng, hazard.lat]);
+        const distMeters = turf.distance(userPt, hazardPt, {units: 'kilometers'}) * 1000;
+
+        // THE DYNAMIC RADAR TRIGGER
+        if (distMeters < alertRadius) {
+            console.log(`🚨 DYNAMIC RADAR: Hazard is ${Math.round(distMeters)}m away (Speed: ${Math.round(speedKmh)}km/h).`);
+            hazardAlertTriggered.add(hazard.id); 
+            
+            // Visual Alert
+            if (typeof window.showPremiumToast === 'function') {
+                window.showPremiumToast(`🚨 HAZARD IN ${Math.round(distMeters)}m`, hazard.desc, "error", 8000);
+            }
+            
+            // Voice Alert
+            if (typeof isVoiceActive !== 'undefined' && isVoiceActive && window.speechSynthesis) {
+                // Ensure 'speak' function exists in your codebase
+                if (typeof speak === 'function') {
+                    speak(`Warning. ${hazard.desc} reported ahead in ${Math.round(distMeters)} meters. Please reduce speed.`);
+                }
+            }
+            
+            // Speed UI Flash
+            const zenSpeed = document.getElementById('zenLiveSpeed');
+            if (zenSpeed) {
+                zenSpeed.style.color = "#ef4444";
+                setTimeout(() => { zenSpeed.style.color = ""; }, 5000);
+            }
+        }
+    });
+}
 
 // ============================
 // 6. UI & HUD UPDATES
@@ -1509,7 +1673,6 @@ window.calculateRoute = function() {
                 
                 console.log("✅ Route successfully drawn on the map!");
                 if (typeof window.updateRealTransportETAs === 'function') window.updateRealTransportETAs();
-
                 // ==========================================
                 // 🔥 2. FETCH PYTHON BACKEND (For Safety, Weather & Analytics)
                 // ==========================================
@@ -1518,8 +1681,13 @@ window.calculateRoute = function() {
                 const requestData = {
                     start: { lat: window.startCoords[1], lng: window.startCoords[0] },
                     end: { lat: window.endCoords[1], lng: window.endCoords[0] },
-                    preferences: { priority: "balanced" },
-                    speed: 65 
+                    speed: 65,
+                    preferences: {
+                        aqi_weight: parseInt(document.getElementById('aqiWeight')?.value || 2),
+                        heat_weight: parseInt(document.getElementById('heatWeight')?.value || 2),
+                        risk_tolerance: document.getElementById('riskVal')?.innerText.toLowerCase() || 'balanced',
+                        avoid_hazards: document.getElementById('hazardToggle')?.checked ?? true
+                    }
                 };
 
                 // NOTE: Change this URL if your Flask backend is hosted online (e.g., https://your-app.com/calculate)
@@ -1535,9 +1703,14 @@ window.calculateRoute = function() {
                     if (backendData.success) {
                         console.log("🎯 Python Data Received!", backendData);
                         
-                        // Update the Safety Score and bottom sheet using Python data!
+                      // Update the Safety Score and bottom sheet using Python data!
                         if (typeof updateRouteInfoUI === 'function') {
                             updateRouteInfoUI(backendData.route);
+                        }
+
+                        // 🔥 NEW: Draw the real TomTom accidents on the map!
+                        if (backendData.route.analytics && backendData.route.analytics.congestion_points) {
+                            drawRealHazards(backendData.route.analytics.congestion_points);
                         }
 
                         // Trigger the Weather Pop-up!
@@ -1569,7 +1742,7 @@ function showWeatherAlert(weatherData) {
     
     // Styling it like a premium floating notification
     alertDiv.style.position = 'absolute';
-    alertDiv.style.top = '140px'; // Right below your top banner
+    alertDiv.style.top = '220px'; // Right below your top banner
     alertDiv.style.left = '50%';
     alertDiv.style.transform = 'translateX(-50%)';
     alertDiv.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
@@ -1596,13 +1769,13 @@ function showWeatherAlert(weatherData) {
     // Animate it fading in and sliding down slightly
     setTimeout(() => {
         alertDiv.style.opacity = '1';
-        alertDiv.style.top = '150px';
+        alertDiv.style.top = '230px';
     }, 100);
 
     // Automatically fade it out and remove it after 5 seconds
     setTimeout(() => {
         alertDiv.style.opacity = '0';
-        alertDiv.style.top = '140px';
+        alertDiv.style.top = '220px';
         setTimeout(() => alertDiv.remove(), 400);
     }, 5000);
 }
@@ -2435,3 +2608,56 @@ window.triggerArrivalSequence = function() {
         }, 500);
     });
 };
+// ==========================================
+// 🛡️ THE RADAR HEARTBEAT (Runs every 2 seconds)
+// ==========================================
+setInterval(() => {
+    // Check if the car is currently moving/exists on the map
+    if (window.currentAnimPos) {
+        
+        // Mock a high GPS accuracy (10m) for the MVP demo
+        const mockAccuracy = 10; 
+        
+        // Grab the simulated speed if it exists, otherwise pass null
+        const currentSpeedMps = window.currentSimulatedSpeed ? (window.currentSimulatedSpeed / 3.6) : null;
+
+        // Fire the radar scan!
+        checkHazardProximity(
+            window.currentAnimPos.lat, 
+            window.currentAnimPos.lng, 
+            mockAccuracy, 
+            currentSpeedMps
+        );
+    }
+}, 2000);
+// ==========================================
+// 🛡️ SAFENAV RISK ROUTER LOGIC
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+    const textMap = { 1: 'Low', 2: 'Medium', 3: 'High' };
+    const riskMap = { 1: 'Conservative', 2: 'Balanced', 3: 'Aggressive' };
+
+    const updateLabelAndRecalculate = (sliderId, labelId, mapping) => {
+        const slider = document.getElementById(sliderId);
+        const label = document.getElementById(labelId);
+        if (slider && label) {
+            slider.addEventListener('input', (e) => {
+                label.innerText = mapping[e.target.value];
+            });
+            slider.addEventListener('change', () => {
+                // Instantly recalculate route when slider is dropped
+                if (window.startCoords && window.endCoords && typeof window.calculateRoute === 'function') {
+                    window.calculateRoute(); 
+                }
+            });
+        }
+    };
+
+    updateLabelAndRecalculate('aqiWeight', 'aqiVal', textMap);
+    updateLabelAndRecalculate('heatWeight', 'heatVal', textMap);
+    updateLabelAndRecalculate('riskTolerance', 'riskVal', riskMap);
+
+    document.getElementById('hazardToggle')?.addEventListener('change', () => {
+        if (window.startCoords && window.endCoords) window.calculateRoute();
+    });
+});

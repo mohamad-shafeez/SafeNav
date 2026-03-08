@@ -5,7 +5,6 @@
 const CACHE_NAME = 'safenav-core-v1';
 
 // 📦 The App Shell: Every file needed to run the UI offline
-// 📦 The App Shell: Every file needed to run the UI offline
 const ASSETS_TO_CACHE = [
   'index.html',
   '404.html',
@@ -80,11 +79,14 @@ self.addEventListener('activate', (event) => {
 
 // 3. FETCH EVENT: Network-first, fallback to cache strategy
 self.addEventListener('fetch', (event) => {
-  // 🚫 DO NOT CACHE API CALLS OR EXTERNAL MAPS
+  // 🚫 DO NOT CACHE API CALLS, EXTERNAL MAPS, OR FIREBASE LIVE STREAMS
   if (event.request.url.includes('/api/') || 
       event.request.url.includes('nominatim.openstreetmap.org') ||
-      event.request.url.includes('firebase')) {
-      return; 
+      event.request.url.includes('firebase') ||
+      event.request.url.includes('firestore.googleapis.com') || 
+      event.request.url.includes('apis.google.com') ||
+      event.request.url.includes('identitytoolkit.googleapis.com')) {
+      return; // Let the browser handle these normally without caching
   }
 
   event.respondWith(

@@ -11,6 +11,8 @@ from services.route_engine import (
     calculate_risk
 )
 import json
+from services.planner_engine import generate_itinerary_ai # Added AI Engine
+import logging # Added for error tracking
 
 route_bp = Blueprint("route", __name__)
 
@@ -51,27 +53,86 @@ def calculate_route():
     end_clean = {"lat": end_lat, "lon": end_lon}
 
     try:
-        # Calculate enhanced route with standardized coordinates
+        # 1. 🛡️ EXTRACT USER WEIGHTS FROM SLIDERS
+        aqi_weight = preferences.get('aqi_weight', 2)
+        heat_weight = preferences.get('heat_weight', 2)
+        hazard_weight = 3 if preferences.get('avoid_hazards', True) else 1
+        
+        tolerance_map = {"conservative": 1.0, "balanced": 0.7, "aggressive": 0.4}
+        risk_multiplier = tolerance_map.get(preferences.get('risk_tolerance', 'balanced').lower(), 0.7)
+
+        # 2. CALCULATE BASE ROUTE
         route_data = build_route(start_clean, end_clean, preferences)
         
         if "error" in route_data:
             return jsonify({"success": False, "error": route_data["error"]}), 400
 
+        # 3. 🔥 THE EXPOSURESCORE FORMULA
+        base_risk = calculate_risk(route_data.get("distance_km", 0), speed)
+        weighted_factor = (aqi_weight + heat_weight + hazard_weight) / 6 
+        exposure_score = (base_risk * weighted_factor) * risk_multiplier
+        
+        # Inject for frontend UI color coding
+        if "analytics" not in route_data: 
+            route_data["analytics"] = {}
+            
+        final_score = round(min(150, exposure_score))
+        route_data["analytics"]["safety_score"] = final_score
+        route_data["analytics"]["safety_description"] = f"Risk Level: {'High' if final_score > 100 else 'Moderate' if final_score > 50 else 'Low'}"
+
+        # 4. RUN ANALYTICS
         safety_analysis = analyze_route_safety(route_data)
-        environmental_impact = calculate_environmental_impact(route_data["distance_km"])
+        environmental_impact = calculate_environmental_impact(route_data.get("distance_km", 0))
         statistics = get_route_statistics(route_data, speed)
+        weather_info = route_engine.get_weather_along_route(route_data.get("geometry", {}))
+        traffic_info = route_engine.get_traffic_conditions(route_data.get("geometry", {}))
         
-        # Calculate risk based on distance and speed
-        risk = calculate_risk(route_data["distance_km"], speed)
+        # Updated risk dictionary for the JSON response
+        risk = {
+            "score": final_score, 
+            "weighted_factor": weighted_factor,
+            "multiplier": risk_multiplier
+        }
         
-        # Get weather along route
-        weather_info = route_engine.get_weather_along_route(route_data["geometry"])
+        # 5. GENERATE AI RECOMMENDATIONS (Risk-focused)
+        recommendations = generate_route_recommendations(route_data, speed, weather_info, preferences)
         
-        # Get traffic conditions
-        traffic_info = route_engine.get_traffic_conditions(route_data["geometry"])
+        # 6. TIME ANALYSIS (Restored!)
+        departure_time = data.get("departure_time")
+        if not departure_time:
+            departure_time = datetime.now()
+        elif isinstance(departure_time, str):
+            departure_time = datetime.fromisoformat(departure_time.replace('Z', '+00:00'))
         
-        # Generate recommendations
-        recommendations = generate_route_recommendations(route_data, speed, weather_info, traffic_info)
+        time_analysis = calculate_time_analysis(route_data.get("duration_min", 0), departure_time)
+        
+        # 7. RETURN FULL PAYLOAD (Restored!)
+        return jsonify({
+            "success": True,
+            "route": route_data,
+            "analysis": {
+                "safety": safety_analysis,
+                "environmental": environmental_impact,
+                "statistics": statistics,
+                "risk": risk,
+                "weather": weather_info,
+                "traffic": traffic_info,
+                "time": time_analysis
+            },
+            "recommendations": recommendations,
+            "metadata": {
+                "timestamp": datetime.now().isoformat(),
+                "engine": "SafeNav Pro Enhanced",
+                "version": "2.0.0",
+                "route_hash": route_data.get("route_hash", "")
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Route calculation failed: {str(e)}"
+        }), 500
         
         # Calculate estimated arrival time
         departure_time = data.get("departure_time")
@@ -706,70 +767,66 @@ def health_check():
 # HELPER FUNCTIONS
 # ============================
 
-def generate_route_recommendations(route_data, speed, weather_info, traffic_info):
-    """Generate recommendations based on route analysis"""
+def generate_route_recommendations(route_data, speed, weather_info, preferences):
+    """
+    Generates advice based on the ExposureScore and AI Briefing.
+    Traffic is intentionally excluded to focus on health/safety.
+    """
     recommendations = []
-    distance = route_data.get("distance_km", 0)
-    duration = route_data.get("duration_min", 0)
-    analytics = route_data.get("analytics", {})
+    score = route_data.get("analytics", {}).get("safety_score", 0)
     
-    # Safety recommendations
-    safety_score = analytics.get("safety_score", 0)
-    if safety_score < 70:
+    # 1. Risk-Based Logic
+    if score > 100:
         recommendations.append({
-            "type": "safety",
-            "priority": "high",
-            "message": "Route has moderate safety rating. Exercise extra caution.",
-            "action": "Drive defensively, reduce speed"
+            "type": "risk_alert", "priority": "high", 
+            "message": "High Environmental Exposure Detected.", 
+            "action": "Consider switching to a 'Conservative' route or waiting."
         })
-    
-    # Speed recommendations
-    if speed > 80:
+    elif score > 50:
         recommendations.append({
-            "type": "speed",
-            "priority": "medium",
-            "message": f"Current speed ({speed} km/h) is high. Consider reducing for safety and fuel efficiency.",
-            "action": "Reduce speed to 60-70 km/h"
+            "type": "risk_warning", "priority": "medium", 
+            "message": "Moderate Exposure Risk.", 
+            "action": "Keep windows closed and AC on internal recirculation."
         })
-    
-    # Fuel recommendations
-    if distance > 50:
-        fuel_needed = distance * 0.08
+
+    # 2. Weather Logic
+    if weather_info.get("condition") in ["rain", "storm", "fog"]:
         recommendations.append({
-            "type": "fuel",
-            "priority": "medium",
-            "message": f"Route distance: {distance:.1f} km. Estimated fuel needed: {fuel_needed:.1f} liters.",
-            "action": "Check fuel levels before departure"
+            "type": "weather", "priority": "high", 
+            "message": f"Weather Alert: {weather_info.get('message', 'Poor conditions')}", 
+            "action": "Reduce speed and increase following distance."
         })
-    
-    # Rest recommendations
-    if duration > 120:
+
+    # 3. 🔥 THE AI BRAIN
+    try:
+        briefing = generate_ai_safety_briefing(route_data, weather_info, preferences)
         recommendations.append({
-            "type": "rest",
-            "priority": "medium",
-            "message": f"Estimated travel time: {duration:.0f} minutes. Plan for rest stops.",
-            "action": "Schedule breaks every 2 hours"
+            "type": "ai_insight", "priority": "premium", 
+            "message": "SafeNav AI Analyst", 
+            "action": briefing
         })
-    
-    # Weather recommendations
-    if weather_info.get("condition") in ["rain", "fog"]:
-        recommendations.append({
-            "type": "weather",
-            "priority": "high",
-            "message": f"{weather_info.get('message', 'Adverse weather conditions')}",
-            "action": "Reduce speed, increase following distance"
-        })
-    
-    # Traffic recommendations
-    if traffic_info.get("level") in ["Heavy", "Very Heavy"]:
-        recommendations.append({
-            "type": "traffic",
-            "priority": "medium",
-            "message": f"Heavy traffic expected. Delay: {traffic_info.get('delay_minutes', 0)} minutes.",
-            "action": "Allow extra time, consider alternative routes"
-        })
-    
+    except Exception as e:
+        logging.warning(f"AI Briefing failed: {e}")
+
     return recommendations
+
+def generate_ai_safety_briefing(route_data, weather, weights):
+    """Triggers Gemini API for a human-readable risk summary."""
+    score = route_data["analytics"]["safety_score"]
+    risk_level = "High" if score > 100 else "Moderate" if score > 50 else "Low"
+    
+    prompt = f"""
+    You are the SafeNav AI Safety Analyst. Analyze this route:
+    - Calculated Risk: {score}/150 ({risk_level})
+    - Weather Condition: {weather.get('condition', 'Unknown')}
+    - User Sensitivities: AQI Weight {weights.get('aqi_weight')}, Heat Weight {weights.get('heat_weight')}.
+    
+    Generate a concise, 2-sentence safety briefing. Focus purely on environmental hazards and user health. 
+    Do not mention traffic or itineraries.
+    """
+    
+    briefing = generate_itinerary_ai(prompt)
+    return briefing or "Proceed with caution. Conditions are stable."
 
 def calculate_time_analysis(duration_min, departure_time):
     """Calculate time-based analysis"""

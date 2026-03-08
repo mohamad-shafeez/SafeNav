@@ -317,247 +317,197 @@ async function fetchImage(place, destination, type) {
 }
 
 // ==========================================
-// 🧠 MAIN ITINERARY GENERATION (GEMINI AI API)
+// 🧠 1. GLOBAL STATE (The "TripSession")
 // ==========================================
-// ==========================================
-// 🧠 PREMIUM ITINERARY GENERATION (GEMINI AI)
-// ==========================================
+const TripSession = {
+    status: 'idle', // 'idle', 'loading', 'success', 'error'
+    errorMsg: null,
+    simulationData: null
+};
 
-async function generateItinerary() {
-    // 1. Get Basic UI Inputs
-    const origin = document.getElementById('origin').value.trim() || "Not specified";
-    const destination = document.getElementById('destination').value.trim();
-    const startDate = document.getElementById('startDate').value;
-    const days = document.getElementById('days').value;
-    
-    // UI State Management
-    document.getElementById('defaultState').style.display = 'none';
-    document.getElementById('contentState').style.display = 'none';
-    document.getElementById('loadingState').style.display = 'flex';
-    
-    const generateBtn = document.getElementById('generateBtn');
-    generateBtn.style.transform = 'scale(0.95)';
-    generateBtn.disabled = true;
+// ==========================================
+// ⚙️ 2. CORE API LOGIC (Phase 1 Risk Engine)
+// ==========================================
+async function generateItinerary() { // Kept the name so your HTML button still works
+    // 1. Gather Form Data
+    const formData = {
+        destination: document.getElementById('destination').value.trim(),
+        origin: document.getElementById('origin').value.trim() || "Not specified",
+        start_date: document.getElementById('startDate').value,
+        days: document.getElementById('days').value,
+        health_profile: document.getElementById('plannerHealthProfile')?.value || "Standard",
+        trip_vibe: document.getElementById('vibe')?.value || "Adventure",
+        budget: document.getElementById('budget')?.value || "Moderate",
+        companions: document.getElementById('companions')?.value || "Solo",
+        transport: document.getElementById('transport')?.value || "Public Transit",
+        food: document.getElementById('foodPref')?.value || "Any",
+        safety_mode: "Normal"
+    };
+
+    // Grab deep safety settings if logged in
+    if (typeof firebase !== 'undefined' && currentUser) {
+        try {
+            const doc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
+            if (doc.exists) {
+                if(doc.data().safetyMode) formData.safety_mode = doc.data().safetyMode;
+            }
+        } catch(e) { console.warn("Could not fetch deep profile"); }
+    }
+
+    // 2. Update State to Loading
+    TripSession.status = 'loading';
+    updateUI();
 
     try {
-        // 2. Fetch the Active Profile Data from the UI
-        // 👉 THIS IS THE FIX: We now read directly from the dropdowns so manual overrides work!
-        let userProfile = {
-            safetyMode: "Normal", // Default fallback
-            country: "Not specified", // Default fallback
-            
-            // 👉 NEW: Grabbing the Health Profile directly from the HTML dropdown you just added!
-            healthProfile: document.getElementById('plannerHealthProfile')?.value || "Standard",
-            
-            tripStyle: document.getElementById('vibe')?.value || "Adventure",
-            budget: document.getElementById('budget')?.value || "Moderate",
-            companions: document.getElementById('companions')?.value || "Solo",
-            transport: document.getElementById('transport')?.value || "Public Transit",
-            food: document.getElementById('foodPref')?.value || "Any"
-        };
+        // 3. Call the Python Backend (Sending strict JSON, not a giant prompt string)
+        const response = await fetch(`${API_BASE_URL}/api/planner/generate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData) // Notice how clean this payload is now!
+        });
 
-        // We only fetch from Firebase for hidden background settings (like Safety Mode and Country)
-        // We DO NOT overwrite the UI dropdowns anymore!
-        if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
-            const uid = firebase.auth().currentUser.uid;
-            const doc = await firebase.firestore().collection('users').doc(uid).get();
-            if (doc.exists) {
-                const data = doc.data();
-                if(data.safetyMode) userProfile.safetyMode = data.safetyMode;
-                if(data.country) userProfile.country = data.country;
-            }
+        if (!response.ok) throw new Error("Risk Engine timeout or server error.");
+
+        const data = await response.json();
+        const parsedResult = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+
+        // 4. Update State to Success
+        TripSession.simulationData = parsedResult;
+        TripSession.status = 'success';
+
+    } catch (error) {
+        console.error("Simulation Error:", error);
+        TripSession.errorMsg = error.message;
+        TripSession.status = 'error';
+    }
+
+    // 5. Trigger a screen update based on the new state
+    updateUI();
+}
+
+// ==========================================
+// 🎨 3. UI CONTROLLERS (Modular Renderers)
+// ==========================================
+
+function updateUI() {
+    const defaultState = document.getElementById('defaultState');
+    const loadingState = document.getElementById('loadingState');
+    const contentState = document.getElementById('contentState');
+    const itineraryElement = document.getElementById('itineraryText');
+    const generateBtn = document.getElementById('generateBtn');
+
+    // Reset visibility
+    defaultState.style.display = 'none';
+    loadingState.style.display = 'none';
+    contentState.style.display = 'none';
+    generateBtn.disabled = false;
+
+    if (TripSession.status === 'loading') {
+        loadingState.style.display = 'flex';
+        generateBtn.disabled = true;
+        // UX Magic: Simulate deep analysis text
+        const loaderText = loadingState.querySelector('p');
+        if (loaderText) {
+            setTimeout(() => loaderText.innerText = "Analyzing live weather & AQI hazards...", 1000);
+            setTimeout(() => loaderText.innerText = "Simulating safe transit paths...", 2500);
         }
-
-        // 👉 Secure AI Caller
-        async function callSafenavAI(finalPrompt) {
-            try {
-                const response = await fetch(`${CONFIG.BACKEND_URL}/api/planner/generate`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ prompt: finalPrompt })
-                });
-                
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const data = await response.json();
-                return data.result; // The JSON string from Gemini
-            } catch (error) {
-                console.error("Security Layer Error:", error);
-                return null;
-            }
-        }
-        // 🚀 The Master Prompt (Now Powered by the Elite Profile)
-        const promptText = `
-            You are a high-end, expert travel planner and safety analyst API. 
-            Create a ${days}-day itinerary to ${destination} starting on ${startDate}.
-            Origin City: ${origin}.
-            
-            USER INTELLIGENCE PROFILE:
-            - Home Country: ${userProfile.country} (Provide contextual advice based on this)
-            - Companions: ${userProfile.companions}
-            - Budget Level: ${userProfile.budget}
-            - Trip Style: ${userProfile.tripStyle}
-            - Transport Preference: ${userProfile.transport}
-            - Dietary Needs: ${userProfile.food}
-            
-            CRITICAL SAFETY ENGINE PARAMETERS:
-            - Safety Alert Level: ${userProfile.safetyMode} (Adjust activity risk thresholds accordingly. If Maximum, avoid any moderate/high risk areas).
-            - User Health Conditions: ${userProfile.healthProfile} (Crucial: You MUST tailor the physical strain, altitude, and weather recommendations to accommodate this health condition).
-
-            INSTRUCTIONS:
-            - Calculate realistic transit logistics from the Origin to the Destination. If Origin is "Not specified", leave transit empty but provide the rest.
-            - Suggest an exact departure date/time based on the start date so they arrive on time.
-            - Provide a realistic cost breakdown in INR.
-            - Provide a Risk/Safety score for EACH day ('Low', 'Moderate', 'High') and a specific reason factoring in the user's Health Profile and Safety Level.
-            
-            You MUST return ONLY a valid JSON object. Do not include markdown.
-            Use this EXACT structure:
-            {
-                "trip_overview": {
-                    "destination": "${destination}",
-                    "why_this_plan": "Short paragraph explaining why this fits their specific trip style, health condition, and safety mode.",
-                    "cost_breakdown": {
-                        "stay": 0,
-                        "food": 0,
-                        "activities": 0,
-                        "transport": 0,
-                        "total": 0
-                    },
-                    "transit_logistics": {
-                        "has_transit": true,
-                        "route_advice": "e.g., Flight from Mangalore to Delhi, then Volvo bus to Manali.",
-                        "departure_recommendation": "e.g., Leave on [Date] at [Time] to reach by Day 1 morning.",
-                        "estimated_transit_cost": 0
-                    }
-                },
-                "itinerary": [
-                    {
-                        "day": 1,
-                        "theme": "String",
-                        "risk_level": "String (Strictly 'Low', 'Moderate', or 'High')",
-                        "risk_reason": "String (Short reason accounting for their health/safety profile)",
-                        "activities": [
-                            {
-                                "time": "String",
-                                "place": "String",
-                                "type": "String (Strictly 'activity', 'food', or 'stay')",
-                                "estimated_cost_inr": 0
-                            }
-                        ]
-                    }
-                ]
-            }
-        `;
-    // ✅ Keep this: This calls YOUR backend safely.
-const aiResponseRaw = await callSafenavAI(promptText);
-
-if (!aiResponseRaw) throw new Error("AI engine failed to respond. Check backend connection.");
-
-// ✅ Keep this: Your backend returns a string, so we parse it here.
-const tripData = JSON.parse(aiResponseRaw);
-
-        // ==========================================
-        // 🎨 BUILD THE PREMIUM UI
-        // ==========================================
-        let htmlContent = `
-            <div style="background: var(--input-bg); padding: 20px; border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 25px;">
-                <h4 style="color: var(--primary); margin-bottom: 8px;"><i class="fas fa-robot"></i> AI Trip Analysis</h4>
-                <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6;">${tripData.trip_overview.why_this_plan}</p>
+    } 
+    else if (TripSession.status === 'error') {
+        defaultState.style.display = 'flex';
+        showError(TripSession.errorMsg || "Failed to simulate trip. Please try again.");
+    } 
+    else if (TripSession.status === 'success') {
+        contentState.style.display = 'block';
+        
+        // Assemble the modular components
+        let html = renderRiskDashboard(TripSession.simulationData) + renderDailyItinerary(TripSession.simulationData);
+        
+        // Add action buttons
+        html += `
+            <div class="itinerary-actions" style="display: flex; gap: 15px; margin-top: 40px; padding-top: 20px; border-top: 1px dashed var(--glass-border);">
+                <button id="saveTripBtn" class="generate-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; background: #10b981;">
+                    <i class="fas fa-cloud-upload-alt"></i> Save to Dashboard
+                </button>
+                <button id="printTripBtn" class="action-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);">
+                    <i class="fas fa-file-pdf"></i> Save as PDF
+                </button>
             </div>
         `;
 
-        // 2. Transit Logistics (Only show if an origin was provided)
-        if (tripData.trip_overview.transit_logistics.has_transit) {
-            htmlContent += `
-            <div style="background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(14,165,233,0.1)); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(37,99,235,0.2);">
-                <h4 style="color: var(--primary-dark); margin-bottom: 12px;"><i class="fas fa-plane-departure"></i> Journey Logistics</h4>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 200px;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Recommended Route</div>
-                        <div style="font-weight: 600; color: var(--text-main);">${tripData.trip_overview.transit_logistics.route_advice}</div>
-                    </div>
-                    <div style="flex: 1; min-width: 200px;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">When to Leave</div>
-                        <div style="font-weight: 600; color: var(--warning);"><i class="fas fa-clock"></i> ${tripData.trip_overview.transit_logistics.departure_recommendation}</div>
-                    </div>
-                </div>
-            </div>`;
-        }
+        itineraryElement.innerHTML = html;
+        itineraryElement.style.opacity = 0;
+        itineraryElement.style.animation = "fadeUp 0.6s ease-out forwards";
+        document.querySelector('.output-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        // 3. Cost Breakdown Grid
-        htmlContent += `
-            <div class="budget-overview-card">
-                <div style="width: 100%;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px;">
-                        <div style="font-size:0.9rem; color:var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Total Estimated Budget</div>
-                        <div style="font-size:2.2rem; font-weight:800; color:var(--accent);">₹${tripData.trip_overview.cost_breakdown.total.toLocaleString('en-IN')}</div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
-                        <div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-bed"></i> Stay</div>
-                            <div style="font-weight: 700; color: var(--text-main);">₹${tripData.trip_overview.cost_breakdown.stay.toLocaleString('en-IN')}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-utensils"></i> Food</div>
-                            <div style="font-weight: 700; color: var(--text-main);">₹${tripData.trip_overview.cost_breakdown.food.toLocaleString('en-IN')}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-hiking"></i> Activities</div>
-                            <div style="font-weight: 700; color: var(--text-main);">₹${tripData.trip_overview.cost_breakdown.activities.toLocaleString('en-IN')}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-car"></i> Local Transit</div>
-                            <div style="font-weight: 700; color: var(--text-main);">₹${tripData.trip_overview.cost_breakdown.transport.toLocaleString('en-IN')}</div>
-                        </div>
-                    </div>
+        // Re-attach event listeners for dynamically created buttons
+        document.getElementById('saveTripBtn')?.addEventListener('click', saveTripToCloud);
+        document.getElementById('printTripBtn')?.addEventListener('click', () => window.print());
+    }
+}
+
+function renderRiskDashboard(data) {
+    // Phase 1 Risk Dashboard Output
+    return `
+        <div style="background: var(--input-bg); padding: 25px; border-radius: 16px; border-left: 5px solid #10b981; margin-bottom: 25px; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: var(--text-main); margin: 0;"><i class="fas fa-shield-alt" style="color: #10b981;"></i> Trip Safety Simulation</h3>
+                <span style="background: #10b98120; color: #10b981; padding: 5px 15px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">Protected Route</span>
+            </div>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;">
+                ${data.trip_overview.why_this_plan}
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border);">
+                <div><div style="font-size: 0.8rem; color: var(--text-muted);">Est. Budget</div><div style="font-weight: 800; color: var(--accent); font-size: 1.2rem;">₹${data.trip_overview.cost_breakdown.total.toLocaleString('en-IN')}</div></div>
+                <div><div style="font-size: 0.8rem; color: var(--text-muted);">Transit Config</div><div style="font-weight: 600; color: var(--text-main); font-size: 0.9rem;">${data.trip_overview.transit_logistics.route_advice}</div></div>
+            </div>
+        </div>
+    `;
+}
+
+function renderDailyItinerary(data) {
+    let html = '';
+    
+    data.itinerary.forEach((day, i) => {
+        let riskColor = day.risk_level === 'Low' ? '#10b981' : day.risk_level === 'Moderate' ? '#f59e0b' : '#ef4444';
+        let riskIcon = day.risk_level === 'Low' ? 'fa-check-circle' : day.risk_level === 'Moderate' ? 'fa-exclamation-triangle' : 'fa-shield-alt';
+        
+        html += `
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid var(--glass-border); padding-bottom: 10px; margin: 40px 0 20px 0;">
+                <h3 style="color: var(--primary); margin: 0; font-weight: 800; font-size: 1.5rem;"><i class="fas fa-calendar-day"></i> Day ${day.day}: ${day.theme}</h3>
+                <div style="background: ${riskColor}15; color: ${riskColor}; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; border: 1px solid ${riskColor}40;">
+                    <i class="fas ${riskIcon}"></i> ${day.risk_level} Risk: <span style="font-weight: 500;">${day.risk_reason}</span>
                 </div>
             </div>
         `;
 
-        // 4. Loop the Days
-        for (let i = 0; i < tripData.itinerary.length; i++) {
-            const day = tripData.itinerary[i];
+        day.activities.forEach((act, j) => {
+            let icon = 'fas fa-map-marker-alt';
+            let color = 'var(--primary)';
+            let buttonHtml = '';
+
+            const exactSearchQuery = encodeURIComponent(act.place + " " + data.trip_overview.destination);
+
+            // Restore the Affiliate and Navigation logic
+            if(act.type === 'stay') {
+                icon = 'fas fa-bed'; color = 'var(--accent)'; 
+                buttonHtml = `<a href="https://www.booking.com/searchresults.html?ss=${exactSearchQuery}&aid=2779272" target="_blank" class="btn-affiliate-book" style="display: inline-block; padding: 8px 15px; background: var(--accent); color: white; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600;"><i class="fas fa-hotel"></i> Book on Booking.com</a>`;
+            } else if (act.type === 'food') {
+                icon = 'fas fa-utensils'; color = '#f59e0b'; 
+                buttonHtml = `<a href="route.html?dest=${exactSearchQuery}" target="_blank" class="btn-navigate" style="display: inline-block; padding: 8px 15px; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600;"><i class="fas fa-map-marked-alt"></i> View on Map</a>`;
+            } else {
+                buttonHtml = `<a href="route.html?dest=${exactSearchQuery}" target="_blank" class="btn-navigate" style="display: inline-block; padding: 8px 15px; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600;"><i class="fas fa-car"></i> Navigate Here</a>`;
+            }
+
+            const imgId = `img-${i}-${j}`; 
+            const imageHtml = `<img id="${imgId}" src="https://via.placeholder.com/100?text=Loading..." class="activity-image" alt="${act.place}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 12px;">`;
             
-            // Render the SafeNav Risk Badge based on the AI's risk level
-            let riskColor = '#10b981'; // Green
-            let riskIcon = 'fa-check-circle';
-            if(day.risk_level === 'Moderate') { riskColor = '#f59e0b'; riskIcon = 'fa-exclamation-triangle'; }
-            if(day.risk_level === 'High') { riskColor = '#ef4444'; riskIcon = 'fa-shield-alt'; }
+            // Background Image Fetcher
+            fetchImage(act.place, data.trip_overview.destination, act.type).then(url => {
+                document.getElementById(imgId).src = url;
+            }).catch(() => {});
 
-            htmlContent += `
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid var(--glass-border); padding-bottom: 10px; margin: 40px 0 20px 0;">
-                    <h3 style="color: var(--primary); margin: 0; font-weight: 800; font-size: 1.5rem;"><i class="fas fa-calendar-day"></i> Day ${day.day}: ${day.theme}</h3>
-                    <div style="background: ${riskColor}15; color: ${riskColor}; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; border: 1px solid ${riskColor}40;">
-                        <i class="fas ${riskIcon}"></i> ${day.risk_level} Risk: <span style="font-weight: 500;">${day.risk_reason}</span>
-                    </div>
-                </div>
-            `;
-            
-           // Loop the Activities
-            for (let j = 0; j < day.activities.length; j++) {
-                const act = day.activities[j];
-                let icon = 'fas fa-map-marker-alt';
-                let color = 'var(--primary)';
-                let buttonHtml = '';
-
-                const exactSearchQuery = encodeURIComponent(act.place + " " + tripData.trip_overview.destination);
-
-                if(act.type === 'stay') {
-                    icon = 'fas fa-bed'; color = 'var(--accent)'; 
-                    buttonHtml = `<a href="https://www.booking.com/searchresults.html?ss=${exactSearchQuery}&aid=2779272" target="_blank" class="btn-affiliate-book"><i class="fas fa-hotel"></i> Book on Booking.com</a>`;
-                } else if (act.type === 'food') {
-                    icon = 'fas fa-utensils'; color = '#f59e0b'; 
-                    buttonHtml = `<a href="route.html?dest=${exactSearchQuery}" target="_blank" class="btn-navigate"><i class="fas fa-map-marked-alt"></i> View on Map</a>`;
-                } else {
-                    buttonHtml = `<a href="route.html?dest=${exactSearchQuery}" target="_blank" class="btn-navigate"><i class="fas fa-car"></i> Navigate Here</a>`;
-                }
-
-                // FETCH THE IMAGE
-                const imageUrl = await fetchImage(act.place, tripData.trip_overview.destination, act.type);
-                const imageHtml = `<img src="${imageUrl}" class="activity-image" alt="${act.place}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 12px;">`;
-
-                // THE HTML WITH THE NEW SWAP BUTTON INJECTED
-                htmlContent += `
+            html += `
                 <div class="timeline-item" style="display: flex; gap: 15px; margin-bottom: 20px; position: relative;">
                     <div class="time-badge" style="background: var(--card-bg); border: 2px solid ${color}; color: ${color}; width: 75px; height: 75px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; flex-shrink: 0; box-shadow: var(--shadow-sm); z-index: 1;">
                         ${act.time.split(' ')[0]} <span style="font-size:0.6rem;">${act.time.split(' ')[1] || ''}</span>
@@ -572,101 +522,25 @@ const tripData = JSON.parse(aiResponseRaw);
                                 </div>
                                 <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
                                     <p class="cost" style="color: ${color}; font-weight: 700; margin: 0;">₹${act.estimated_cost_inr.toLocaleString('en-IN')}</p>
-                                    <button onclick="swapActivity(this, '${act.place.replace(/'/g, "\\'")}', '${tripData.trip_overview.destination.replace(/'/g, "\\'")}', '${act.type}', '${act.time}', '${color}', '${icon}')" class="swap-btn" style="background: var(--bg-main); border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 8px; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: 0.2s;">
+                                    
+                                    <!-- RESTORED SWAP BUTTON -->
+                                    <button onclick="swapActivity(this, '${act.place.replace(/'/g, "\\'")}', '${data.trip_overview.destination.replace(/'/g, "\\'")}', '${act.type}', '${act.time}', '${color}', '${icon}')" class="swap-btn" style="background: var(--bg-main); border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 8px; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: 0.2s;">
                                         <i class="fas fa-sync-alt"></i> Swap
                                     </button>
+
                                 </div>
                             </div>
-                            <div>${buttonHtml}</div>
+                            <div style="margin-top: 10px;">${buttonHtml}</div>
                         </div>
                     </div>
-                </div>`;
-            }
-        }
-        
-        // ==========================================
-        // 🎯 INJECT PREMIUM ACTION BUTTONS AT THE BOTTOM
-        // ==========================================
-        htmlContent += `
-            <div class="itinerary-actions" style="display: flex; gap: 15px; margin-top: 40px; padding-top: 20px; border-top: 1px dashed var(--glass-border);">
-                <button id="saveTripBtn" class="generate-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; background: #10b981;">
-                    <i class="fas fa-cloud-upload-alt"></i> Save to Dashboard
-                </button>
-                <button id="printTripBtn" class="action-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);">
-                    <i class="fas fa-file-pdf"></i> Save as PDF
-                </button>
-            </div>
-        `;
+                </div>
+            `;
+        });
+    });
 
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('contentState').style.display = 'block';
-        
-        const itineraryElement = document.getElementById('itineraryText');
-        itineraryElement.innerHTML = htmlContent; 
-        
-        itineraryElement.style.opacity = 0;
-        itineraryElement.style.animation = "fadeUp 0.6s ease-out forwards";
-        
-        document.querySelector('.output-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        // ==========================================
-        // ☁️ ATTACH CLOUD SAVE EVENT LISTENER
-        // ==========================================
-        const saveBtn = document.getElementById('saveTripBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', async function() {
-                if (!currentUser) {
-                    alert("Please log in to save trips!");
-                    return;
-                }
-
-                const originalText = this.innerHTML;
-                this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving to Cloud...`;
-                this.disabled = true;
-
-                const db = firebase.firestore();
-                const tripDataToSave = {
-                    destination: document.getElementById('destination').value.trim(),
-                    budget: document.getElementById('budget').value,
-                    vibe: document.getElementById('vibe').value,
-                    plan: document.getElementById('itineraryText').innerHTML, // Saves the generated HTML
-                    date: new Date().toLocaleDateString(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                };
-
-                try {
-                    await db.collection('users').doc(currentUser.uid).collection('trips').add(tripDataToSave);
-                    this.innerHTML = `<i class="fas fa-check"></i> Saved Successfully!`;
-                    this.style.background = '#059669'; // Darker green
-                } catch (error) {
-                    console.error("Cloud Save Error:", error);
-                    alert("Failed to save. Check your connection.");
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                }
-            });
-        }
-
-        // ==========================================
-        // 🖨️ ATTACH PDF / PRINT EVENT LISTENER
-        // ==========================================
-        const printBtn = document.getElementById('printTripBtn');
-        if (printBtn) {
-            printBtn.addEventListener('click', () => {
-                window.print(); // Triggers the browser's native PDF/Print dialog
-            });
-        }
-
-    } catch (error) {
-        console.error("Error:", error);
-        showError("Server Error: " + error.message);
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('defaultState').style.display = 'flex';
-    } finally {
-        generateBtn.style.transform = '';
-        generateBtn.disabled = false;
-    }
+    return html;
 }
+
 
 // ==========================================
 // ITINERARY MANAGEMENT FUNCTIONS
