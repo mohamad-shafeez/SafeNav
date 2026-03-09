@@ -70,3 +70,17 @@ function initNavbarFeatures() {
         });
     }
 }
+const profileAvatar = document.getElementById('navAvatar'); 
+    if (profileAvatar) {
+        profileAvatar.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Check if we are on a page that actually has a drawer (like Dashboard)
+            if (typeof toggleProfileDrawer === 'function') {
+                toggleProfileDrawer();
+            } else {
+                // If on another page, maybe redirect to dashboard
+                window.location.href = "dashboard.html";
+            }
+        });
+        profileAvatar.style.cursor = 'pointer';
+    }

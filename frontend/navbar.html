@@ -18,12 +18,12 @@
                 <li><a href="package.html" class="nav-link"><span class="icon">🛄</span> Package</a></li>
                 <li><a href="planner.html" class="nav-link"><span class="icon">🛂</span> Trip Planner</a></li>
             </ul>
-            <div class="nav-actions">
-                <button id="themeToggle" class="icon-btn" title="Toggle Theme">🌙</button>
-                <a href="dashboard.html" class="avatar-btn" style="display: block;">
-                    <img id="navAvatar" src="https://ui-avatars.com/api/?name=User&background=2563eb&color=fff" alt="Profile">
-                </a>
-            </div>
+       <div class="nav-actions">
+    <button id="themeToggle" class="icon-btn">🌙</button>
+    <div class="avatar-btn" onclick="toggleProfileDrawer(event)" style="z-index: 10000; position: relative;">
+        <img id="navAvatar" src="https://ui-avatars.com/api/?name=User&background=2563eb&color=fff" alt="Profile">
+    </div>
+</div>
         </div>
     </div>
 </nav>

@@ -2,62 +2,111 @@ import os
 import time
 import logging
 import random
+import json
+from flask import Blueprint, request, jsonify
 from google import genai
-from dotenv import load_dotenv 
+from dotenv import load_dotenv
 
-# Load your .env file
-load_dotenv() 
+load_dotenv()
 
-# Setup Logging
 logging.basicConfig(level=logging.INFO)
 
-# --- THE 2-KEY LOAD BALANCER ---
-# Grab the two specific keys you put in your .env file
 key1 = os.environ.get("GEMINI_API_KEY")
 key2 = os.environ.get("PLANNER_API_KEY")
 
-# Create a list of the keys that actually exist
 API_KEYS = [k for k in (key1, key2) if k]
 
+planner_bp = Blueprint("planner", __name__)
+
 def generate_itinerary_ai(prompt_text, max_retries=3):
-    """Generates AI itinerary with automatic load-balancing and legal retries."""
-    
     if not API_KEYS:
-        logging.error("🚨 CRITICAL: No API Keys found in .env file!")
         return None
 
-    # Loop to try multiple times if we hit a limit
     for attempt in range(max_retries):
-        
-        # 👉 THE MAGIC: Pick a random key for EVERY attempt. 
-        # If Key 1 hits a quota, Attempt 2 will likely pick Key 2 and succeed instantly!
         selected_key = random.choice(API_KEYS)
         
         try:
-            # Initialize the modern 2026 client with the selected key
             client = genai.Client(api_key=selected_key)
-
-            # Modern API call forcing JSON output
             response = client.models.generate_content(
-                model='gemini-2.5-flash', # Upgraded to the faster model
+                model='gemini-2.5-flash',
                 contents=prompt_text,
                 config={"response_mime_type": "application/json"}
             )
-            
             return response.text
             
         except Exception as e:
             error_msg = str(e)
-            
-            # Check if the error is a Quota/429 error
             if "429" in error_msg or "Quota" in error_msg:
-                wait_time = (attempt + 1) * 15  # Wait 15s, then 30s
-                logging.warning(f"⚠️ Quota hit on key ending in ...{selected_key[-4:]}! Waiting {wait_time}s before retry {attempt + 1}/{max_retries}...")
+                wait_time = (attempt + 1) * 15
                 time.sleep(wait_time)
             else:
-                # If it's a different error, stop immediately
-                logging.error(f"🚨 AI Generation Error: {error_msg}")
                 return None
                 
-    logging.error("🚨 Max retries reached across all keys. Google AI is currently overwhelmed.")
     return None
+
+@planner_bp.route("/generate", methods=["POST"])
+def generate_trip():
+    data = request.json
+    
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    destination = data.get("destination")
+    days = data.get("days")
+    origin = data.get("origin", "Not specified")
+    start_date = data.get("start_date", "Unknown")
+    health_profile = data.get("health_profile", "Standard")
+    trip_vibe = data.get("trip_vibe", "Adventure")
+    budget = data.get("budget", "Moderate")
+    companions = data.get("companions", "Solo")
+    transport = data.get("transport", "Public Transit")
+    safety_mode = data.get("safety_mode", "Normal")
+
+    prompt = f"""
+    You are the SafeNav AI Trip Planner. Create a safe, optimized {days}-day itinerary for {destination}.
+    Origin: {origin}
+    Start Date: {start_date}
+    Health Profile: {health_profile}
+    Vibe: {trip_vibe}
+    Budget: {budget}
+    Companions: {companions}
+    Transport: {transport}
+    Safety Mode: {safety_mode}
+
+    Return ONLY a valid JSON object matching this exact structure:
+    {{
+      "trip_overview": {{
+        "why_this_plan": "A 2-sentence explanation of why this fits their vibe and health profile.",
+        "cost_breakdown": {{ "total": 15000 }},
+        "transit_logistics": {{ "route_advice": "Brief advice on local transit." }}
+      }},
+      "itinerary": [
+        {{
+          "day": 1,
+          "theme": "Arrival & Exploration",
+          "risk_level": "Low",
+          "risk_reason": "Clear weather, low AQI.",
+          "activities": [
+            {{
+              "place": "Exact Name of Place",
+              "type": "stay", 
+              "time": "10:00 AM",
+              "estimated_cost_inr": 2000
+            }}
+          ]
+        }}
+      ]
+    }}
+    Ensure 'type' is exactly one of: 'stay', 'food', or 'activity'.
+    """
+
+    ai_result = generate_itinerary_ai(prompt)
+
+    if not ai_result:
+        return jsonify({"success": False, "error": "AI generation failed."}), 500
+
+    try:
+        parsed_json = json.loads(ai_result)
+        return jsonify({"success": True, "result": parsed_json})
+    except Exception as e:
+        return jsonify({"success": False, "error": "Invalid AI output format."}), 500

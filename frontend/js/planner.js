@@ -8,41 +8,39 @@ let currentUser = null;
 const API_BASE_URL = 'http://localhost:5000'; // Your actual live URL! // Change this after deployment
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 🛡️ THE LOGIN WALL: Check if user is authenticated
+    // 🛡️ THE LOGIN WALL: (Temporarily bypassed for UI testing)
     if (typeof firebase !== 'undefined') {
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
                 // Automatically fill the UI with the user's saved Firebase profile
-const uid = user.uid;
-firebase.firestore().collection('users').doc(uid).get().then(doc => {
-    if (doc.exists) {
-        const data = doc.data();
-        // Update the visual dropdowns on the page!
-        if (data.budgetDefault) document.getElementById('budget').value = data.budgetDefault;
-        if (data.tripStyle) document.getElementById('vibe').value = data.tripStyle;
-        if (data.travelGroup) document.getElementById('companions').value = data.travelGroup;
-        if (data.transportDefault) document.getElementById('transport').value = data.transportDefault;
-        if (data.foodDefault) document.getElementById('foodPref').value = data.foodDefault;
-    }
-});
-                // User IS logged in. Let them use the app!
+                const uid = user.uid;
+                firebase.firestore().collection('users').doc(uid).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        if (data.budgetDefault) document.getElementById('budget').value = data.budgetDefault;
+                        if (data.tripStyle) document.getElementById('vibe').value = data.tripStyle;
+                        if (data.travelGroup) document.getElementById('companions').value = data.travelGroup;
+                        if (data.transportDefault) document.getElementById('transport').value = data.transportDefault;
+                        if (data.foodDefault) document.getElementById('foodPref').value = data.foodDefault;
+                    }
+                });
                 currentUser = user;
                 console.log("Authenticated as:", currentUser.email);
-                
-                // Initialize all the UI features now that we know they are safe
-                initializeEntranceAnimations();
-                initializeThemeToggle();
-                initializeFloatingLabels();
-                initializeVibeChips();
-                initializeDropdowns();
-                initializeRippleEffects();
-                initializeSmoothScrolling();
-                initializeFormValidation();
             } else {
-                // User is NOT logged in. Kick them to the login page!
-                console.log("Unauthorized access. Redirecting to login...");
-                window.location.href = "login.html"; 
+                console.warn("User not logged in. Bypassing login redirect for testing.");
+                // window.location.href = "login.html"; <-- WE COMMENTED THIS OUT!
             }
+            
+            // 🚀 INITIALIZE UI WHETHER LOGGED IN OR NOT
+            initializeEntranceAnimations();
+            initializeThemeToggle();
+            initializeFloatingLabels();
+            initializeVibeChips();
+            initializeDropdowns();
+            initializeRippleEffects();
+            initializeSmoothScrolling();
+            initializeFormValidation();
+            restrictPastDates();
         });
     } else {
         console.error("Firebase is not loaded! Check your HTML scripts.");
@@ -384,11 +382,6 @@ async function generateItinerary() { // Kept the name so your HTML button still 
     // 5. Trigger a screen update based on the new state
     updateUI();
 }
-
-// ==========================================
-// 🎨 3. UI CONTROLLERS (Modular Renderers)
-// ==========================================
-
 function updateUI() {
     const defaultState = document.getElementById('defaultState');
     const loadingState = document.getElementById('loadingState');
@@ -396,7 +389,6 @@ function updateUI() {
     const itineraryElement = document.getElementById('itineraryText');
     const generateBtn = document.getElementById('generateBtn');
 
-    // Reset visibility
     defaultState.style.display = 'none';
     loadingState.style.display = 'none';
     contentState.style.display = 'none';
@@ -405,7 +397,6 @@ function updateUI() {
     if (TripSession.status === 'loading') {
         loadingState.style.display = 'flex';
         generateBtn.disabled = true;
-        // UX Magic: Simulate deep analysis text
         const loaderText = loadingState.querySelector('p');
         if (loaderText) {
             setTimeout(() => loaderText.innerText = "Analyzing live weather & AQI hazards...", 1000);
@@ -419,10 +410,8 @@ function updateUI() {
     else if (TripSession.status === 'success') {
         contentState.style.display = 'block';
         
-        // Assemble the modular components
         let html = renderRiskDashboard(TripSession.simulationData) + renderDailyItinerary(TripSession.simulationData);
         
-        // Add action buttons
         html += `
             <div class="itinerary-actions" style="display: flex; gap: 15px; margin-top: 40px; padding-top: 20px; border-top: 1px dashed var(--glass-border);">
                 <button id="saveTripBtn" class="generate-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; background: #10b981;">
@@ -439,12 +428,18 @@ function updateUI() {
         itineraryElement.style.animation = "fadeUp 0.6s ease-out forwards";
         document.querySelector('.output-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        // Re-attach event listeners for dynamically created buttons
         document.getElementById('saveTripBtn')?.addEventListener('click', saveTripToCloud);
-        document.getElementById('printTripBtn')?.addEventListener('click', () => window.print());
+        
+        // 🚨 PDF FIX: Now calls our professional print function instead of basic window.print
+        document.getElementById('printTripBtn')?.addEventListener('click', () => {
+            if(typeof printItineraryPDF === 'function') {
+                printItineraryPDF();
+            } else {
+                window.print();
+            }
+        });
     }
 }
-
 function renderRiskDashboard(data) {
     // Phase 1 Risk Dashboard Output
     return `
@@ -820,3 +815,14 @@ window.restoreProfileDefaults = async function() {
         console.error("Failed to restore profile defaults:", error);
     }
 };
+// ==========================================
+// 📅 DATE RESTRICTION
+// ==========================================
+function restrictPastDates() {
+    const dateInput = document.getElementById('startDate');
+    if (dateInput) {
+        // Get today's date and format it as YYYY-MM-DD
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+    }
+}

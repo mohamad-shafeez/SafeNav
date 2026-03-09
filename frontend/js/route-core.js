@@ -1701,6 +1701,23 @@ window.calculateRoute = function() {
                 .then(res => res.json())
                 .then(backendData => {
                     if (backendData.success) {
+                        // 🟢 DYNAMIC RISK COLORING 🔴
+// SafeNav Logic: Lower score is safer. <50 Green, 50-100 Yellow, >100 Red.
+if (backendData.route.analytics && backendData.route.analytics.safety_score) {
+    const exposureScore = backendData.route.analytics.safety_score;
+    let routeColor = '#10b981'; // Default Green (Safe)
+    
+    if (exposureScore > 100) {
+        routeColor = '#ef4444'; // Red (High Risk)
+    } else if (exposureScore >= 50) {
+        routeColor = '#f59e0b'; // Yellow (Moderate)
+    }
+
+    // Repaint the MapLibre line instantly
+    if (map.getLayer('route-line')) {
+        map.setPaintProperty('route-line', 'line-color', routeColor);
+    }
+}
                         console.log("🎯 Python Data Received!", backendData);
                         
                       // Update the Safety Score and bottom sheet using Python data!

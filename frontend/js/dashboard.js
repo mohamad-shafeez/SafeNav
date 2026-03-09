@@ -29,13 +29,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // 6. Listen for Modal Clicks
+  // 6. Listen for Modal Clicks
     window.onclick = function(event) {
         const modal = document.getElementById('tripModal');
         if (event.target == modal) {
             closeModal();
         }
     }
+
+  // 👉 7. WIRE UP THE PROFILE DRAWER (With Anti-Reload Fix)
+    const profileAvatar = document.getElementById('navAvatar'); 
+    if (profileAvatar) {
+        profileAvatar.addEventListener('click', function(event) {
+            event.preventDefault(); 
+            toggleProfileDrawer();
+        });
+        profileAvatar.style.cursor = 'pointer'; 
+    }
+
 });
 
 // ==========================================
@@ -101,7 +112,9 @@ window.loadSavedTrips = async function() {
                     </div>
 
                     <div class="trip-actions">
-                        <button class="btn-view" onclick="viewTrip('${trip.id}')"><i class="fas fa-eye"></i> View Itinerary</button>
+                       <button class="btn-view" onclick="event.stopPropagation(); viewTrip('${trip.id}')">
+    <i class="fas fa-eye"></i> View Itinerary
+</button>
                         <button class="btn-delete" onclick="deleteTrip('${trip.id}')"><i class="fas fa-trash"></i></button>
                     </div>
                 `;
@@ -117,17 +130,26 @@ window.loadSavedTrips = async function() {
 
 // Open the beautiful dark modal to read the trip from the Cloud
 window.viewTrip = function(tripId) {
-    // Find the trip in our temporary cloud array
+    // 1. Find the trip in our temporary cloud array
     const trip = window.currentCloudTrips.find(t => t.id === tripId);
     
     if(trip) {
+        console.log("Opening Trip:", trip.destination); 
+        const modal = document.getElementById('tripModal');
         const modalContent = document.getElementById('modalContent');
-        modalContent.innerHTML = `
-            <h2 style="color: var(--primary); margin-bottom: 20px; font-size: 2rem;">Journey to ${trip.destination}</h2>
-            ${trip.plan}
-        `;
-        document.getElementById('tripModal').style.display = 'flex';
-        document.body.style.overflow = 'hidden'; 
+        
+        if (modal && modalContent) {
+            modalContent.innerHTML = `
+                <h2 style="color: var(--primary-blue); margin-bottom: 20px; font-size: 2rem;">Journey to ${trip.destination}</h2>
+                <div class="itinerary-content-wrapper">
+                    ${trip.plan}
+                </div>
+            `;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+        }
+    } else {
+        console.warn("Trip not found in local memory. ID:", tripId);
     }
 }
 
@@ -487,12 +509,18 @@ window.logoutUser = function() {
         });
     }
 };
-function toggleProfileDrawer() {
+// ==========================================
+// 👤 TOGGLE PROFILE DRAWER
+// ==========================================
+window.toggleProfileDrawer = function(event) {
+    if (event) {
+        event.preventDefault(); 
+    }
+    
     const drawer = document.getElementById('profileDrawer'); 
     if (drawer) {
-        // Change 'active' to 'open' to match the CSS we just wrote!
         drawer.classList.toggle('open');
     } else {
         console.warn("Profile drawer element not found in HTML");
     }
-}
+};

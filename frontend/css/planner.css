@@ -1,182 +1,134 @@
-/* =========================================================
-   1. CSS VARIABLES & THEMES
-   ========================================================= */
+/* ==========================================================================
+   SAFENAV / TRAVELDISCOVER - AI PLANNER STYLES
+   ========================================================================== */
+
+/* --- 1. CORE VARIABLES --- */
 :root {
-    /* ☀️ Light Theme (Default) */
-    --primary: #2563eb;
-    --secondary: #0ea5e9; /*
-    --primary-light: #3b82f6;
-    --primary-dark: #1d4ed8;
-    --accent: #10b981; /* Booking.com Green */
-    --accent-dark: #059669;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    
-    --bg-main: #f8fafc;
-    --text-main: #0f172a;
+    --bg-color: #f0fdf4;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --text-main: #1e293b;
     --text-muted: #64748b;
-    
-    --glass-bg: rgba(255, 255, 255, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.4);
-    
-    /* Solid colors for inputs to prevent transparent overlap */
-    --input-bg: #ffffff; 
-    --card-bg: #ffffff;
-    
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --primary: #2563eb;
+    --primary-light: #60a5fa;
+    --primary-dark: #1e3a8a;
+    --accent: #10b981;
+    --border-color: rgba(148, 163, 184, 0.2);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+    --radius-lg: 24px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Bulletproof Dark Mode (Hooks into your style.css logic) */
+body.dark-mode,
 [data-theme="dark"] {
-    /* 🌌 Beautiful Deep Navy Theme */
-    --bg-main: #060b19; 
-    --text-main: #ffffff;
+    --bg-color: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.75);
+    --text-main: #f8fafc;
     --text-muted: #94a3b8;
-    
-    /* 🧊 Navy Glass Panels */
-    --glass-bg: rgba(13, 24, 48, 0.85); 
-    --glass-border: rgba(255, 255, 255, 0.1);
-    
-    /* 📦 Solid, visible input boxes */
-    --input-bg: #112240; 
-    --card-bg: #0d1930;
-    
-    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* =========================================================
-   2. RESET & BASE
-   ========================================================= */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* --- 2. LAYOUT & RESCUE FIXES --- */
+/* Forces visibility to override any bugs from style.css */
+.main-container {
+    opacity: 1 !important;
+    position: relative;
+    z-index: 10;
+    max-width: 1200px;
+    margin: 100px auto 40px;
+    padding: 0 20px;
+    animation: slideUp 0.6s ease-out forwards;
 }
 
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: var(--bg-main);
-    color: var(--text-main);
-    line-height: 1.6;
-    overflow-x: hidden;
-    transition: background-color 0.3s ease, color 0.3s ease;
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* Animated Background */
 .animated-bg {
     position: fixed;
     top: -50%; left: -50%; width: 200%; height: 200%;
-    background: radial-gradient(circle, rgba(37,99,235,0.05) 0%, rgba(16,185,129,0.05) 50%, transparent 100%);
-    z-index: -1;
-    animation: rotateBg 60s linear infinite;
+    background: radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.03), transparent 60%),
+                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.03), transparent 50%);
+    z-index: -10 !important;
+    pointer-events: none;
+    animation: slowDrift 30s linear infinite alternate;
 }
 
-[data-theme="dark"] .animated-bg {
-    /* Toned down for Dark Mode so the Navy stays deep */
-    background: radial-gradient(circle, rgba(37,99,235,0.05) 0%, transparent 70%);
+@keyframes slowDrift {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(5deg); }
 }
 
-@keyframes rotateBg { 100% { transform: rotate(360deg); } }
-@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-/* =========================================================
-   3. NAVIGATION & FOOTER
-   ========================================================= */
-.glass-nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--glass-border);
-    z-index: 1000;
-    padding: 15px 20px;
-}
-
-.nav-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo-wrapper { display: flex; align-items: center; gap: 10px; }
-.logo-icon { color: var(--primary); font-size: 1.5rem; }
-.logo-text { font-size: 1.2rem; font-weight: 700; color: var(--text-main); }
-.logo-accent { color: var(--primary); }
-
-.nav-links { display: flex; gap: 15px; align-items: center; }
-.nav-link { color: var(--text-main); text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
-.nav-link:hover { color: var(--primary); }
-.theme-toggle { background: none; border: none; font-size: 1.2rem; color: var(--text-main); cursor: pointer; }
-
-.glass-footer {
-    text-align: center;
-    padding: 30px 20px;
-    background: var(--glass-bg);
-    border-top: 1px solid var(--glass-border);
-    margin-top: 40px;
-    color: var(--text-muted);
-}
-.footer-note { font-size: 0.8rem; opacity: 0.7; margin-top: 5px; }
-
-/* =========================================================
-   4. LAYOUT & GLASS PANELS (MOBILE FIRST)
-   ========================================================= */
-.main-container {
-    max-width: 1400px;
-    margin: 100px auto 40px; /* Space for fixed nav */
-    padding: 0 15px;
-}
-
+/* Split Screen Grid */
 .split-screen {
-    display: flex;
-    flex-direction: column; /* Stacks vertically on mobile */
-    gap: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 30px;
+    align-items: start;
 }
 
+/* --- 3. GLASS PANELS --- */
 .glass-panel {
-    background: var(--glass-bg);
+    background: var(--card-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: 30px;
+    color: var(--text-main);
+    transition: var(--transition);
 }
 
-.panel-header { margin-bottom: 25px; }
-.panel-title { font-weight: 700; color: var(--primary); font-size: 1.5rem; margin-bottom: 5px;}
-.panel-subtitle { color: var(--text-muted); font-size: 0.9rem; }
+.panel-header {
+    margin-bottom: 25px;
+}
 
-/* =========================================================
-   5. FORM & INPUTS (WITH HIGHLIGHT FIXES)
-   ========================================================= */
-.form-group { margin-bottom: 20px; }
-.form-label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; color: var(--text-main); }
+.panel-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-/* Floating Inputs */
-.floating-group { position: relative; margin-bottom: 25px; }
+.panel-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* --- 4. FLOATING INPUT FIELDS --- */
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.floating-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
 
 .floating-input {
     width: 100%;
     padding: 16px 16px 16px 45px;
-    border: 2px solid var(--glass-border);
-    border-radius: 12px;
-    font-family: inherit;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: var(--input-bg); /* Solid background to prevent blending */
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: rgba(148, 163, 184, 0.05);
     color: var(--text-main);
-}
-
-/* 🔥 The Strong Highlight on Focus */
-.floating-input:focus { 
-    border-color: var(--primary); 
-    outline: none; 
-    background: var(--card-bg); /* Shifts slightly on focus */
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25); 
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: var(--transition);
+    outline: none;
 }
 
 .floating-label {
@@ -185,269 +137,495 @@ body {
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
-    transition: 0.3s ease;
+    transition: var(--transition);
     pointer-events: none;
     font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* ✨ Floating effect with solid background to hide the border strike-through */
-.floating-group.focused .floating-label,
+/* Floating Animation */
+.floating-input:focus,
+.floating-input:not(:placeholder-shown) {
+    border-color: var(--primary);
+    background: transparent;
+}
+
+.floating-input:focus ~ .floating-label,
+.floating-input:not(:placeholder-shown) ~ .floating-label,
 .floating-label.floating {
-    top: -10px; 
-    left: 15px; 
-    font-size: 0.8rem; 
-    font-weight: 600; 
-    background: var(--card-bg); /* Matches the focused input background */
-    padding: 0 8px; 
-    color: var(--primary); 
+    top: -10px;
+    left: 15px;
+    font-size: 0.75rem;
+    background: var(--card-bg);
+    padding: 0 5px;
+    color: var(--primary);
+    font-weight: 600;
     border-radius: 4px;
 }
 
-.search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); transition: 0.3s; }
-.floating-group.focused .search-icon { color: var(--primary); }
+.search-icon {
+    position: absolute;
+    left: 16px;
+    color: var(--primary-light);
+    font-size: 1.1rem;
+    pointer-events: none;
+}
 
-/* Dropdowns */
-.dropdown-wrapper { position: relative; }
+/* Date/Number specific tweaks */
+input[type="date"].floating-input,
+input[type="number"].floating-input {
+    padding-left: 15px; /* Adjust padding since they don't have leading icons */
+}
+
+/* --- 5. DROPDOWNS --- */
+.form-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+.dropdown-wrapper {
+    position: relative;
+}
+
 .styled-select {
-    width: 100%; padding: 16px; border: 2px solid var(--glass-border); border-radius: 12px;
-    font-family: inherit; font-size: 1rem; background: var(--input-bg); color: var(--text-main);
-    appearance: none; cursor: pointer; transition: 0.3s;
+    width: 100%;
+    padding: 14px 40px 14px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: rgba(148, 163, 184, 0.05);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    cursor: pointer;
+    transition: var(--transition);
 }
-.styled-select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25); background: var(--card-bg); }
-.dropdown-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
 
-/* Vibe Chips */
-.chips-container { display: flex; flex-wrap: wrap; gap: 10px; }
+.styled-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.dropdown-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+body.dark-mode option {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+}
+
+/* --- 6. TRIP VIBE CHIPS --- */
+.chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
 .vibe-chip {
-    padding: 8px 16px; border-radius: 20px; border: 1px solid var(--glass-border);
-    cursor: pointer; font-size: 0.9rem; transition: 0.2s; background: var(--input-bg); color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 30px;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+    border: 1px solid transparent;
 }
-.vibe-chip:hover { border-color: var(--primary); color: var(--primary); }
-.vibe-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-@keyframes chipSelect { 50% { transform: scale(0.95); } }
+.vibe-chip:hover {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+}
 
-/* =========================================================
-   6. BUTTONS & SHIMMER EFFECT
-   ========================================================= */
+.vibe-chip.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary-light);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
+/* --- 7. SHIMMER GENERATE BUTTON --- */
 .generate-btn {
-    width: 100%; padding: 16px; margin-top: 10px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600;
-    cursor: pointer; position: relative; overflow: hidden; transition: 0.3s;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+    transition: var(--transition);
 }
-.generate-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37,99,235,0.3); }
-.btn-content { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 10px;}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(37, 99, 235, 0.4);
+}
+
+.generate-btn:active {
+    transform: translateY(1px);
+}
+
+.btn-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
 
 .shimmer {
-    position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
-    transform: skewX(-20deg); animation: shimmer 3s infinite; z-index: 1;
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-20deg);
+    animation: shimmer 3s infinite;
 }
-@keyframes shimmer { 100% { left: 200%; } }
 
-.action-btn {
-    background: var(--input-bg); color: var(--text-main); border: 1px solid var(--glass-border);
-    padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: 0.2s;
+@keyframes shimmer {
+    100% { left: 200%; }
 }
-.action-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
-/* Ripples */
-.ripple {
-    position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.4);
-    transform: scale(0); animation: rippleEffect 0.6s linear; pointer-events: none;
+/* --- 8. OUTPUT PANEL & STATES --- */
+.output-panel {
+    min-height: 550px;
+    display: flex;
+    flex-direction: column;
 }
-@keyframes rippleEffect { to { transform: scale(4); opacity: 0; } }
 
-/* Quick Tips */
-.quick-tips { margin-top: 20px; padding: 15px; background: rgba(37,99,235,0.05); border-radius: 12px; }
-.quick-tips h4 { color: var(--primary); font-size: 0.95rem; margin-bottom: 5px; }
-.quick-tips ul { list-style: none; font-size: 0.85rem; color: var(--text-muted); padding-left: 20px; }
-.quick-tips ul li { position: relative; margin-bottom: 3px; }
-.quick-tips ul li::before { content: "•"; position: absolute; left: -15px; color: var(--primary); font-weight: bold; }
+.panel-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
 
-/* =========================================================
-   7. OUTPUT STATES (Default & Loading)
-   ========================================================= */
-.panel-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 400px; }
-.state-icon i { font-size: 4rem; color: #cbd5e1; margin-bottom: 20px; }
-[data-theme="dark"] .state-icon i { color: #475569; }
+/* Default State */
+.default-state {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--text-muted);
+}
 
-.feature-highlights { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; }
-.feature { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted); background: var(--input-bg); padding: 6px 12px; border-radius: 20px; }
+.state-icon {
+    font-size: 4rem;
+    color: var(--border-color);
+    margin-bottom: 20px;
+}
 
-/* Paper Plane Animation */
-.paper-plane-container { position: relative; height: 100px; width: 100%; display: flex; justify-content: center; margin-bottom: 20px; }
-.paper-plane { font-size: 3rem; color: var(--primary); animation: flyPlane 3s ease-in-out infinite; }
-@keyframes flyPlane {
-    0% { transform: translate(-30px, 20px) rotate(-10deg) scale(0.8); opacity: 0; }
-    20% { opacity: 1; }
-    50% { transform: translate(0px, -10px) rotate(5deg) scale(1.1); }
-    80% { opacity: 1; }
-    100% { transform: translate(40px, -30px) rotate(20deg) scale(0.8); opacity: 0; }
+.feature-highlights {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.feature {
+    background: rgba(37, 99, 235, 0.05);
+    padding: 10px 15px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(37, 99, 235, 0.1);
+}
+
+body.dark-mode .feature {
+    background: rgba(96, 165, 250, 0.1);
+    color: var(--primary-light);
+    border-color: rgba(96, 165, 250, 0.2);
+}
+
+/* Loading State */
+.loading-state {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.paper-plane-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 20px;
+}
+
+.paper-plane {
+    font-size: 3rem;
+    color: var(--primary);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: fly 3s ease-in-out infinite;
+}
+
+@keyframes fly {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+    25% { transform: translate(-40%, -60%) rotate(10deg) scale(1.1); }
+    50% { transform: translate(-50%, -40%) rotate(-5deg) scale(0.9); }
+    75% { transform: translate(-60%, -60%) rotate(-15deg) scale(1.05); }
+}
+
+.loading-dots {
+    display: flex;
+    gap: 6px;
+    margin-top: 15px;
+    justify-content: center;
 }
 
 .loading-dots span {
-    display: inline-block; width: 8px; height: 8px; background: var(--primary);
-    border-radius: 50%; margin: 0 3px; animation: bounceDots 1.4s infinite ease-in-out both;
+    width: 10px;
+    height: 10px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
 }
+
 .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
 .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-@keyframes bounceDots { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-/* =========================================================
-   8. CONTENT STATE & ITINERARY TIMELINE
-   ========================================================= */
-.result-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px;}
-.result-actions { display: flex; gap: 10px; }
-
-.budget-overview-card {
-    background: linear-gradient(135deg, var(--card-bg), var(--bg-main));
-    border: 1px solid var(--glass-border);
-    color: var(--text-main); padding: 25px; border-radius: 16px; margin-bottom: 30px;
-    display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
 }
 
-.timeline-day-header {
-    background: var(--primary); color: white; padding: 10px 20px;
-    border-radius: 8px; display: inline-block; font-weight: 700; margin: 30px 0 20px 0;
+/* Content State (Results) */
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
 }
 
-/* The Timeline Container */
-.timeline-item { 
-    display: flex; 
-    gap: 15px; 
-    margin-bottom: 20px; 
-    position: relative; 
-}
-
-/* The vertical connecting line (Moved to perfectly center under the new bigger circles) */
-.timeline-item::before { 
-    content: ''; 
-    position: absolute; 
-    left: 37.5px; /* Shifted to center of the 75px circle */
-    top: 50px; 
-    bottom: -20px; 
-    width: 2px; 
-    background: var(--glass-border); 
-    z-index: 0; 
-}
-.timeline-item:last-child::before { display: none; }
-
-/* The New, Bigger Time Bubble */
-.time-badge {
-    background: var(--card-bg); 
-    border: 2px solid var(--primary); 
+.result-header h3 {
+    margin: 0;
     color: var(--primary);
-    width: 75px;  /* 🔥 Increased from 50px */
-    height: 75px; /* 🔥 Increased from 50px */
-    border-radius: 50%; 
-    display: flex; 
-    flex-direction: column; /* 🔥 Forces text to stack neatly inside */
-    align-items: center; 
-    justify-content: center;
-    font-weight: 700; 
-    font-size: 0.75rem; /* Scaled down slightly to fit big words */
-    line-height: 1.2;
-    z-index: 1; 
-    text-align: center; 
-    flex-shrink: 0;
-    padding: 5px;
-    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.activity-card {
-    background: var(--card-bg); padding: 20px; border-radius: 16px;
-    border: 1px solid var(--glass-border); flex-grow: 1; box-shadow: var(--shadow-sm); z-index: 1;
+.result-actions {
+    display: flex;
+    gap: 10px;
 }
-.activity-card h4 { color: var(--text-main); font-size: 1.1rem; }
 
-/* Affiliate Buttons generated by JS */
-.btn-affiliate-book {
-    display: inline-block; 
-    background: #003580; /* 🔥 FIXED: Hardcoded official Booking.com blue! */
+.action-btn {
+    background: rgba(148, 163, 184, 0.1);
+    border: none;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.action-btn:hover {
+    background: var(--primary);
     color: white;
-    padding: 10px 15px; 
-    border-radius: 8px; 
-    text-decoration: none; 
-    font-weight: 600; 
-    font-size: 0.9rem; 
-    margin-top: 15px; 
-    transition: 0.2s;
 }
-.btn-affiliate-book:hover { 
-    background: #00224f; 
-    transform: translateY(-2px); 
-    color: white;
-}
-.btn-navigate {
-    display: inline-block; background: var(--bg-main); color: var(--primary); border: 1px solid var(--primary);
-    padding: 10px 15px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; margin-top: 15px; transition: 0.2s;
-}
-.btn-navigate:hover { background: var(--primary); color: white; }
 
 /* Save Reminder */
-.save-reminder { display: flex; align-items: center; gap: 15px; margin-top: 40px; border-left: 4px solid var(--warning); padding: 20px;}
-.save-reminder i.fa-star { font-size: 2rem; color: var(--warning); }
-.save-profile-btn { background: var(--text-main); color: var(--bg-main); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: auto; transition: 0.2s;}
-.save-profile-btn:hover { opacity: 0.9; transform: translateY(-2px);}
-
-/* =========================================================
-   9. ERROR SHAKE ANIMATION
-   ========================================================= */
-.shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-@keyframes shake {
-    10%, 90% { transform: translate3d(-1px, 0, 0); }
-    20%, 80% { transform: translate3d(2px, 0, 0); border-color: var(--danger); }
-    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-    40%, 60% { transform: translate3d(4px, 0, 0); }
+.save-reminder {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-radius: var(--radius-md);
 }
 
-/* =========================================================
-   10. DESKTOP MEDIA QUERY (SIDE-BY-SIDE LAYOUT)
-   ========================================================= */
-@media (min-width: 992px) {
-    .nav-links { gap: 25px; }
-    
+body.dark-mode .save-reminder {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.save-reminder i.fa-star {
+    font-size: 2rem;
+    color: #f59e0b;
+}
+
+.save-reminder h4 {
+    margin: 0 0 5px 0;
+    color: var(--text-main);
+}
+
+.save-reminder p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.save-profile-btn {
+    margin-left: auto;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.save-profile-btn:hover {
+    background: #059669;
+}
+
+/* Quick Tips */
+.quick-tips {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.quick-tips h4 {
+    margin: 0 0 10px 0;
+    color: #f59e0b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-tips ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+/* --- 9. MOBILE RESPONSIVENESS --- */
+@media (max-width: 900px) {
     .split-screen {
-        flex-direction: row; /* Snaps side-by-side on large screens */
-        align-items: flex-start;
+        grid-template-columns: 1fr;
     }
     
-    .input-panel {
-        width: 400px; /* Fixed width form */
-        flex-shrink: 0;
-        position: sticky; /* Magic lock */
-        top: 100px; 
-        max-height: calc(100vh - 120px);
-        overflow-y: auto;
+    .output-panel {
+        min-height: 400px;
+    }
+    
+    .save-reminder {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .save-profile-btn {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .result-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .result-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .action-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+/* ==========================================================================
+   🚨 MISSING ANIMATION FIX 🚨
+   ========================================================================== */
+@keyframes fadeUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@media print {
+    /* Hide EVERYTHING except the itinerary content */
+    nav, .planner-form-section, .itinerary-actions, .theme-toggle, .navbar-placeholder {
+        display: none !important;
     }
 
-    /* Hide scrollbar for clean sticky look */
-    .input-panel::-webkit-scrollbar { width: 6px; }
-    .input-panel::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+    body {
+        background: white !important;
+        color: black !important;
+        margin: 0;
+        padding: 0;
+    }
+
+    .glass-panel {
+        background: white !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
 
     .output-panel {
-        flex-grow: 1; /* Takes up rest of the screen */
-        min-height: calc(100vh - 120px);
+        width: 100% !important;
+        position: absolute;
+        top: 0;
+        left: 0;
     }
-}
-/* =========================================================
-   11. DYNAMIC ACTIVITY IMAGES (UNSPLASH)
-   ========================================================= */
-.activity-card {
-    overflow: hidden; /* Keeps the rounded corners perfect */
-    padding: 0; /* Removing padding here so the image touches the edges */
-}
 
-.activity-image {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-bottom: 1px solid var(--glass-border);
-    background-color: var(--input-bg);
-}
+    /* Force images to show up in the PDF */
+    .activity-image {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        border: 1px solid #ddd;
+    }
 
-.activity-content {
-    padding: 20px; /* Moved the padding here */
+    /* Professional Header for the PDF */
+    .output-panel::before {
+        content: "SafeNav TravelMate - Official Itinerary";
+        display: block;
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: #2563eb;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #2563eb;
+        padding-bottom: 10px;
+    }
 }
