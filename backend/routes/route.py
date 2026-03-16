@@ -762,6 +762,28 @@ def health_check():
         "engine": "SafeNav Pro Enhanced"
     })
 
+# 👇 ====== PASTE THIS NEW BLOCK HERE ====== 👇
+
+@route_bp.route('/analyze', methods=['POST'])
+def analyze_risk():
+    """
+    Receives slider weights from the frontend and returns the live safety score.
+    """
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+            
+        # Use your already-imported route_engine!
+        result = route_engine.analyze_route_with_weights(data)
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        import logging
+        logging.error(f"Error analyzing route risk: {e}")
+        return jsonify({"error": "Failed to calculate risk"}), 500
+
 
 # ============================
 # HELPER FUNCTIONS

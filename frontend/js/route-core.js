@@ -2678,3 +2678,66 @@ document.addEventListener("DOMContentLoaded", () => {
         if (window.startCoords && window.endCoords) window.calculateRoute();
     });
 });
+// ==========================================
+// 🧠 AI SAFETY SLIDER LOGIC
+// ==========================================
+
+// PART 1: THE ENGINE (Talks to Python)
+async function fetchRouteRisk(destLat, destLng) {
+    const aqiVal = document.getElementById('aqiWeight')?.value || 2;
+    const heatVal = document.getElementById('heatWeight')?.value || 2;
+    const riskVal = document.getElementById('riskTolerance')?.value || 2;
+
+    const payload = {
+        lat: destLat,
+        lng: destLng,
+        aqi_weight: parseInt(aqiVal),
+        heat_weight: parseInt(heatVal),
+        risk_tolerance: parseInt(riskVal)
+    };
+
+    try {
+        const response = await fetch('/api/route/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        // Update the UI
+        const riskElement = document.getElementById('recommendedRisk');
+        if (riskElement) riskElement.innerText = `${data.score}% - ${data.label}`;
+        
+        const aqiElement = document.getElementById('bd-distance');
+        if (aqiElement) aqiElement.innerText = `Air Quality: ${data.breakdown.aqi}`;
+        
+        const heatElement = document.getElementById('bd-weather');
+        if (heatElement) heatElement.innerText = `Weather: ${data.breakdown.heat}`;
+        
+        const hazardElement = document.getElementById('bd-accidents');
+        if (hazardElement) hazardElement.innerText = `Hazards: ${data.breakdown.hazards}`;
+
+    } catch (error) {
+        console.error("Failed to analyze risk:", error);
+    }
+}
+
+// PART 2: THE GAS PEDAL (Listens for your drag)
+document.addEventListener("DOMContentLoaded", () => {
+    const sliders = ['aqiWeight', 'heatWeight', 'riskTolerance'];
+    
+    sliders.forEach(id => {
+        const slider = document.getElementById(id);
+        if (slider) {
+            slider.addEventListener('input', () => {
+                // Get the current destination coordinates
+                // (Update these variable names if your map uses different ones!)
+                const lat = window.currentDestLat || 12.2958; // Defaulting to Mysuru latitude
+                const lng = window.currentDestLng || 76.6394; // Defaulting to Mysuru longitude
+                
+                fetchRouteRisk(lat, lng);
+            });
+        }
+    });
+});

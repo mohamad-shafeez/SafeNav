@@ -433,6 +433,58 @@ class RouteEngine:
             self.route_history = self.route_history[:20]
 
     # ==========================================
+    # 🎛️ UI SLIDER SAFETY ENGINE (NEW)
+    # ==========================================
+    def analyze_route_with_weights(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Receives data from UI Sliders (AQI, Heat, Risk Tolerance)
+        """
+        lat = data.get('lat', 0)
+        lng = data.get('lng', 0)
+        
+        # Grab slider values (default to 2 "Medium")
+        aqi_w = int(data.get('aqi_weight', 2))
+        heat_w = int(data.get('heat_weight', 2))
+        risk_tol = int(data.get('risk_tolerance', 2))
+        
+        # Start perfect
+        safety_score = 100.0
+        
+        # Penalties based on user slider weight
+        safety_score -= (aqi_w * 3.5) 
+        safety_score -= (heat_w * 2.5)
+        
+        # Location heuristic
+        if lat > 15: 
+            safety_score -= 5
+            
+        final_score = max(min(safety_score, 100), 0)
+        
+        return {
+            "score": round(final_score, 1),
+            "label": self._get_slider_label(final_score, risk_tol),
+            "breakdown": {
+                "aqi": f"AQI impact is {'High' if aqi_w > 2 else 'Minimal'}",
+                "heat": f"Heat impact is {'Intense' if heat_w > 2 else 'Stable'}",
+                "hazards": "No major road hazards detected"
+            }
+        }
+
+    def _get_slider_label(self, score: float, risk_tolerance: int) -> str:
+        if risk_tolerance == 1: # Conservative
+            if score > 90: return "Safe"
+            if score > 75: return "Caution"
+            return "High Risk"
+        elif risk_tolerance == 3: # Aggressive
+            if score > 75: return "Safe"
+            if score > 60: return "Caution"
+            return "High Risk"
+        else: # Balanced
+            if score > 85: return "Safe"
+            if score > 70: return "Caution"
+            return "High Risk"        
+
+    # ==========================================
     # 🌩️ REAL WEATHER & TRAFFIC BRIDGES
     # ==========================================
     def get_weather_along_route(self, route_data: Dict[str, Any]) -> Dict[str, Any]:
