@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>SafeNav | Premium AI Routing</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; child-src 'self' blob:; img-src 'self' https: data: blob:; connect-src 'self' https://*.tomtom.com https://*.firebaseio.com https://*.googleapis.com https://api.bigdatacloud.net;">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -402,5 +403,11 @@
             }, 4000);
         }
     </script>
+    <script>
+    // Force MapLibre to allow workers on live deployment
+    if (typeof maplibregl !== 'undefined') {
+        maplibregl.setRTLTextPlugin(null); // Optional
+    }
+</script>
 </body>
 </html>
