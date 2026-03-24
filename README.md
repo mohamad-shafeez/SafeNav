@@ -2,6 +2,10 @@
 
 SafeNav is an AI-powered travel safety engine that combines live environmental data and health-aware risk modeling to generate personalized itineraries and real-time safety guidance. 
 
+> Designed to transform unstructured environmental data into deterministic, machine-readable safety signals using a hybrid of rule-based logic and LLM-assisted generation.
+
+**Deterministic Output Layer:** Ensures stable and predictable safety scoring despite noisy, real-world inputs.
+
 ## 🚧 Live Demo (In Progress)
 The production deployment is currently being optimized for UI stability and API efficiency. 
 * **GitHub Repository:** https://github.com/mohamad-shafeez/safenav
@@ -32,7 +36,40 @@ The production deployment is currently being optimized for UI stability and API 
 * Google Generative AI SDK (Gemini 1.5 Flash)
 * Flask-CORS (Cross-Origin Resource Sharing)
 
-## System Architecture
+## 🏗️ System Architecture
+
+SafeNav is designed to convert inconsistent, unstructured environmental data into a stable, machine-readable safety signal.
+
+### Challenges:
+- APIs return data in different formats (JSON structures vary)
+- Missing or delayed data from external sources
+- No standardized risk scale across weather, AQI, and alerts
+
+### Approach:
+- Normalized all inputs into a unified internal schema
+- Applied weighted heuristics to combine signals (AQI, temperature, alerts)
+- Implemented fallback logic when APIs fail or return incomplete data
+- Ensured deterministic output even with partial inputs
+
+This layer acts as a bridge between raw real-world data and structured decision-making.
+
+## 🤖 LLM Integration Logic
+
+SafeNav uses Gemini 1.5 Flash to generate contextual travel plans based on structured safety inputs.
+
+### Key Design Decisions:
+- Inject structured safety scores into prompts rather than raw API data
+- Constrain outputs using prompt templates to ensure consistent itinerary formats
+- Avoid reliance on LLM for critical calculations (handled in backend logic)
+
+This hybrid approach ensures reliability while still leveraging generative capabilities.
+
+## ⚠️ Failure Handling & Edge Cases
+
+- Handles missing API responses using cached or fallback values
+- Prevents extreme fluctuations in safety score due to sudden data spikes
+- Ensures graceful degradation when external services are unavailable
+- Maintains consistent output format even under partial system failure
 
 SafeNav operates on a decoupled architecture designed for scalability and fault tolerance:
 1. **The Client (Frontend):** Manages user state via Firebase and LocalStorage, handling UI rendering and asynchronous API requests.
