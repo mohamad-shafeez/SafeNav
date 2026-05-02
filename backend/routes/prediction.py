@@ -2,6 +2,17 @@ import logging
 from flask import Blueprint, request, jsonify
 from flask_cors import CORS
 from services.prediction_engine import calculate_risk
+from firebase_admin import firestore
+
+def track_api_call(api_name):
+    """Silently increments the API usage counter in Firestore"""
+    try:
+        db = firestore.client()
+        db.collection('analytics').document('api_usage').set({
+            api_name: firestore.Increment(1)
+        }, merge=True)
+    except Exception as e:
+        print(f"Failed to track API: {e}")
 
 prediction_bp = Blueprint("prediction", __name__)
 
@@ -45,6 +56,12 @@ def predict():
     try:
         # 👉 NEW: Pass duration_mins into the prediction engine!
         result = calculate_risk(lat_f, lng_f, time, mode, user_profile, duration_mins)
+        
+        # 🚀 NEW: Track the API usage for the Admin Dashboard!
+        # A successful risk prediction hits both the Weather and Air Quality APIs
+        track_api_call("owm")
+        track_api_call("waqi")
+        
         return jsonify(result), 200
     except Exception as e:
         # logging.error records the error with a timestamp and details

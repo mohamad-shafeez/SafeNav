@@ -1,5 +1,4 @@
 # backend/routes/documents_routes.py
-
 import os
 import io
 import asyncio
@@ -11,6 +10,9 @@ from routes.documents import DocumentType, EncryptionLevel, DocumentStatus
 
 # Import the real AI, Encryption, and Storage Engine
 from services.documents_engine import DocumentVault
+
+# 🚀 NEW: Import the Admin Tracker
+from routes.dashboard import track_system_event
 
 documents_bp = Blueprint("documents", __name__)
 
@@ -54,6 +56,10 @@ def upload_file():
             encryption_level=EncryptionLevel(encryption_level),
             notes=notes
         ))
+
+        # 🚀 NEW: Track Gemini API usage for the Admin Dashboard!
+        # Since upload_document uses Gemini to analyze the file, we record 1 API hit.
+        track_system_event("gemini")
 
         return jsonify(document.to_dict()), 201
 
