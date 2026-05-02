@@ -1,227 +1,1821 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>SafeNav Command Center | GOD MODE</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase.js"></script>
-    
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<meta charset="UTF-8">
+<title>SafeNav | Command Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
 
-    <style>
-        :root { --bg: #0b1121; --card: #151e32; --text: #e2e8f0; --accent: #0ea5e9; --danger: #ef4444; --success: #22c55e; }
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+<style>
+:root {
+  --bg:       #060b14;
+  --surface:  #0d1526;
+  --card:     #111d35;
+  --border:   #1a2d50;
+  --text:     #c9d8f0;
+  --muted:    #4a6080;
+  --accent:   #00d4ff;
+  --accent2:  #7c3aed;
+  --success:  #00e68a;
+  --warning:  #ffb700;
+  --danger:   #ff3d5a;
+  --gold:     #f59e0b;
+  --font-mono: 'Space Mono', monospace;
+  --font-ui:   'DM Sans', sans-serif;
+  --sidebar-w: 72px;
+  --sidebar-expanded: 260px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-ui); }
 
-        /* Sidebar Command */
-        .sidebar { width: 280px; background: var(--card); border-right: 1px solid #1e293b; display: flex; flex-direction: column; padding: 20px; z-index: 10; }
-        .brand { font-size: 1.4rem; font-weight: 800; color: var(--accent); margin-bottom: 40px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .menu-item { padding: 15px; margin: 5px 0; border-radius: 8px; cursor: pointer; color: #94a3b8; transition: 0.3s; font-weight: 600; display: flex; align-items: center; gap: 12px; }
-        .menu-item:hover, .menu-item.active { background: rgba(14, 165, 233, 0.1); color: var(--accent); border-left: 3px solid var(--accent); }
-        
-        /* Main Operations */
-        .main { flex: 1; position: relative; display: flex; flex-direction: column; }
-        
-        /* Tactical Map Layer */
-        #tacticalMap { flex: 1; width: 100%; height: 100%; background: #0f172a; }
-        .map-overlay { position: absolute; top: 20px; left: 20px; z-index: 999; background: rgba(15, 23, 42, 0.9); padding: 15px; border-radius: 12px; border: 1px solid #334155; backdrop-filter: blur(10px); width: 300px; }
-        
-        /* 🔥 NEW: BROADCAST CONTROL PANEL (Bottom Center) */
-        .broadcast-panel {
-            position: absolute; 
-            bottom: 30px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            z-index: 1000; 
-            width: 90%; 
-            max-width: 600px;
-            background: rgba(30, 41, 59, 0.95); 
-            backdrop-filter: blur(10px);
-            border: 1px solid #3b82f6;
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-        }
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
-        .stat-val { font-weight: bold; color: var(--accent); }
+/* ═══════════════════════════════════
+   LAYOUT
+═══════════════════════════════════ */
+.shell { display: flex; height: 100vh; }
 
-        /* User Markers Custom Style */
-        .admin-marker { background: var(--accent); border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; box-shadow: 0 0 10px var(--accent); }
-        .admin-marker.offline { background: #64748b; box-shadow: none; }
-    </style>
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: var(--sidebar-expanded);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 0;
+  z-index: 100;
+  transition: width .3s ease;
+  flex-shrink: 0;
+}
+.sidebar-brand {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: white; flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(0,212,255,.3);
+}
+.brand-text { font-family: var(--font-mono); font-size: .8rem; line-height: 1.3; }
+.brand-title { color: var(--accent); font-weight: 700; letter-spacing: 1px; }
+.brand-sub { color: var(--muted); font-size: .65rem; }
+
+.sidebar-role {
+  margin: 12px 14px;
+  padding: 8px 12px;
+  background: rgba(0,212,255,.06);
+  border: 1px solid rgba(0,212,255,.15);
+  border-radius: 8px;
+  font-size: .72rem;
+  font-family: var(--font-mono);
+}
+.role-label { color: var(--muted); margin-bottom: 2px; }
+.role-name { color: var(--accent); font-weight: 700; }
+
+.sidebar-nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+.nav-section { padding: 16px 16px 6px; font-size: .62rem; font-family: var(--font-mono); color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; margin: 1px 8px;
+  border-radius: 8px; cursor: pointer;
+  color: var(--muted); font-size: .85rem; font-weight: 500;
+  transition: all .2s;
+  position: relative;
+}
+.nav-item:hover { background: rgba(255,255,255,.04); color: var(--text); }
+.nav-item.active { background: rgba(0,212,255,.1); color: var(--accent); }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%; background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-icon { width: 20px; text-align: center; font-size: .9rem; }
+.nav-badge {
+  margin-left: auto; background: var(--danger);
+  color: white; font-size: .6rem; font-weight: 700;
+  padding: 2px 6px; border-radius: 10px; font-family: var(--font-mono);
+  min-width: 18px; text-align: center;
+}
+.nav-badge.green { background: var(--success); }
+
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.sys-status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-radius: 8px;
+  background: rgba(0,230,138,.06); border: 1px solid rgba(0,230,138,.15);
+  font-size: .75rem; margin-bottom: 8px;
+}
+.pulse-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 0 rgba(0,230,138,.4);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{ box-shadow: 0 0 0 0 rgba(0,230,138,.4); } 50%{ box-shadow: 0 0 0 6px rgba(0,230,138,0); } }
+.logout-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  color: var(--danger); font-size: .85rem; font-weight: 500;
+  border: 1px solid rgba(255,61,90,.2); transition: all .2s;
+}
+.logout-btn:hover { background: rgba(255,61,90,.1); }
+
+/* ─── MAIN ─── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* TOPBAR */
+.topbar {
+  height: 60px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0;
+}
+.topbar-title { font-family: var(--font-mono); font-size: .95rem; color: var(--text); font-weight: 700; }
+.topbar-sub { font-size: .75rem; color: var(--muted); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.admin-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: .8rem;
+}
+.admin-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700; color: white;
+}
+.topbar-clock { font-family: var(--font-mono); font-size: .8rem; color: var(--accent); }
+
+/* CONTENT AREA */
+.content { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.view { display: none; height: 100%; }
+.view.active { display: block; }
+
+/* ─── KILL SWITCH BAR ─── */
+.kill-bar {
+  background: rgba(255,61,90,.08);
+  border-bottom: 1px solid rgba(255,61,90,.2);
+  padding: 10px 24px;
+  display: flex; align-items: center; gap: 16px;
+  flex-shrink: 0;
+}
+.kill-label { font-family: var(--font-mono); font-size: .75rem; color: var(--danger); font-weight: 700; letter-spacing: 1px; }
+.kill-levels { display: flex; gap: 8px; }
+.kill-btn {
+  padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card); color: var(--muted); font-size: .75rem;
+  font-family: var(--font-mono); cursor: pointer; transition: all .2s; font-weight: 700;
+}
+.kill-btn:hover { border-color: var(--warning); color: var(--warning); }
+.kill-btn.active-level { border-color: var(--danger); color: white; background: rgba(255,61,90,.2); }
+.kill-btn.l0.active-level { border-color: var(--success); color: var(--success); background: rgba(0,230,138,.1); }
+.kill-status { margin-left: auto; font-size: .75rem; font-family: var(--font-mono); }
+
+/* ═══════════════════════════════════
+   DASHBOARD VIEW
+═══════════════════════════════════ */
+.dash-grid { padding: 20px; display: grid; gap: 16px; }
+
+/* KPI Row */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.kpi-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px;
+  position: relative; overflow: hidden;
+  transition: transform .2s;
+}
+.kpi-card:hover { transform: translateY(-2px); }
+.kpi-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--kpi-color, var(--accent));
+}
+.kpi-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(0,0,0,.3); display: flex; align-items: center;
+  justify-content: center; font-size: .9rem;
+  color: var(--kpi-color, var(--accent)); margin-bottom: 12px;
+  border: 1px solid rgba(255,255,255,.05);
+}
+.kpi-val { font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.kpi-label { font-size: .75rem; color: var(--muted); font-weight: 500; }
+.kpi-delta { font-size: .7rem; margin-top: 8px; font-family: var(--font-mono); }
+.kpi-delta.up { color: var(--success); }
+.kpi-delta.down { color: var(--danger); }
+
+/* Middle Row */
+.mid-row { display: grid; grid-template-columns: 1fr 1fr 340px; gap: 16px; }
+
+/* API Gauges */
+.api-monitor { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.section-title { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.api-gauge-row { margin-bottom: 14px; }
+.api-gauge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.api-name { font-size: .8rem; font-weight: 600; }
+.api-stats { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+.gauge-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 3px; transition: width .8s ease; }
+.api-cost { font-size: .7rem; color: var(--muted); margin-top: 4px; text-align: right; font-family: var(--font-mono); }
+
+/* Chart cards */
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.chart-wrap { position: relative; height: 180px; }
+
+/* Risk distrib */
+.risk-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.risk-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.risk-label { font-size: .78rem; width: 60px; color: var(--muted); }
+.risk-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.risk-fill { height: 100%; border-radius: 4px; }
+.risk-pct { font-family: var(--font-mono); font-size: .7rem; width: 32px; text-align: right; }
+
+/* Health aggreg */
+.health-chart-wrap { position: relative; height: 120px; margin: 10px auto 0; width: 120px; }
+.health-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.hl-item { display: flex; align-items: center; gap: 5px; font-size: .72rem; color: var(--muted); }
+.hl-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Bottom Row */
+.bot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Recent Audit */
+.audit-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.audit-table th { color: var(--muted); font-family: var(--font-mono); font-size: .65rem; text-transform: uppercase; letter-spacing: 1px; padding: 0 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+.audit-table td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,.03); }
+.audit-table tr:hover td { background: rgba(255,255,255,.02); }
+.sev-badge { padding: 2px 8px; border-radius: 4px; font-size: .62rem; font-family: var(--font-mono); font-weight: 700; }
+.sev-INFO { background: rgba(0,212,255,.1); color: var(--accent); }
+.sev-WARN { background: rgba(255,183,0,.1); color: var(--warning); }
+.sev-CRITICAL { background: rgba(255,61,90,.1); color: var(--danger); }
+
+/* ═══════════════════════════════════
+   MAP VIEW
+═══════════════════════════════════ */
+.map-shell { height: calc(100vh - 110px); display: flex; gap: 0; position: relative; }
+#tacticalMap { flex: 1; background: #060b14; }
+
+.map-sidebar {
+  width: 320px; background: var(--surface); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.map-panel { padding: 16px; border-bottom: 1px solid var(--border); }
+.map-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.map-stat { background: var(--card); border-radius: 8px; padding: 10px 12px; border: 1px solid var(--border); }
+.map-stat-val { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+.map-stat-label { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+
+.broadcast-section { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+.broadcast-textarea {
+  width: 100%; padding: 10px 12px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  font-family: var(--font-ui); font-size: .82rem; resize: none;
+  outline: none; margin-bottom: 8px; transition: border-color .2s; height: 80px;
+}
+.broadcast-textarea:focus { border-color: var(--accent); }
+.alert-types { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.alert-chip {
+  padding: 4px 10px; border-radius: 20px; font-size: .7rem; cursor: pointer;
+  border: 1px solid var(--border); background: var(--card); color: var(--muted);
+  transition: all .2s; font-weight: 500;
+}
+.alert-chip:hover, .alert-chip.sel { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,.08); }
+.send-btn {
+  width: 100%; padding: 11px; background: linear-gradient(135deg, var(--danger), #c2185b);
+  border: none; border-radius: 8px; color: white; font-weight: 700;
+  font-size: .85rem; cursor: pointer; transition: all .2s;
+  font-family: var(--font-ui); letter-spacing: .5px;
+}
+.send-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,61,90,.3); }
+
+.shadow-controls { padding: 16px; border-top: 1px solid var(--border); }
+.shadow-row { display: flex; gap: 8px; }
+.shadow-btn {
+  flex: 1; padding: 8px 6px; background: rgba(124,58,237,.1);
+  border: 1px solid rgba(124,58,237,.3); border-radius: 8px;
+  color: #a78bfa; font-size: .72rem; cursor: pointer; transition: all .2s;
+  font-weight: 600; text-align: center;
+}
+.shadow-btn:hover { background: rgba(124,58,237,.2); }
+.shadow-label { font-size: .62rem; font-family: var(--font-mono); color: var(--muted); margin-bottom: 8px; letter-spacing: 1px; }
+
+/* MAP CONTROLS floating */
+.map-controls-float {
+  position: absolute; top: 16px; left: 16px; z-index: 500;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.map-ctl-btn {
+  width: 36px; height: 36px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--muted); transition: all .2s; font-size: .8rem;
+}
+.map-ctl-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ═══════════════════════════════════
+   USERS VIEW
+═══════════════════════════════════ */
+.users-shell { padding: 20px; }
+.users-toolbar {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 16px;
+}
+.search-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--text); font-family: var(--font-ui); font-size: .85rem;
+}
+.search-input::placeholder { color: var(--muted); }
+.filter-btn {
+  padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); font-size: .78rem;
+  cursor: pointer; transition: all .2s; font-family: var(--font-ui);
+}
+.filter-btn.active-f { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,.08); }
+
+.users-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.users-table { width: 100%; border-collapse: collapse; }
+.users-table th {
+  background: var(--surface); color: var(--muted); font-family: var(--font-mono);
+  font-size: .65rem; text-transform: uppercase; letter-spacing: 1px;
+  padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border);
+}
+.users-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.03); font-size: .82rem; vertical-align: middle; }
+.users-table tr:last-child td { border-bottom: none; }
+.users-table tr:hover td { background: rgba(255,255,255,.02); }
+
+.user-name-cell { display: flex; align-items: center; gap: 10px; }
+.user-av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent2), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 700; color: white; flex-shrink: 0; }
+.user-av.offline-av { background: var(--muted); }
+.user-info-name { font-weight: 600; }
+.user-info-id { font-family: var(--font-mono); font-size: .65rem; color: var(--muted); }
+
+.status-pill { padding: 3px 10px; border-radius: 20px; font-size: .68rem; font-weight: 700; font-family: var(--font-mono); }
+.status-Active { background: rgba(0,230,138,.1); color: var(--success); border: 1px solid rgba(0,230,138,.2); }
+.status-Idle { background: rgba(255,183,0,.1); color: var(--warning); border: 1px solid rgba(255,183,0,.2); }
+.status-Offline { background: rgba(255,255,255,.05); color: var(--muted); border: 1px solid var(--border); }
+.status-Banned { background: rgba(255,61,90,.1); color: var(--danger); border: 1px solid rgba(255,61,90,.2); }
+
+.role-tag { font-size: .68rem; padding: 2px 8px; border-radius: 4px; font-family: var(--font-mono); font-weight: 700; }
+.role-superadmin { background: rgba(245,158,11,.15); color: var(--gold); }
+.role-moderator { background: rgba(124,58,237,.15); color: #a78bfa; }
+.role-analyst { background: rgba(0,212,255,.1); color: var(--accent); }
+.role-user { background: rgba(255,255,255,.05); color: var(--muted); }
+
+.action-group { display: flex; gap: 6px; }
+.act-btn {
+  width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: .75rem; color: var(--muted); transition: all .2s;
+}
+.act-btn:hover { color: var(--accent); border-color: var(--accent); background: rgba(0,212,255,.05); }
+.act-btn.danger:hover { color: var(--danger); border-color: var(--danger); background: rgba(255,61,90,.05); }
+.act-btn.warn:hover { color: var(--warning); border-color: var(--warning); background: rgba(255,183,0,.05); }
+
+/* ═══════════════════════════════════
+   REPORTS / INTELLIGENCE QUEUE
+═══════════════════════════════════ */
+.reports-shell { padding: 20px; }
+.reports-queue { display: flex; flex-direction: column; gap: 12px; }
+.report-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 20px;
+  display: flex; align-items: flex-start; gap: 16px;
+  transition: border-color .2s;
+}
+.report-card:hover { border-color: rgba(0,212,255,.2); }
+.report-icon {
+  width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+}
+.ri-flood { background: rgba(0,212,255,.1); color: var(--accent); }
+.ri-road { background: rgba(255,183,0,.1); color: var(--warning); }
+.ri-hazard { background: rgba(255,61,90,.1); color: var(--danger); }
+.ri-camera { background: rgba(124,58,237,.1); color: #a78bfa; }
+.ri-clear { background: rgba(0,230,138,.1); color: var(--success); }
+
+.report-body { flex: 1; }
+.report-title { font-weight: 600; margin-bottom: 4px; }
+.report-meta { font-size: .75rem; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.report-upvotes { color: var(--accent); font-family: var(--font-mono); font-size: .72rem; }
+.report-location { display: flex; align-items: center; gap: 4px; }
+.report-actions { display: flex; gap: 8px; align-items: flex-start; flex-shrink: 0; }
+.rpt-btn {
+  padding: 6px 14px; border-radius: 6px; font-size: .75rem; font-weight: 700;
+  cursor: pointer; border: 1px solid; transition: all .2s; font-family: var(--font-ui);
+}
+.rpt-approve { border-color: var(--success); color: var(--success); background: rgba(0,230,138,.05); }
+.rpt-approve:hover { background: rgba(0,230,138,.15); }
+.rpt-reject { border-color: var(--danger); color: var(--danger); background: rgba(255,61,90,.05); }
+.rpt-reject:hover { background: rgba(255,61,90,.15); }
+.rpt-escalate { border-color: var(--warning); color: var(--warning); background: rgba(255,183,0,.05); }
+.rpt-escalate:hover { background: rgba(255,183,0,.15); }
+
+/* ═══════════════════════════════════
+   VAULT VIEW
+═══════════════════════════════════ */
+.vault-shell { padding: 20px; }
+.vault-notice {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.2);
+  border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; font-size: .82rem;
+}
+.vault-notice i { color: var(--gold); margin-top: 2px; flex-shrink: 0; }
+.vault-notice p { color: var(--muted); line-height: 1.5; }
+.vault-notice strong { color: var(--text); }
+
+.vault-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.vault-table { width: 100%; border-collapse: collapse; }
+.vault-table th { background: var(--surface); color: var(--muted); font-family: var(--font-mono); font-size: .65rem; text-transform: uppercase; letter-spacing: 1px; padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+.vault-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.03); font-size: .82rem; }
+.vault-table tr:last-child td { border-bottom: none; }
+.vault-table tr:hover td { background: rgba(255,255,255,.02); }
+.file-type-badge { padding: 2px 8px; border-radius: 4px; font-family: var(--font-mono); font-size: .65rem; font-weight: 700; background: rgba(0,212,255,.1); color: var(--accent); }
+.delete-vault-btn { padding: 5px 14px; border-radius: 6px; background: rgba(255,61,90,.1); border: 1px solid rgba(255,61,90,.3); color: var(--danger); font-size: .75rem; cursor: pointer; transition: all .2s; }
+.delete-vault-btn:hover { background: rgba(255,61,90,.2); }
+
+/* ═══════════════════════════════════
+   ANALYTICS VIEW
+═══════════════════════════════════ */
+.analytics-shell { padding: 20px; display: grid; gap: 16px; }
+.anl-row1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.anl-row2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+/* ═══════════════════════════════════
+   SYSTEM SETTINGS
+═══════════════════════════════════ */
+.settings-shell { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.setting-row:last-child { border-bottom: none; }
+.setting-info { flex: 1; }
+.setting-name { font-size: .85rem; font-weight: 500; margin-bottom: 2px; }
+.setting-desc { font-size: .72rem; color: var(--muted); }
+
+/* Toggle Switch */
+.toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--border);
+  border-radius: 24px; cursor: pointer; transition: .3s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; width: 18px; height: 18px;
+  left: 3px; top: 3px; background: white; border-radius: 50%; transition: .3s;
+}
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* JWT Config */
+.config-input {
+  width: 100%; padding: 8px 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: var(--font-mono); font-size: .78rem;
+  outline: none; margin-top: 4px; transition: border-color .2s;
+}
+.config-input:focus { border-color: var(--accent); }
+
+/* Audit log */
+.audit-shell { padding: 20px; }
+.audit-filters { display: flex; gap: 8px; margin-bottom: 16px; }
+.audit-full-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+
+/* ═══════════════════════════════════
+   MODAL
+═══════════════════════════════════ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(6,11,20,.85); backdrop-filter: blur(6px);
+  z-index: 1000; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 28px; width: 100%; max-width: 480px;
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-title { font-family: var(--font-mono); font-size: 1rem; margin-bottom: 6px; }
+.modal-sub { font-size: .8rem; color: var(--muted); margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btn {
+  flex: 1; padding: 10px; border-radius: 8px; font-size: .85rem;
+  font-weight: 700; cursor: pointer; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); transition: all .2s;
+  font-family: var(--font-ui);
+}
+.modal-btn.danger { background: var(--danger); color: white; border-color: var(--danger); }
+.modal-btn.confirm { background: var(--accent); color: #000; border-color: var(--accent); }
+.modal-select {
+  width: 100%; padding: 10px 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  font-family: var(--font-ui); font-size: .85rem; outline: none; margin-bottom: 8px;
+}
+.modal-field { margin-bottom: 14px; }
+.modal-label { font-size: .75rem; color: var(--muted); margin-bottom: 6px; display: block; font-family: var(--font-mono); letter-spacing: .5px; }
+
+/* ─── TOAST NOTIFICATIONS ─── */
+.toast-stack { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 16px; font-size: .82rem; min-width: 260px;
+  display: flex; align-items: center; gap: 10px;
+  animation: toastIn .3s ease; box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+.toast.success { border-color: rgba(0,230,138,.3); }
+.toast.error { border-color: rgba(255,61,90,.3); }
+.toast.warning { border-color: rgba(255,183,0,.3); }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ─── EMPTY STATE ─── */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
+.empty-state i { font-size: 2.5rem; margin-bottom: 12px; opacity: .4; }
+.empty-state p { font-size: .85rem; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1200px) {
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .mid-row { grid-template-columns: 1fr 1fr; }
+  .settings-shell { grid-template-columns: 1fr; }
+}
+
+/* ─── LEAFLET CUSTOM ─── */
+.leaflet-container { background: #060b14 !important; }
+.leaflet-popup-content-wrapper { background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,.5); }
+.leaflet-popup-tip { background: var(--card); }
+.leaflet-popup-content { font-family: var(--font-ui); font-size: .82rem; line-height: 1.6; }
+.popup-row { display: flex; justify-content: space-between; gap: 20px; }
+.popup-key { color: var(--muted); }
+.popup-val { color: var(--text); font-weight: 600; font-family: var(--font-mono); }
+</style>
 </head>
 <body>
+<div class="shell">
 
-    <div class="sidebar">
-        <div class="brand"><i class="fas fa-satellite-dish"></i> SafeNav OPS</div>
-        
-        <div class="menu-item active" onclick="switchView('map')"><i class="fas fa-globe-asia"></i> Live Tactical Map</div>
-        <div class="menu-item" onclick="switchView('users')"><i class="fas fa-users"></i> User Database</div>
-        <div class="menu-item" onclick="switchView('ai')"><i class="fas fa-brain"></i> AI Model Training</div>
-        <div class="menu-item" onclick="switchView('settings')"><i class="fas fa-cogs"></i> System Controls</div>
-        
-        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #1e293b;">
-            <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">SYSTEM STATUS</div>
-            <div style="display: flex; align-items: center; gap: 8px; color: var(--success); font-weight: bold;">
-                <span style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success);"></span> ONLINE
-            </div>
-        </div>
-        <div class="menu-item" style="color: var(--danger);" onclick="logout()"><i class="fas fa-power-off"></i> Terminate Session</div>
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="fas fa-satellite-dish"></i></div>
+    <div class="brand-text">
+      <div class="brand-title">SAFENAV</div>
+      <div class="brand-sub">Command Center v2.0</div>
+    </div>
+  </div>
+
+  <div class="sidebar-role">
+    <div class="role-label">SIGNED IN AS</div>
+    <div class="role-name" id="sidebarRole">SUPER ADMIN</div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section">Operations</div>
+    <div class="nav-item active" onclick="switchView('dashboard')">
+      <span class="nav-icon"><i class="fas fa-chart-line"></i></span> Dashboard
+    </div>
+    <div class="nav-item" onclick="switchView('map')">
+      <span class="nav-icon"><i class="fas fa-globe-asia"></i></span> Live Map
+      <span class="nav-badge green" id="liveCount">0</span>
     </div>
 
-    <div class="main">
-        
-        <div class="map-overlay">
-            <h3 style="margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px;">Network Status</h3>
-            <div class="stat-row"><span>Active Units:</span> <span class="stat-val" id="activeCount">0</span></div>
-            <div class="stat-row"><span>Total Database:</span> <span class="stat-val" id="totalCount">0</span></div>
-            <div class="stat-row"><span>Data Stream:</span> <span class="stat-val" style="color: var(--success);">LIVE</span></div>
-            <div style="margin-top: 10px; font-size: 0.8rem; color: #64748b;">Scanning frequency: 2000ms</div>
+    <div class="nav-section">Management</div>
+    <div class="nav-item" onclick="switchView('users')">
+      <span class="nav-icon"><i class="fas fa-users"></i></span> User Database
+    </div>
+    <div class="nav-item" onclick="switchView('reports')">
+      <span class="nav-icon"><i class="fas fa-flag"></i></span> Intel Queue
+      <span class="nav-badge" id="reportsBadge">4</span>
+    </div>
+    <div class="nav-item" onclick="switchView('vault')">
+      <span class="nav-icon"><i class="fas fa-lock"></i></span> Vault Metadata
+    </div>
+
+    <div class="nav-section">Monitoring</div>
+    <div class="nav-item" onclick="switchView('analytics')">
+      <span class="nav-icon"><i class="fas fa-brain"></i></span> Analytics
+    </div>
+    <div class="nav-item" onclick="switchView('audit')">
+      <span class="nav-icon"><i class="fas fa-scroll"></i></span> Audit Log
+    </div>
+
+    <div class="nav-section">System</div>
+    <div class="nav-item" onclick="switchView('settings')">
+      <span class="nav-icon"><i class="fas fa-sliders-h"></i></span> System Config
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sys-status">
+      <div class="pulse-dot"></div>
+      <div>
+        <div style="font-size:.72rem;font-weight:700;color:var(--success)">ALL SYSTEMS ONLINE</div>
+        <div style="font-size:.65rem;color:var(--muted);font-family:var(--font-mono)" id="lastSync">Synced just now</div>
+      </div>
+    </div>
+    <div class="logout-btn" onclick="adminLogout()">
+      <i class="fas fa-power-off"></i> Terminate Session
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbarTitle">Overview Dashboard</div>
+      <div class="topbar-sub" id="topbarSub">Real-time network intelligence</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-clock" id="clockDisplay">00:00:00</div>
+      <div class="admin-chip">
+        <div class="admin-avatar" id="adminAvatar">SA</div>
+        <span id="adminEmail" style="font-size:.78rem">admin@safenav.com</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- KILL SWITCH BAR -->
+  <div class="kill-bar">
+    <i class="fas fa-shield-alt" style="color:var(--danger);font-size:.85rem"></i>
+    <div class="kill-label">KILL SWITCH</div>
+    <div class="kill-levels">
+      <button class="kill-btn l0 active-level" onclick="setKillLevel(0)">L0 · NORMAL</button>
+      <button class="kill-btn l1" onclick="setKillLevel(1)">L1 · AI OFF</button>
+      <button class="kill-btn l2" onclick="setKillLevel(2)">L2 · ALERTS OFF</button>
+      <button class="kill-btn l3" onclick="setKillLevel(3)">L3 · EMERGENCY</button>
+    </div>
+    <div class="kill-status">
+      System Mode: <span id="killStatusText" style="color:var(--success);font-family:var(--font-mono);font-weight:700">NOMINAL</span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ─── DASHBOARD VIEW ─── -->
+    <div class="view active" id="view-dashboard">
+      <div class="dash-grid">
+        <!-- KPI Row -->
+        <div class="kpi-row">
+          <div class="kpi-card" style="--kpi-color:var(--accent)">
+            <div class="kpi-icon"><i class="fas fa-users"></i></div>
+            <div class="kpi-val" id="kpiUsers">0</div>
+            <div class="kpi-label">Total Users</div>
+            <div class="kpi-delta up" id="kpiUsersDelta">↑ Loading...</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:var(--success)">
+            <div class="kpi-icon"><i class="fas fa-satellite"></i></div>
+            <div class="kpi-val" id="kpiActive">0</div>
+            <div class="kpi-label">Active Now</div>
+            <div class="kpi-delta up">↑ Live tracking</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:var(--warning)">
+            <div class="kpi-icon"><i class="fas fa-route"></i></div>
+            <div class="kpi-val" id="kpiRoutes">0</div>
+            <div class="kpi-label">Routes Today</div>
+            <div class="kpi-delta up" id="kpiRoutesDelta">Loading...</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:var(--danger)">
+            <div class="kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="kpi-val" id="kpiAlerts">0</div>
+            <div class="kpi-label">Active Alerts</div>
+            <div class="kpi-delta" id="kpiAlertsDelta" style="color:var(--muted)">—</div>
+          </div>
         </div>
 
-        <div class="broadcast-panel">
-            <h3 style="color: #3b82f6; margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-bullhorn"></i> Global Emergency Broadcast
-            </h3>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="adminMessage" placeholder="Type alert (e.g., '⚠️ Heavy Fog in Sector 4 - Slow Down')" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; outline: none;">
-                <button onclick="sendGlobalAlert()" style="background: #ef4444; color: white; border: none; padding: 0 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; white-space: nowrap;">
-                    SEND ALERT 🚨
-                </button>
+        <!-- Mid Row -->
+        <div class="mid-row">
+          <!-- Route Chart -->
+          <div class="chart-card">
+            <div class="section-title">Route Requests (24h)</div>
+            <div class="chart-wrap"><canvas id="routeChart"></canvas></div>
+          </div>
+
+          <!-- API Monitor -->
+          <div class="api-monitor">
+            <div class="section-title">API Quota Monitor</div>
+            <div class="api-gauge-row">
+              <div class="api-gauge-header">
+                <span class="api-name">OpenWeatherMap</span>
+                <span class="api-stats" id="owmStat">0 / 1,000 calls</span>
+              </div>
+              <div class="gauge-bar"><div class="gauge-fill" id="owmBar" style="width:0%;background:var(--accent)"></div></div>
+              <div class="api-cost" id="owmCost">Est. cost: $0.00</div>
             </div>
+            <div class="api-gauge-row">
+              <div class="api-gauge-header">
+                <span class="api-name">WAQI Air Quality</span>
+                <span class="api-stats" id="waqiStat">0 / 500 calls</span>
+              </div>
+              <div class="gauge-bar"><div class="gauge-fill" id="waqiBar" style="width:0%;background:var(--success)"></div></div>
+              <div class="api-cost" id="waqiCost">Est. cost: $0.00</div>
+            </div>
+            <div class="api-gauge-row">
+              <div class="api-gauge-header">
+                <span class="api-name">Gemini 1.5 Flash</span>
+                <span class="api-stats" id="geminiStat">0 / 100 calls</span>
+              </div>
+              <div class="gauge-bar"><div class="gauge-fill" id="geminiBar" style="width:0%;background:var(--warning)"></div></div>
+              <div class="api-cost" id="geminiCost">Est. cost: $0.00</div>
+            </div>
+            <div class="api-gauge-row">
+              <div class="api-gauge-header">
+                <span class="api-name">Nominatim Geocode</span>
+                <span class="api-stats" id="nominatimStat">0 / 2,000 calls</span>
+              </div>
+              <div class="gauge-bar"><div class="gauge-fill" id="nominatimBar" style="width:0%;background:#a78bfa"></div></div>
+              <div class="api-cost" id="nominatimCost">Free tier</div>
+            </div>
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:.75rem;color:var(--muted)">Est. Daily Total</span>
+              <span style="font-family:var(--font-mono);font-size:.9rem;color:var(--warning);font-weight:700" id="totalCost">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Health Aggregated -->
+          <div class="risk-card">
+            <div class="section-title">Health Profiles (Anonymized)</div>
+            <div class="health-chart-wrap"><canvas id="healthChart"></canvas></div>
+            <div class="health-legend" id="healthLegend"></div>
+          </div>
         </div>
 
+        <!-- Bot Row -->
+        <div class="bot-row">
+          <!-- Risk distribution -->
+          <div class="chart-card">
+            <div class="section-title">Risk Level Distribution</div>
+            <div class="risk-bar-row">
+              <div class="risk-label">LOW</div>
+              <div class="risk-track"><div class="risk-fill" id="riskLow" style="width:0%;background:var(--success)"></div></div>
+              <div class="risk-pct" id="riskLowPct" style="color:var(--success)">0%</div>
+            </div>
+            <div class="risk-bar-row">
+              <div class="risk-label">MEDIUM</div>
+              <div class="risk-track"><div class="risk-fill" id="riskMed" style="width:0%;background:var(--warning)"></div></div>
+              <div class="risk-pct" id="riskMedPct" style="color:var(--warning)">0%</div>
+            </div>
+            <div class="risk-bar-row">
+              <div class="risk-label">HIGH</div>
+              <div class="risk-track"><div class="risk-fill" id="riskHigh" style="width:0%;background:var(--danger)"></div></div>
+              <div class="risk-pct" id="riskHighPct" style="color:var(--danger)">0%</div>
+            </div>
+            <div class="section-title" style="margin-top:16px">AQI Trend (7d)</div>
+            <div style="position:relative;height:100px"><canvas id="aqiChart"></canvas></div>
+          </div>
+
+          <!-- Recent Audit -->
+          <div class="chart-card">
+            <div class="section-title">Recent Audit Events</div>
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Action</th><th>Actor</th><th>Severity</th><th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="auditPreviewBody">
+                <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /dashboard -->
+
+    <!-- ─── MAP VIEW ─── -->
+    <div class="view" id="view-map">
+      <div class="map-shell">
         <div id="tacticalMap"></div>
+
+        <div class="map-controls-float">
+          <div class="map-ctl-btn" onclick="mapZoomIn()" title="Zoom In"><i class="fas fa-plus"></i></div>
+          <div class="map-ctl-btn" onclick="mapZoomOut()" title="Zoom Out"><i class="fas fa-minus"></i></div>
+          <div class="map-ctl-btn" onclick="centerIndia()" title="Reset View"><i class="fas fa-crosshairs"></i></div>
+          <div class="map-ctl-btn" onclick="toggleHazards()" title="Toggle Hazards" id="hazardToggleBtn"><i class="fas fa-radiation-alt"></i></div>
+        </div>
+
+        <div class="map-sidebar">
+          <div class="map-panel">
+            <div class="section-title">Live Network</div>
+            <div class="map-stat-grid">
+              <div class="map-stat">
+                <div class="map-stat-val" id="mapActiveUsers">0</div>
+                <div class="map-stat-label">Active users</div>
+              </div>
+              <div class="map-stat">
+                <div class="map-stat-val" id="mapTotalRoutes">0</div>
+                <div class="map-stat-label">Live routes</div>
+              </div>
+              <div class="map-stat">
+                <div class="map-stat-val" id="mapHazards">0</div>
+                <div class="map-stat-label">Hazard zones</div>
+              </div>
+              <div class="map-stat">
+                <div class="map-stat-val" id="mapRefresh" style="color:var(--success)">4s</div>
+                <div class="map-stat-label">Refresh rate</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="broadcast-section">
+            <div class="section-title">Emergency Broadcast</div>
+            <textarea class="broadcast-textarea" id="broadcastMsg" placeholder="Type alert message..."></textarea>
+            <div class="alert-types">
+              <span class="alert-chip" onclick="setAlertType(this,'⚠️ Weather')">⚠️ Weather</span>
+              <span class="alert-chip" onclick="setAlertType(this,'🚧 Road Closed')">🚧 Road Closed</span>
+              <span class="alert-chip" onclick="setAlertType(this,'🔴 High AQI')">🔴 High AQI</span>
+              <span class="alert-chip" onclick="setAlertType(this,'🌊 Flood Risk')">🌊 Flood Risk</span>
+              <span class="alert-chip" onclick="setAlertType(this,'✅ All Clear')">✅ All Clear</span>
+            </div>
+            <button class="send-btn" onclick="sendBroadcast()">
+              <i class="fas fa-broadcast-tower"></i> BROADCAST TO ALL USERS
+            </button>
+          </div>
+
+          <div class="shadow-controls">
+            <div class="shadow-label"><i class="fas fa-user-secret" style="margin-right:6px"></i>SHADOW MODE (Admin Only)</div>
+            <div class="shadow-row">
+              <div class="shadow-btn" onclick="dropShadowHazard()"><i class="fas fa-map-pin"></i> Drop Hazard</div>
+              <div class="shadow-btn" onclick="simulateRoute()"><i class="fas fa-route"></i> Sim Route</div>
+              <div class="shadow-btn" onclick="clearShadow()"><i class="fas fa-eraser"></i> Clear</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /map -->
+
+    <!-- ─── USERS VIEW ─── -->
+    <div class="view" id="view-users">
+      <div class="users-shell">
+        <div class="users-toolbar">
+          <i class="fas fa-search" style="color:var(--muted)"></i>
+          <input class="search-input" id="userSearch" placeholder="Search by name, email, or UID..." oninput="filterUsers()">
+          <button class="filter-btn active-f" onclick="setUserFilter(this,'all')">All</button>
+          <button class="filter-btn" onclick="setUserFilter(this,'Active')">Active</button>
+          <button class="filter-btn" onclick="setUserFilter(this,'Banned')">Banned</button>
+          <button class="filter-btn" onclick="setUserFilter(this,'Offline')">Offline</button>
+        </div>
+
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Medical Profile</th>
+                <th>Last Seen</th>
+                <th>Routes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Loading user data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /users -->
+
+    <!-- ─── REPORTS / INTELLIGENCE QUEUE ─── -->
+    <div class="view" id="view-reports">
+      <div class="reports-shell">
+        <div class="section-title" style="margin-bottom:16px">Community Intelligence Queue — Pending Review</div>
+        <div class="reports-queue" id="reportsQueue">
+          <!-- injected by JS -->
+        </div>
+      </div>
     </div>
 
-    <script>
-        const db = firebase.firestore();
-        let map;
-        let userMarkers = {};
-        const AUTHORIZED_ADMINS = ["shafeezchappi18@gmail.com", "admin@safenav.com"];
+    <!-- ─── VAULT VIEW ─── -->
+    <div class="view" id="view-vault">
+      <div class="vault-shell">
+        <div class="vault-notice">
+          <i class="fas fa-shield-alt"></i>
+          <p><strong>Privacy Compliance Mode Active.</strong> You are viewing document metadata only. File content, decryption keys, and raw payloads are <strong>never</strong> accessible from this panel. All deletions are permanent server-side purges and are logged in the audit trail.</p>
+        </div>
+        <div class="vault-table-wrap">
+          <table class="vault-table">
+            <thead>
+              <tr>
+                <th>Vault ID</th>
+                <th>User (Anonymized)</th>
+                <th>Document Title</th>
+                <th>File Type</th>
+                <th>Size</th>
+                <th>Upload Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="vaultTableBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Loading vault metadata...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-        // 1. INITIALIZE SYSTEM
-        document.addEventListener("DOMContentLoaded", () => {
-            initTacticalMap();
-            verifyAdmin();
+    <!-- ─── ANALYTICS VIEW ─── -->
+    <div class="view" id="view-analytics">
+      <div class="analytics-shell">
+        <div class="anl-row1">
+          <div class="chart-card">
+            <div class="section-title">User Growth (30d)</div>
+            <div style="position:relative;height:200px"><canvas id="growthChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="section-title">Top Destinations</div>
+            <div style="position:relative;height:200px"><canvas id="destChart"></canvas></div>
+          </div>
+        </div>
+        <div class="anl-row2">
+          <div class="chart-card">
+            <div class="section-title">Alerts Sent (7d)</div>
+            <div style="position:relative;height:150px"><canvas id="alertChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="section-title">API Calls vs Cost</div>
+            <div style="position:relative;height:150px"><canvas id="costChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="section-title">Travel Modes</div>
+            <div style="position:relative;height:150px"><canvas id="modeChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── AUDIT LOG ─── -->
+    <div class="view" id="view-audit">
+      <div class="audit-shell">
+        <div class="audit-filters">
+          <button class="filter-btn active-f" onclick="filterAudit(this,'all')">All</button>
+          <button class="filter-btn" onclick="filterAudit(this,'INFO')">INFO</button>
+          <button class="filter-btn" onclick="filterAudit(this,'WARN')">WARN</button>
+          <button class="filter-btn" onclick="filterAudit(this,'CRITICAL')">CRITICAL</button>
+        </div>
+        <div class="audit-full-table-wrap">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Severity</th>
+                <th>Metadata</th>
+              </tr>
+            </thead>
+            <tbody id="auditFullBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SETTINGS VIEW ─── -->
+    <div class="view" id="view-settings">
+      <div class="settings-shell">
+
+        <!-- Feature Toggles -->
+        <div class="settings-card">
+          <div class="section-title">Feature Toggles</div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Gemini AI Advisories</div>
+              <div class="setting-desc">Enable/disable AI-generated safety text (Gemini 1.5 Flash)</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="tog-gemini" checked onchange="saveSetting('gemini_enabled', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Emergency Broadcasts</div>
+              <div class="setting-desc">Allow admin broadcast push to all active users</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="tog-broadcast" checked onchange="saveSetting('broadcast_enabled', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Crowdsource Reports</div>
+              <div class="setting-desc">Allow users to submit road/hazard reports</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="tog-reports" checked onchange="saveSetting('reports_enabled', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Document Vault</div>
+              <div class="setting-desc">Enable secure document upload & storage</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="tog-vault" checked onchange="saveSetting('vault_enabled', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">New Registrations</div>
+              <div class="setting-desc">Allow new users to sign up on the platform</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="tog-reg" checked onchange="saveSetting('registrations_open', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+
+        <!-- Risk Engine Config -->
+        <div class="settings-card">
+          <div class="section-title">Risk Engine Thresholds</div>
+          <div class="modal-field">
+            <label class="modal-label">AQI Critical Threshold (default: 300)</label>
+            <input class="config-input" type="number" id="cfg-aqi" value="300" onchange="saveSetting('aqi_critical', this.value)">
+          </div>
+          <div class="modal-field">
+            <label class="modal-label">Heat Index Danger (°C, default: 42)</label>
+            <input class="config-input" type="number" id="cfg-heat" value="42" onchange="saveSetting('heat_danger', this.value)">
+          </div>
+          <div class="modal-field">
+            <label class="modal-label">Strain Multiplier Cap (default: 2.5)</label>
+            <input class="config-input" type="number" step="0.1" id="cfg-strain" value="2.5" onchange="saveSetting('strain_cap', this.value)">
+          </div>
+          <div class="modal-field">
+            <label class="modal-label">Active Session Timeout (minutes, default: 5)</label>
+            <input class="config-input" type="number" id="cfg-timeout" value="5" onchange="saveSetting('session_timeout', this.value)">
+          </div>
+        </div>
+
+        <!-- JWT & Auth Config -->
+        <div class="settings-card">
+          <div class="section-title">Auth & JWT Config</div>
+          <div class="modal-field">
+            <label class="modal-label">JWT Session Expiry (hours)</label>
+            <input class="config-input" type="number" id="cfg-jwt" value="24" onchange="saveSetting('jwt_expiry_hours', this.value)">
+          </div>
+          <div class="modal-field">
+            <label class="modal-label">Max Failed Login Attempts</label>
+            <input class="config-input" type="number" id="cfg-maxlogin" value="5" onchange="saveSetting('max_login_attempts', this.value)">
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Enforce MFA for Admins</div>
+              <div class="setting-desc">Require two-factor auth for all admin accounts</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="tog-mfa" onchange="saveSetting('admin_mfa', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+
+        <!-- API Status -->
+        <div class="settings-card">
+          <div class="section-title">API Key Status</div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">OpenWeatherMap API</div>
+              <div class="setting-desc" style="color:var(--success)"><i class="fas fa-circle" style="font-size:.55rem"></i> Connected — env var: OPENWEATHER_API_KEY</div>
+            </div>
+            <span class="status-pill status-Active">LIVE</span>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">WAQI Air Quality</div>
+              <div class="setting-desc" style="color:var(--success)"><i class="fas fa-circle" style="font-size:.55rem"></i> Connected — env var: WAQI_TOKEN</div>
+            </div>
+            <span class="status-pill status-Active">LIVE</span>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Google Gemini 1.5 Flash</div>
+              <div class="setting-desc" style="color:var(--success)"><i class="fas fa-circle" style="font-size:.55rem"></i> Connected — env var: GOOGLE_API_KEY</div>
+            </div>
+            <span class="status-pill status-Active" id="geminiStatusPill">LIVE</span>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Nominatim Geocoding</div>
+              <div class="setting-desc" style="color:var(--success)"><i class="fas fa-circle" style="font-size:.55rem"></i> OSM proxy — no key required</div>
+            </div>
+            <span class="status-pill status-Active">LIVE</span>
+          </div>
+        </div>
+      </div>
+    </div><!-- /settings -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- User Action Modal -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-title" id="userModalTitle">User Action</div>
+    <div class="modal-sub" id="userModalSub">Select an action for this user account.</div>
+    <div class="modal-field">
+      <label class="modal-label">Action Type</label>
+      <select class="modal-select" id="userActionSelect">
+        <option value="ban">Ban Account</option>
+        <option value="unban">Unban Account</option>
+        <option value="delete">Permanently Delete</option>
+        <option value="role">Change Role</option>
+        <option value="reset">Force Password Reset</option>
+      </select>
+    </div>
+    <div class="modal-field" id="roleField" style="display:none">
+      <label class="modal-label">New Role</label>
+      <select class="modal-select" id="roleSelect">
+        <option value="user">User</option>
+        <option value="analyst">Analyst</option>
+        <option value="moderator">Moderator</option>
+        <option value="superadmin">Super Admin</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal('userModal')">Cancel</button>
+      <button class="modal-btn danger" id="userModalConfirm" onclick="executeUserAction()">Confirm Action</button>
+    </div>
+  </div>
+</div>
+
+<!-- Vault Delete Modal -->
+<div class="modal-overlay" id="vaultModal">
+  <div class="modal">
+    <div class="modal-title">⚠️ Confirm Vault Purge</div>
+    <div class="modal-sub">This will permanently delete the document from the server. This action is <strong style="color:var(--danger)">irreversible</strong> and will be logged in the audit trail.</div>
+    <div id="vaultDeleteInfo" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem;margin-bottom:4px"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal('vaultModal')">Cancel</button>
+      <button class="modal-btn danger" onclick="executeVaultDelete()">Purge Document</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kill Switch Modal -->
+<div class="modal-overlay" id="killModal">
+  <div class="modal">
+    <div class="modal-title" id="killModalTitle">⚡ Activate Kill Switch</div>
+    <div class="modal-sub" id="killModalSub">Confirm kill switch level change.</div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal('killModal')">Cancel</button>
+      <button class="modal-btn danger" onclick="confirmKillLevel()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Stack -->
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  SAFENAV COMMAND CENTER — PRODUCTION ENGINE (COMPLETE)
+// ══════════════════════════════════════════════════════════════
+
+// 🔥 Firebase Globals
+db = firebase.firestore();
+auth = firebase.auth();
+
+const ROLE_HIERARCHY = { user: 0, analyst: 1, moderator: 2, superadmin: 3 };
+const AUTHORIZED_ADMINS = ["shafeezchappi18@gmail.com", "admin@safenav.com"];
+const API_BASE_URL = 'http://localhost:5000'; 
+
+let currentAdminRole = 'superadmin';
+let currentAdminEmail = '';
+let currentAdminUid = '';
+let currentKillLevel = 0;
+let map, userMarkers = {}, shadowMarkers = [], hazardMarkers = [];
+let allUsers = [], allAuditLogs = [];
+let currentUserFilter = 'all';
+let charts = {};
+
+const killLevels = {
+  0: { text: 'NOMINAL', color: 'var(--success)', label: 'L0 · NORMAL', desc: 'All systems operating normally.' },
+  1: { text: 'AI DISABLED', color: 'var(--warning)', label: 'L1 · AI OFF', desc: 'Gemini AI advisories disabled.' },
+  2: { text: 'ALERTS OFF', color: 'var(--warning)', label: 'L2 · ALERTS', desc: 'Broadcast alerts disabled.' },
+  3: { text: 'EMERGENCY', color: 'var(--danger)', label: 'L3 · EMERGENCY', desc: 'App in read-only mode.' },
+};
+
+// ══════════════════════════════════════════════════════════════
+//  INIT & AUTH GATEKEEPER
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    startClock();
+    initMap();
+    initAnalyticsCharts(); 
+    verifyAdmin(); 
+});
+
+function verifyAdmin() {
+    auth.onAuthStateChanged(user => {
+        if (!user || !AUTHORIZED_ADMINS.includes(user.email)) {
+            window.location.replace('login.html');
+            return;
+        }
+        
+        currentAdminEmail = user.email;
+        currentAdminUid = user.uid;
+
+        db.collection('admin_roles').doc(user.uid).get().then(doc => {
+            currentAdminRole = doc.exists ? doc.data().role : 'superadmin';
+            setAdminDisplay(user.email, currentAdminRole);
+            
+            // 🚀 BOOT REAL-TIME STREAMS (Defensively defined below)
+            loadSystemConfig();
+            loadDashboard(); 
+            loadUsers();     
+            loadReports();   
+            loadVault();     
+            loadAuditLog();  
+            startApiMonitor();
+            
+            toast(`System Online: Commander ${user.email.split('@')[0]}`, 'success');
+        });
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  1. DATA LOADERS (THE MISSING PIECES)
+// ══════════════════════════════════════════════════════════════
+
+function loadSystemConfig() {
+    // Sync Feature Toggles
+    db.collection('system_config').doc('settings').onSnapshot(doc => {
+        if (!doc.exists) return;
+        const d = doc.data();
+        if (d.gemini_enabled !== undefined) document.getElementById('tog-gemini').checked = d.gemini_enabled;
+        if (d.broadcast_enabled !== undefined) document.getElementById('tog-broadcast').checked = d.broadcast_enabled;
+        if (d.reports_enabled !== undefined) document.getElementById('tog-reports').checked = d.reports_enabled;
+        if (d.vault_enabled !== undefined) document.getElementById('tog-vault').checked = d.vault_enabled;
+        if (d.registrations_open !== undefined) document.getElementById('tog-reg').checked = d.registrations_open;
+    });
+
+    // Sync Kill Switch UI state
+    db.collection('system_config').doc('kill_switch').onSnapshot(doc => {
+        if (doc.exists) {
+            const d = doc.data();
+            currentKillLevel = d.level || 0;
+            const kl = killLevels[currentKillLevel];
+            
+            document.querySelectorAll('.kill-btn').forEach(b => b.classList.remove('active-level'));
+            document.querySelectorAll('.kill-btn')[currentKillLevel]?.classList.add('active-level');
+            
+            const statusEl = document.getElementById('killStatusText');
+            statusEl.textContent = kl.text;
+            statusEl.style.color = kl.color;
+        }
+    });
+}
+
+function loadUsers() {
+    db.collection('users').onSnapshot(snap => {
+        // 1. Completely clear the local array
+        allUsers = []; 
+        
+        // 2. Map the new data
+        allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // 3. 🔥 THE ADDITION: Clear old markers from the map before re-drawing
+        Object.keys(userMarkers).forEach(id => {
+            map.removeLayer(userMarkers[id]);
+            delete userMarkers[id];
         });
 
-        function verifyAdmin() {
-            firebase.auth().onAuthStateChanged(user => {
-                if (!user || !AUTHORIZED_ADMINS.includes(user.email)) {
-                    alert("⛔ UNAUTHORIZED ACCESS DETECTED");
-                    window.location.href = "login.html";
-                } else {
-                    startScanning();
-                }
-            });
-        }
-        
-        // 2. TACTICAL MAP ENGINE
-        function initTacticalMap() {
-            map = L.map('tacticalMap').setView([20.5937, 78.9629], 5); // India Center
-            
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap &copy; CARTO',
-                subdomains: 'abcd',
-                maxZoom: 19
-            }).addTo(map);
-        }
-
-        // 3. REAL-TIME SCANNING
-        function startScanning() {
-            console.log("📡 Establishing Data Link...");
-            
-            db.collection("users").onSnapshot((snapshot) => {
-                let active = 0;
-                let total = 0;
-
-                snapshot.forEach((doc) => {
-                    total++;
-                    const data = doc.data();
-                    
-                    if (data.location && data.location.latitude) {
-                        updateUserOnMap(doc.id, data);
-                        
-                        // Check if "Active" (seen in last 5 mins)
-                        const lastSeen = data.lastSeen ? data.lastSeen.toDate() : new Date(0);
-                        const minsAgo = (Date.now() - lastSeen) / 60000;
-                        if (minsAgo < 5) active++;
-                    }
-                });
-
-                document.getElementById('activeCount').textContent = active;
-                document.getElementById('totalCount').textContent = total;
-            });
-        }
-
-        // 4. MARKER MANAGEMENT
-        function updateUserOnMap(uid, data) {
-            const lat = data.location.latitude;
-            const lng = data.location.longitude;
-            const isOnline = (Date.now() - (data.lastSeen?.toDate() || 0)) < 300000;
-
-            const iconColor = isOnline ? '#0ea5e9' : '#64748b';
-            
-            const customIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color:${iconColor}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${iconColor};"></div>`,
-                iconSize: [15, 15],
-                iconAnchor: [7, 7]
-            });
-
-            if (userMarkers[uid]) {
-                userMarkers[uid].setLatLng([lat, lng]);
-                userMarkers[uid].setIcon(customIcon);
-                userMarkers[uid].bindPopup(`
-                    <b>User:</b> ${data.email}<br>
-                    <b>Speed:</b> ${data.speed || 0} km/h<br>
-                    <b>Status:</b> ${isOnline ? '🟢 Live' : '⚫ Offline'}
-                `);
-             } else { 
-                const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
-                marker.bindPopup(`<b>User:</b> ${data.email}<br><b>Status:</b> Syncing...`);
-                userMarkers[uid] = marker;
+        // 4. Re-render the table and map markers
+        renderUsers();
+        allUsers.forEach(u => {
+            if (u.status && u.status.toLowerCase() === 'active' && u.location) {
+                renderUserMarker(u);
             }
-        }
+        });
+    });
+}
 
-        // 🔥 NEW: BROADCAST ALERT FUNCTION
-        function sendGlobalAlert() {
-            const msg = document.getElementById('adminMessage').value;
-            if(!msg) return;
-            
-            // Visual Feedback
-            const btn = document.querySelector('button[onclick="sendGlobalAlert()"]');
-            const originalText = btn.innerText;
-            btn.innerText = "SENDING...";
-            
-            // Write to a special 'system_alerts' collection in Database
-            db.collection('system_alerts').add({
-                message: msg,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                type: 'critical'
-            }).then(() => {
-                alert("🚨 ALERT SENT TO ALL DRIVERS!");
-                document.getElementById('adminMessage').value = "";
-                btn.innerText = originalText;
-            }).catch(err => {
-                alert("Error sending alert: " + err.message);
-                btn.innerText = originalText;
-            });
-        }
+function loadReports() {
+    db.collection('crowd_reports').where('status','==','pending').onSnapshot(snap => {
+        const reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        document.getElementById('reportsBadge').textContent = reports.length;
+        renderReports(reports);
+    });
+}
 
-        function logout() {
-            firebase.auth().signOut().then(() => window.location.href = "login.html");
+function loadVault() {
+    db.collection('document_vault').onSnapshot(snap => {
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderVault(docs);
+    });
+}
+
+function startApiMonitor() {
+    db.collection('analytics').doc('api_usage').onSnapshot(doc => {
+        if (doc.exists) {
+            const d = doc.data();
+            updateApiGauges(d.owm||0, d.waqi||0, d.gemini||0, d.nominatim||0);
         }
-    </script>
+    });
+}
+
+// 1. REAL-TIME KPI & BAR SYNC
+function loadDashboard() {
+    db.collection('users').onSnapshot(snap => {
+        const users = snap.docs.map(d => d.data());
+        const total = users.length;
+        
+        // 🔥 THE FIX: Null-safe status check for the counter
+        const active = users.filter(u => (u.status || '').toLowerCase() === 'active').length;
+        
+        animateCounter('kpiUsers', total);
+        animateCounter('kpiActive', active);
+
+        const high = users.filter(u => u.riskLevel === 'High').length;
+        const med = users.filter(u => u.riskLevel === 'Medium').length;
+        const low = Math.max(0, total - (high + med));
+        
+        setRiskBars(
+            total > 0 ? Math.round((low/total)*100) : 0, 
+            total > 0 ? Math.round((med/total)*100) : 0, 
+            total > 0 ? Math.round((high/total)*100) : 0
+        );
+        
+        updateHealthData(users);
+        updateGrowthData(users);
+    });
+}
+
+// 2. FILLING THE AUDIT LOG (Immutable History)
+function loadAuditLog() {
+    db.collection('audit_logs').orderBy('timestamp', 'desc').limit(50).onSnapshot(snap => {
+        const logs = snap.docs.map(d => d.data());
+        const body = document.getElementById('auditFullBody');
+        
+        body.innerHTML = logs.map(log => `
+            <tr>
+                <td>${log.timestamp?.toDate().toLocaleString() || 'Just now'}</td>
+                <td>${log.actorEmail}</td>
+                <td style="color:var(--accent)">${log.action}</td>
+                <td>${log.targetId}</td>
+                <td><span class="sev-badge sev-${log.severity}">${log.severity}</span></td>
+                <td>Verified via Backend</td>
+            </tr>
+        `).join('');
+    });
+}
+
+function renderUsers() {
+    const q = document.getElementById('userSearch').value.toLowerCase();
+    const body = document.getElementById('usersTableBody');
+    
+    let filtered = allUsers.filter(u => {
+        // 🔥 THE FIX: Added a fallback to 'Offline' if status is missing
+        const userStatus = (u.status || 'Offline').toLowerCase();
+        const matchFilter = currentUserFilter === 'all' || userStatus === currentUserFilter.toLowerCase();
+        const matchSearch = !q || (u.email?.toLowerCase().includes(q)) || (u.name?.toLowerCase().includes(q));
+        return matchFilter && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No users found in this category.</td></tr>`;
+        return;
+    }
+
+    body.innerHTML = filtered.map(u => {
+        const rawStatus = u.status || 'Offline';
+        const statusClass = rawStatus === 'active' ? 'Active' : rawStatus;
+
+        return `
+          <tr>
+            <td><div class="user-name-cell"><div class="user-av">${(u.name||'A').slice(0,2).toUpperCase()}</div>
+            <div><div class="user-info-name">${u.name||'Anon'}</div><div class="user-info-id">${u.id}</div></div></div></td>
+            <td><span class="status-pill status-${statusClass}">${rawStatus}</span></td>
+            <td><span class="role-tag role-${u.role||'user'}">${(u.role||'user').toUpperCase()}</span></td>
+            <td style="font-size:.75rem">${u.healthProfile||'Standard'}</td>
+            <td style="font-size:.75rem">${u.lastSeen ? new Date(u.lastSeen.seconds * 1000).toLocaleString() : 'Never'}</td>
+            <td style="font-family:var(--font-mono);color:var(--accent)">${u.routesCompleted||0}</td>
+            <td><div class="action-group">
+                <button class="act-btn" onclick="viewOnMap('${u.id}', '${u.location?.latitude}', '${u.location?.longitude}')"><i class="fas fa-map-marker-alt"></i></button>
+                <button class="act-btn warn" onclick="openUserModal('${u.id}','${u.email}','role')"><i class="fas fa-user-shield"></i></button>
+                <button class="act-btn danger" onclick="openUserModal('${u.id}','${u.email}','ban')"><i class="fas fa-ban"></i></button>
+            </div></td>
+          </tr>`;
+    }).join('');
+}
+function renderReports(reports) {
+    const queue = document.getElementById('reportsQueue');
+    if (!reports.length) { queue.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>No pending reports</p></div>`; return; }
+    queue.innerHTML = reports.map(r => `
+        <div class="report-card">
+            <div class="report-icon ri-hazard"><i class="fas fa-radiation-alt"></i></div>
+            <div class="report-body"><div class="report-title">${r.title}</div>
+            <div class="report-meta"><span><i class="fas fa-map-pin"></i> ${r.location}</span><span>▲ ${r.upvotes||0}</span></div></div>
+            <div class="report-actions"><button class="rpt-btn rpt-approve">✓</button><button class="rpt-btn rpt-reject">✕</button></div>
+        </div>`).join('');
+}
+
+function renderVault(docs) {
+    const body = document.getElementById('vaultTableBody');
+    if (!docs.length) { body.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px">No Docs</td></tr>`; return; }
+    body.innerHTML = docs.map(v => `
+        <tr><td style="font-family:var(--font-mono);font-size:.7rem">${v.id.slice(0,8)}...</td>
+        <td style="font-size:.7rem">usr_***${(v.userId||'').slice(-4)}</td>
+        <td>${v.title}</td><td><span class="file-type-badge">${v.type||'PDF'}</span></td>
+        <td>${v.size}</td><td>${v.uploaded}</td>
+        <td><button class="delete-vault-btn" onclick="confirmVaultDelete('${v.id}','${v.title}','${v.size}')"><i class="fas fa-trash-alt"></i></button></td></tr>`).join('');
+}
+
+function loadAuditLog() {
+    db.collection('audit_logs').orderBy('timestamp', 'desc').limit(50).onSnapshot(snap => {
+        allAuditLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const previewBody = document.getElementById('auditPreviewBody');
+        previewBody.innerHTML = allAuditLogs.slice(0, 5).map(a => `
+            <tr><td>${a.action}</td><td>${a.actorEmail?.split('@')[0]}</td>
+            <td><span class="sev-badge sev-${a.severity}">${a.severity}</span></td>
+            <td>${a.timestamp ? new Date(a.timestamp.seconds * 1000).toLocaleTimeString() : '...'}</td></tr>`).join('');
+        
+        const fullBody = document.getElementById('auditFullBody');
+        fullBody.innerHTML = allAuditLogs.map(a => `
+            <tr><td style="font-size:.7rem">${a.timestamp ? new Date(a.timestamp.seconds * 1000).toLocaleString() : '...'}</td>
+            <td>${a.actorEmail}</td><td style="color:var(--accent)">${a.action}</td><td>${a.targetId}</td>
+            <td><span class="sev-badge sev-${a.severity}">${a.severity}</span></td><td>${a.metadata||'—'}</td></tr>`).join('');
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  3. MAP & ANALYTICS HELPERS
+// ══════════════════════════════════════════════════════════════
+function initMap() {
+    // 1. Initialize the map
+    map = L.map('tacticalMap', { zoomControl: false, attributionControl: false }).setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+    // 2. 🔥 PASTE THE GHOST KILLER HERE
+    setInterval(() => {
+        const activeIdsThisFrame = [];
+
+        allUsers.forEach(u => { 
+            const isActive = u.status && u.status.toLowerCase() === 'active';
+            const hasLocation = u.location && u.location.latitude;
+
+            if (isActive && hasLocation) { 
+                renderUserMarker(u); 
+                activeIdsThisFrame.push(u.id); 
+            } 
+        });
+
+        Object.keys(userMarkers).forEach(markerId => {
+            if (!activeIdsThisFrame.includes(markerId)) {
+                map.removeLayer(userMarkers[markerId]); 
+                delete userMarkers[markerId];           
+            }
+        });
+
+        const liveCountBadge = document.getElementById('liveCount');
+        if (liveCountBadge) liveCountBadge.textContent = Object.keys(userMarkers).length;
+    }, 5000);
+}
+function renderUserMarker(u) {
+    const lat = parseFloat(u.location?.latitude);
+    const lng = parseFloat(u.location?.longitude);
+    if (isNaN(lat) || isNaN(lng)) return;
+    const icon = L.divIcon({ className: '', html: `<div style="width:12px;height:12px;border-radius:50%;background:#00d4ff;border:2px solid white;box-shadow:0 0 10px #00d4ff;"></div>`, iconSize: [12, 12] });
+    if (userMarkers[u.id]) userMarkers[u.id].setLatLng([lat, lng]);
+    else userMarkers[u.id] = L.marker([lat, lng], { icon }).addTo(map).bindPopup(`<strong>User: ${u.name||'Anon'}</strong>`);
+}
+
+function updateApiGauges(owm, waqi, gemini, nom) {
+    const gauges = [['owm', owm, 1000], ['waqi', waqi, 500], ['gemini', gemini, 100], ['nominatim', nom, 2000]];
+    gauges.forEach(g => {
+        const pct = Math.min((g[1]/g[2])*100, 100);
+        const bar = document.getElementById(`${g[0]}Bar`);
+        if(bar) {
+            bar.style.width = pct + '%';
+            bar.style.background = pct > 80 ? 'var(--danger)' : pct > 60 ? 'var(--warning)' : '';
+        }
+        const stat = document.getElementById(`${g[0]}Stat`);
+        if(stat) stat.textContent = `${g[1].toLocaleString()} / ${g[2].toLocaleString()} calls`;
+    });
+}
+
+function updateHealthData(users) {
+    const counts = { 'Standard': 0, 'Asthma': 0, 'Cardiovascular': 0, 'Other': 0 };
+    users.forEach(u => {
+        const hp = u.healthProfile || 'Standard';
+        if (counts[hp] !== undefined) counts[hp]++; else counts['Other']++;
+    });
+    if (charts.health) { charts.health.data.datasets[0].data = Object.values(counts); charts.health.update(); }
+}
+
+// 📈 Real-Time Growth Chart Logic
+function updateGrowthData(users) {
+    if (!charts.growth) return;
+
+    // 1. Group users by registration date
+    const countsByDate = {};
+    users.forEach(u => {
+        if (u.createdAt) {
+            const date = new Date(u.createdAt.seconds * 1000).toLocaleDateString();
+            countsByDate[date] = (countsByDate[date] || 0) + 1;
+        }
+    });
+
+    // 2. Sort dates and update chart
+    const labels = Object.keys(countsByDate).sort();
+    const data = labels.map(label => countsByDate[label]);
+
+    charts.growth.data.labels = labels;
+    charts.growth.data.datasets[0].data = data;
+    charts.growth.update();
+}
+
+// 🚦 Real-Time API Monitor Logic
+function updateApiGauges(owm, waqi, gemini, nom) {
+    const apiMap = [
+        { id: 'owm', val: owm, max: 1000 },
+        { id: 'waqi', val: waqi, max: 500 },
+        { id: 'gemini', val: gemini, max: 100 },
+        { id: 'nominatim', val: nom, max: 2000 }
+    ];
+
+    apiMap.forEach(api => {
+        const pct = Math.min((api.val / api.max) * 100, 100);
+        const bar = document.getElementById(`${api.id}Bar`);
+        const stat = document.getElementById(`${api.id}Stat`);
+        
+        if (bar) bar.style.width = `${pct}%`;
+        if (stat) stat.textContent = `${api.val} / ${api.max} calls`;
+        
+        // Dynamic Warning Colors
+        if (pct > 80) bar.style.background = 'var(--danger)';
+        else if (pct > 60) bar.style.background = 'var(--warning)';
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  4. UI & ACTION HANDLERS (Upgraded to use adminAPI)
+// ══════════════════════════════════════════════════════════════
+async function executeUserAction() {
+    const uid = pendingUserUid;
+    const action = document.getElementById('userActionSelect').value;
+    const role = document.getElementById('roleSelect').value;
+    closeModal('userModal');
+    toast(`Executing ${action}...`, 'warning');
+    
+    // 🔥 Uses the secure token wrapper
+    const result = await adminAPI('/user-action', { targetUid: uid, action: action, newRole: role });
+    if (result) toast(result.message, 'success');
+}
+
+async function confirmKillLevel() {
+    const level = pendingKillLevel; 
+    closeModal('killModal');
+    
+    // 🔥 Uses the secure token wrapper
+    const result = await adminAPI('/kill-switch', { newLevel: level, reason: killLevels[level].text });
+    if (result) toast(`Kill Switch Engaged: ${killLevels[level].text}`, 'warning');
+}
+
+async function executeVaultDelete() {
+    closeModal('vaultModal');
+    
+    // 🔥 Uses the secure token wrapper
+    const result = await adminAPI('/vault-purge', { docId: pendingVaultId });
+    if (result) toast('Purged successfully', 'success');
+}
+
+function initAnalyticsCharts() {
+    const ctxHealth = document.getElementById('healthChart').getContext('2d');
+    charts.health = new Chart(ctxHealth, { type: 'doughnut', data: { labels: ['Standard','Asthma','Cardio','Other'], datasets: [{ data: [0,0,0,0], backgroundColor: ['#00d4ff','#ffb700','#ff3d5a','#7c3aed'] }] }, options: { cutout: '70%', plugins: { legend: { display: false } } } });
+    const ctxGrowth = document.getElementById('growthChart').getContext('2d');
+    charts.growth = new Chart(ctxGrowth, { type: 'line', data: { labels: [], datasets: [{ label: 'Users', data: [], borderColor: '#00d4ff', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+}
+
+function animateCounter(id, target) {
+    const el = document.getElementById(id); if (!el) return;
+    let cur = parseInt(el.textContent) || 0;
+    const step = Math.ceil(Math.abs(target - cur) / 10) || 1;
+    const timer = setInterval(() => {
+        if (cur < target) cur += step; else if (cur > target) cur -= step;
+        if (Math.abs(cur - target) <= step) { cur = target; clearInterval(timer); }
+        el.textContent = cur;
+    }, 50);
+}
+
+function setRiskBars(low, med, high) {
+    document.getElementById('riskLow').style.width = low + '%'; document.getElementById('riskLowPct').textContent = low + '%';
+    document.getElementById('riskMed').style.width = med + '%'; document.getElementById('riskMedPct').textContent = med + '%';
+    document.getElementById('riskHigh').style.width = high + '%'; document.getElementById('riskHighPct').textContent = high + '%';
+}
+
+function setAdminDisplay(email, role) {
+    document.getElementById('adminAvatar').textContent = email.slice(0,2).toUpperCase();
+    document.getElementById('adminEmail').textContent = email;
+    document.getElementById('sidebarRole').textContent = role.toUpperCase();
+}
+
+function startClock() { setInterval(() => { document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString('en-IN', { hour12: false }); }, 1000); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toast(msg, type = 'success') { const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<span>${msg}</span>`; document.getElementById('toastStack').appendChild(el); setTimeout(() => el.remove(), 4000); }
+function adminLogout() { auth.signOut().then(() => window.location.href = 'login.html'); }
+function switchView(name) { 
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
+    document.getElementById(`view-${name}`).classList.add('active'); 
+    if (name === 'map' && map) setTimeout(() => map.invalidateSize(), 200); 
+}
+
+// Map Controls Reset
+function centerIndia() { if(map) map.setView([20.5937, 78.9629], 5); }
+function mapZoomIn() { if(map) map.zoomIn(); }
+function mapZoomOut() { if(map) map.zoomOut(); }
+
+async function adminAPI(endpoint, data = {}) {
+    const user = auth.currentUser;
+    if (!user) {
+        toast("Session expired. Please log in.", "error");
+        return null;
+    }
+
+    // 🔥 Get the secret military-grade token
+    const idToken = await user.getIdToken(true);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/admin${endpoint}`, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${idToken}` 
+            },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Server Error");
+        return result;
+    } catch (err) {
+        toast(err.message, "error");
+        return null;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  5. UI HELPER FUNCTIONS (Restored for Button Clicks)
+// ══════════════════════════════════════════════════════════════
+
+let pendingKillLevel = null;
+
+// --- Kill Switch UI ---
+function setKillLevel(level) {
+    pendingKillLevel = level;
+    const kl = killLevels[level];
+    document.getElementById('killModalTitle').textContent = `⚡ ${kl.label}`;
+    document.getElementById('killModalSub').textContent = kl.desc;
+    openModal('killModal');
+}
+
+// --- User Table Filters ---
+function filterUsers() { renderUsers(); }
+function setUserFilter(el, filter) {
+    document.querySelectorAll('.users-toolbar .filter-btn').forEach(b => b.classList.remove('active-f'));
+    el.classList.add('active-f');
+    currentUserFilter = filter;
+    renderUsers();
+}
+
+// --- Broadcast UI ---
+function setAlertType(el, txt) {
+    document.querySelectorAll('.alert-chip').forEach(c => c.classList.remove('sel'));
+    el.classList.add('sel');
+    document.getElementById('broadcastMsg').value = txt + ' — ';
+    document.getElementById('broadcastMsg').focus();
+}
+
+async function sendBroadcast() {
+    if (currentKillLevel >= 2) { toast('Broadcasts disabled — Kill Switch L2 active.', 'error'); return; }
+    const msg = document.getElementById('broadcastMsg').value.trim();
+    if (!msg) { toast('Enter a message first.', 'warning'); return; }
+    
+    try {
+        await db.collection('system_alerts').add({
+            message: msg, type: 'admin_broadcast', shadow: false,
+            sentBy: currentAdminEmail, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('broadcastMsg').value = '';
+        toast('Broadcast sent to all active users.', 'success');
+        document.querySelectorAll('.alert-chip').forEach(c => c.classList.remove('sel'));
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+// --- Shadow Mode Map Controls ---
+function dropShadowHazard() {
+    if (!map) return;
+    const center = map.getCenter();
+    const circle = L.circle(center, { radius: 1500, color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, weight: 1.5, dashArray: '6 4' }).addTo(map);
+    circle.bindPopup(`<strong style="color:#a78bfa">🔮 SHADOW HAZARD</strong><br><span style="font-size:.75rem;color:var(--muted)">Admin test marker</span>`);
+    shadowMarkers.push(circle);
+    toast('Shadow hazard dropped (admin-only).', 'success');
+}
+
+function simulateRoute() {
+    if (!map) return;
+    const pts = [[12.9716,77.5946],[13.0,77.6],[13.05,77.55],[13.0827,77.56]];
+    const poly = L.polyline(pts, { color: '#7c3aed', weight: 3, dashArray: '8 4', opacity: .7 }).addTo(map);
+    shadowMarkers.push(poly);
+    map.fitBounds(poly.getBounds());
+    toast('Shadow route simulated.', 'success');
+}
+
+function clearShadow() {
+    if (!map) return;
+    shadowMarkers.forEach(m => map.removeLayer(m));
+    shadowMarkers = [];
+    toast('Shadow markers cleared.', 'success');
+}
+
+// --- Map Toggle UI ---
+function toggleHazards() {
+    let btn = document.getElementById('hazardToggleBtn');
+    let isActive = btn.style.color === 'var(--accent)';
+    btn.style.color = isActive ? 'var(--muted)' : 'var(--accent)';
+    
+    if (isActive) {
+        hazardMarkers.forEach(m => map.removeLayer(m));
+    } else {
+        hazardMarkers.forEach(m => m.addTo(map));
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  6. USER TABLE ACTION HELPERS
+// ══════════════════════════════════════════════════════════════
+
+let pendingUserUid = null;
+
+// --- Open the User Action Modal ---
+function openUserModal(uid, email, action) {
+    pendingUserUid = uid;
+    document.getElementById('userModalTitle').textContent = `User Action: ${email ? email.split('@')[0] : 'User'}`;
+    document.getElementById('userModalSub').textContent = `UID: ${uid}`;
+    
+    const actionSelect = document.getElementById('userActionSelect');
+    if (actionSelect) {
+        actionSelect.value = action === 'delete' ? 'delete' : action === 'role' ? 'role' : 'ban';
+    }
+    
+    toggleRoleField();
+    openModal('userModal');
+}
+
+// --- Toggle the Role Dropdown visibility ---
+function toggleRoleField() {
+    const sel = document.getElementById('userActionSelect');
+    const roleField = document.getElementById('roleField');
+    if (roleField) {
+        roleField.style.display = sel?.value === 'role' ? 'block' : 'none';
+    }
+}
+
+// Make sure the dropdown toggles when manually changed
+document.addEventListener('change', e => {
+    if (e.target.id === 'userActionSelect') toggleRoleField();
+});
+
+// --- Jump to Map and Center on User ---
+function viewOnMap(uid, lat, lng) {
+    if (lat && lat !== 'undefined' && lng && lng !== 'undefined') {
+        switchView('map');
+        // Small timeout allows the map container to render before zooming
+        setTimeout(() => { 
+            if (map) map.setView([parseFloat(lat), parseFloat(lng)], 14); 
+        }, 200);
+    } else {
+        toast('No active GPS signal for this user.', 'warning');
+    }
+}
+
+// 🔥 Execute a metadata update on a Vault document
+async function updateVaultStatus(docId, newStatus) {
+    const updates = {
+        status: newStatus,
+        notes: `Validated by Admin (${currentAdminEmail}) on ${new Date().toLocaleDateString()}`,
+        last_modified: new Date().toISOString()
+    };
+
+    toast(`Updating document ${docId.slice(0,8)}...`, 'warning');
+
+    const result = await adminAPI('/vault-update', { 
+        docId: docId, 
+        updates: updates 
+    });
+
+    if (result) {
+        toast('Document status updated and logged.', 'success');
+        // Refresh the vault list to show the new status
+        loadVault(); 
+    }
+}
+</script>
 </body>
 </html>

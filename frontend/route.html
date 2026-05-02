@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>SafeNav | Premium AI Routing</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; child-src 'self' blob:; img-src 'self' https: data: blob:; connect-src 'self' https://*.tomtom.com https://*.firebaseio.com https://*.googleapis.com https://api.bigdatacloud.net;">
+   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; child-src 'self' blob: https://*.firebaseapp.com; frame-src 'self' https://*.firebaseapp.com; img-src 'self' https: data: blob:; connect-src 'self' https://*.tomtom.com https://*.firebaseio.com https://*.googleapis.com https://api.bigdatacloud.net https://*.onrender.com https://*.cartocdn.com https://unpkg.com https://*.gstatic.com;">
+    <link rel="preconnect" href="https://api.tomtom.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -18,10 +21,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" defer></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     
-    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js" defer></script>
 
     <link rel="stylesheet" href="css/route.css">
     <link rel="stylesheet" href="css/navbar.css">
@@ -39,7 +42,38 @@
 </head>
 
 <body data-theme="light">
-   
+   <style>
+        #safenav-splash {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #0f172a; /* Deep premium blue/black */
+            z-index: 99999999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
+        }
+        .splash-ring {
+            width: 60px; height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #3b82f6; /* SafeNav Blue */
+            border-radius: 50%;
+            animation: splashSpin 1s linear infinite;
+        }
+        @keyframes splashSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .splash-text {
+            color: white; margin-top: 25px; font-family: sans-serif;
+            font-weight: 700; letter-spacing: 3px; font-size: 14px;
+            text-transform: uppercase;
+        }
+        .splash-sub {
+            color: #94a3b8; font-family: sans-serif; font-size: 12px;
+            margin-top: 8px; letter-spacing: 1px;
+        }
+    </style>
+
+    <div id="safenav-splash">
+        <div class="splash-ring"></div>
+        <div class="splash-text">SafeNav Pro Engine</div>
+        <div class="splash-sub">Booting AI Core...</div>
+    </div>
     <div id="map" style="width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1;"></div>
     <script src="config.js"></script>
 
@@ -143,49 +177,28 @@
             <button class="mode-btn" data-mode="bus"><i class="fa-solid fa-bus"></i> <span class="time">--</span></button>
             <button class="mode-btn" data-mode="pedestrian"><i class="fa-solid fa-person-walking"></i> <span class="time">--</span></button>
         </div>
-        <div id="riskSettingsPanel" style="margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.15); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-    <h4 style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;"><i class="fas fa-sliders-h"></i> Environmental Risk Factors</h4>
+  
+        <div id="routeOptionsContainer" style="display: none; gap: 10px; margin: 15px 0;">
+            <div id="cardFastest" class="route-option-card active" onclick="selectRouteOption('fastest')" style="flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.9); border: 2px solid var(--primary); border-radius: 12px; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.2s;">
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;"><i class="fas fa-bolt" style="color: #f59e0b;"></i> Fastest</div>
+                <div id="fastestTime" style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 4px 0;">-- min</div>
+                <div id="fastestDist" style="font-size: 0.8rem; color: var(--text-muted);">-- km</div>
+            </div>
 
-    <div style="margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
-            <span><i class="fas fa-smog" style="color: #94a3b8;"></i> AQI Weight</span>
-            <span id="aqiVal" style="color: #10b981; font-weight: 700;">Medium</span>
+            <div id="cardSafest" class="route-option-card" onclick="selectRouteOption('safest')" style="flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.9); border: 2px solid transparent; border-radius: 12px; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.2s;">
+                <div style="font-size: 0.75rem; color: #10b981; font-weight: 700; text-transform: uppercase;"><i class="fas fa-shield-alt"></i> SafeNav Route</div>
+                <div id="safestTime" style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 4px 0;">-- min</div>
+                <div id="safestDist" style="font-size: 0.8rem; color: var(--text-muted);">-- km</div>
+            </div>
         </div>
-        <input type="range" id="aqiWeight" min="1" max="3" value="2" style="width: 100%; accent-color: #10b981;">
-    </div>
 
-    <div style="margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
-            <span><i class="fas fa-temperature-high" style="color: #94a3b8;"></i> Heat Weight</span>
-            <span id="heatVal" style="color: #10b981; font-weight: 700;">Medium</span>
-        </div>
-        <input type="range" id="heatWeight" min="1" max="3" value="2" style="width: 100%; accent-color: #10b981;">
-    </div>
-
-    <div style="margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
-            <span><i class="fas fa-balance-scale" style="color: #f59e0b;"></i> Risk Tolerance</span>
-            <span id="riskVal" style="color: #f59e0b; font-weight: 700;">Balanced</span>
-        </div>
-        <input type="range" id="riskTolerance" min="1" max="3" value="2" style="width: 100%; accent-color: #f59e0b;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
-            <span>Conservative</span>
-            <span>Aggressive</span>
-        </div>
-    </div>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
-        <span style="font-size: 0.85rem;"><i class="fas fa-triangle-exclamation" style="color: #ef4444;"></i> Avoid Hazard Zones</span>
-        <input type="checkbox" id="hazardToggle" checked style="width: 18px; height: 18px; accent-color: #ef4444; cursor: pointer;">
-    </div>
-</div>
-        <div style="display:flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+        <div style="display:flex; flex-direction: column; gap: 10px; margin-top: 5px;">
             <div style="display:flex; gap: 10px;">
                 <button id="navActionBtn" class="gradient-btn start-nav-btn">
                     <i class="fa-solid fa-play"></i> Start Navigation
                 </button>
-                <button id="aiAdviceBtn" class="btn premium-feature-btn" title="Premium: AI Safe Route">
-                    <i class="fa-solid fa-robot"></i> <i class="fa-solid fa-lock lock-icon"></i>
+                <button id="aiAdviceBtn" class="btn premium-feature-btn" title="View AI Analysis" style="background: #f59e0b; color: white; border: none; border-radius: 12px; cursor: pointer; padding: 0 20px; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
+                    <i class="fa-solid fa-robot"></i>
                 </button>
             </div>
             <div style="display:flex; gap: 10px;">
@@ -227,7 +240,7 @@
     </div>
 
     <div id="safetyAnalysisSheet" class="bottom-sheet glass-panel hidden" style="z-index: 201;">
-        <div class="sheet-drag-handle" onclick="document.getElementById('safetyAnalysisSheet').classList.add('hidden')"></div>
+       <div class="sheet-drag-handle" onclick="closeAIAnalysis()"></div>
         <h3 style="margin-top: 0; color: var(--primary);"><i class="fas fa-chart-bar"></i> AI Route Analysis</h3>
         
         <div id="recommendedRisk" class="risk-indicator" style="font-size: 1.2rem; font-weight: 700; text-align: center; padding: 15px; background: #f0f9ff; border-radius: 15px; margin-bottom: 15px;">
@@ -258,10 +271,6 @@
     </div>
    <button onclick="window.location.href='tel:112'" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: #dc2626; color: white; padding: 15px; border-radius: 50%; font-weight: bold; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s;">
     🚨 112
-</button>
-
-<button id="refreshRouteBtn" onclick="fetchRoute()" style="position: fixed; bottom: 90px; left: 20px; z-index: 1000; background: white; color: #333; padding: 10px 15px; border-radius: 8px; font-weight: bold; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer;">
-    🔄 Refresh Risk
 </button>
 
 <div id="safetyTransparencyPanel" style="display: none; position: fixed; bottom: 140px; left: 20px; z-index: 1000; background: rgba(255,255,255,0.95); padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 220px;">
@@ -403,11 +412,6 @@
             }, 4000);
         }
     </script>
-    <script>
-    // Force MapLibre to allow workers on live deployment
-    if (typeof maplibregl !== 'undefined') {
-        maplibregl.setRTLTextPlugin(null); // Optional
-    }
-</script>
+   
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Create Account | SafeNav</title>
-    
+
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,66 +13,307 @@
     <meta name="apple-mobile-web-app-title" content="SafeNav">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
     <link rel="icon" href="assets/icon-192.png" type="image/png">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="css/planner.css">
+
     <link rel="stylesheet" href="css/auth.css">
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script> 
-    <script src="js/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" defer></script>
+    <script src="js/firebase.js" defer></script>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js')
-                    .then(reg => console.log('✅ Service Worker Registered on Signup', reg.scope))
-                    .catch(err => console.warn('⚠️ SW Failed', err));
+                    .then(r => console.log('✅ SW:', r.scope))
+                    .catch(e => console.warn('SW fail', e));
             });
         }
     </script>
 </head>
-<body class="auth-body" data-theme="light">
+<body class="auth-body" data-theme="dark">
 
-    <div class="animated-bg"></div>
+    <canvas id="animated-bg" class="animated-bg"></canvas>
 
-    <div class="auth-container glass-panel">
+    <div id="authLoader" class="auth-loader">
+        <div class="loader-inner">
+            <div class="loader-ring"></div>
+            <div class="loader-logo"><i class="fas fa-shield-alt"></i></div>
+        </div>
+    </div>
+
+    <div class="auth-container glass-panel signup-container">
         <div class="auth-header">
-            <div class="auth-logo"><i class="fas fa-user-plus"></i></div>
-            <h2 style="color: var(--text-main); margin: 0; font-weight: 800;">Join Safe<span style="color: var(--primary);">Nav</span></h2>
-            <p style="color: var(--text-muted); margin-top: 5px;">Start your secure journey</p>
+            <div class="auth-logo pulse-logo"><i class="fas fa-user-plus"></i></div>
+            <h2 class="brand-title">Join Safe<span class="brand-accent">Nav</span></h2>
+            <p class="brand-subtitle">Start your secure journey</p>
+        </div>
+
+        <!-- Step indicator -->
+        <div class="step-indicator">
+            <div class="step-track"><div class="step-progress" id="stepProgress"></div></div>
+            <div class="step-dots">
+                <div class="step-dot active" data-step="1">
+                    <span class="dot-icon"><i class="fas fa-user"></i></span>
+                    <span class="dot-label">Identity</span>
+                </div>
+                <div class="step-dot" data-step="2">
+                    <span class="dot-icon"><i class="fas fa-heartbeat"></i></span>
+                    <span class="dot-label">Health</span>
+                </div>
+                <div class="step-dot" data-step="3">
+                    <span class="dot-icon"><i class="fas fa-route"></i></span>
+                    <span class="dot-label">Travel</span>
+                </div>
+            </div>
         </div>
 
         <form id="signupForm" class="travel-form">
-            <div class="form-group floating-group">
-                <input type="text" id="signupName" class="floating-input" placeholder=" " required>
-                <label for="signupName" class="floating-label"><i class="fas fa-user"></i> Full Name</label>
+
+            <!-- ===== STEP 1: Identity ===== -->
+            <div class="wizard-step active" id="step1">
+                <div class="step-title"><i class="fas fa-id-card"></i><span>Your Identity</span></div>
+
+                <div class="form-group floating-group">
+                    <input type="text" id="signupName" class="floating-input" placeholder=" " required autocomplete="name">
+                    <label for="signupName" class="floating-label"><i class="fas fa-user"></i> Full Name</label>
+                </div>
+                <div class="form-group floating-group">
+                    <input type="email" id="signupEmail" class="floating-input" placeholder=" " required autocomplete="email">
+                    <label for="signupEmail" class="floating-label"><i class="fas fa-envelope"></i> Email Address</label>
+                </div>
+                <div class="form-group floating-group">
+                    <input type="password" id="signupPassword" class="floating-input" placeholder=" " required autocomplete="new-password">
+                    <label for="signupPassword" class="floating-label"><i class="fas fa-lock"></i> Create Password</label>
+                    <span class="toggle-password" data-target="signupPassword">👁️</span>
+                    <div class="password-strength"><div class="strength-bar"></div></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group floating-group half">
+                        <input type="tel" id="signupPhone" class="floating-input" placeholder=" " autocomplete="tel">
+                        <label for="signupPhone" class="floating-label"><i class="fas fa-phone"></i> Phone</label>
+                    </div>
+                    <div class="form-group floating-group half">
+                        <input type="number" id="signupAge" class="floating-input" placeholder=" " min="10" max="120">
+                        <label for="signupAge" class="floating-label"><i class="fas fa-calendar-alt"></i> Age</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="select-wrapper">
+                        <select id="signupGender" class="styled-select">
+                            <option value="" disabled selected>Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="non-binary">Non-Binary</option>
+                            <option value="prefer-not-to-say">Prefer Not to Say</option>
+                        </select>
+                        <i class="fas fa-venus-mars select-icon"></i>
+                    </div>
+                </div>
+
+                <button type="button" class="auth-btn" id="nextStep1">
+                    <span class="btn-content"><span>Continue</span> <i class="fas fa-arrow-right"></i></span>
+                    <div class="shimmer"></div>
+                </button>
+                <p class="toggle-text">Already have an account? <a href="login.html" class="toggle-link">Sign In</a></p>
             </div>
 
-            <div class="form-group floating-group">
-                <input type="email" id="signupEmail" class="floating-input" placeholder=" " required>
-                <label for="signupEmail" class="floating-label"><i class="fas fa-envelope"></i> Email Address</label>
-            </div>
-            
-            <div class="form-group floating-group">
-                <input type="password" id="signupPassword" class="floating-input" placeholder=" " required>
-                <label for="signupPassword" class="floating-label"><i class="fas fa-lock"></i> Create Password</label>
+            <!-- ===== STEP 2: Health ===== -->
+            <div class="wizard-step" id="step2">
+                <div class="step-title"><i class="fas fa-heartbeat"></i><span>Health Profile</span></div>
+                <p class="step-desc">Helps SafeNav personalise route safety for your needs.</p>
+
+                <div class="form-group">
+                    <div class="select-wrapper">
+                        <select id="signupMedical" class="styled-select">
+                            <option value="" disabled selected>Medical Conditions</option>
+                            <option value="none">None</option>
+                            <option value="asthma">Asthma</option>
+                            <option value="heart">Heart Condition</option>
+                            <option value="diabetes">Diabetes</option>
+                            <option value="mobility">Mobility Issues</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <i class="fas fa-stethoscope select-icon"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-thermometer-half"></i> Heat Sensitivity</label>
+                    <div class="slider-group">
+                        <div class="slider-value" id="heatSenseVal">3</div>
+                        <input type="range" id="signupHeatSense" class="styled-range" min="1" max="5" value="3">
+                        <div class="slider-labels"><span>Low</span><span>Medium</span><span>High</span></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-wind"></i> Air Quality Sensitivity</label>
+                    <div class="slider-group">
+                        <div class="slider-value" id="airSenseVal">3</div>
+                        <input type="range" id="signupAirSense" class="styled-range" min="1" max="5" value="3">
+                        <div class="slider-labels"><span>Low</span><span>Medium</span><span>High</span></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-running"></i> Fitness Level</label>
+                    <div class="fitness-options">
+                        <label class="option-card">
+                            <input type="radio" id="signupFitness" name="signupFitness" value="low">
+                            <span><i class="fas fa-couch"></i> Low</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="signupFitness" value="moderate" checked>
+                            <span><i class="fas fa-walking"></i> Moderate</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="signupFitness" value="high">
+                            <span><i class="fas fa-dumbbell"></i> High</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="back-btn" id="backStep2"><i class="fas fa-arrow-left"></i> Back</button>
+                    <button type="button" class="auth-btn flex-grow" id="nextStep2">
+                        <span class="btn-content"><span>Continue</span> <i class="fas fa-arrow-right"></i></span>
+                        <div class="shimmer"></div>
+                    </button>
+                </div>
             </div>
 
-            <button type="submit" class="generate-btn shimmer-btn" style="margin-top: 10px;" id="signupBtn">
-                <span class="btn-content"><span>Create Account</span> <i class="fas fa-check"></i></span>
-                <div class="shimmer"></div>
-            </button>
+            <!-- ===== STEP 3: Travel & Safety ===== -->
+            <div class="wizard-step" id="step3">
+                <div class="step-title"><i class="fas fa-route"></i><span>Travel Preferences</span></div>
+                <p class="step-desc">Tailor your safety recommendations and alerts.</p>
 
-            <p class="toggle-text">Already have an account? <a href="login.html" class="toggle-link">Sign In</a></p>
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-car"></i> Primary Travel Mode</label>
+                    <div class="travel-options">
+                        <label class="option-card">
+                            <input type="radio" id="signupTravelMode" name="signupTravelMode" value="walking">
+                            <span><i class="fas fa-walking"></i> Walk</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="signupTravelMode" value="cycling">
+                            <span><i class="fas fa-bicycle"></i> Cycle</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="signupTravelMode" value="car" checked>
+                            <span><i class="fas fa-car"></i> Car</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="signupTravelMode" value="transit">
+                            <span><i class="fas fa-bus"></i> Transit</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label"><i class="fas fa-shield-alt"></i> Risk Tolerance</label>
+                    <div class="slider-group">
+                        <div class="slider-value" id="riskVal">3</div>
+                        <input type="range" id="signupRiskTolerance" class="styled-range" min="1" max="5" value="3">
+                        <div class="slider-labels"><span>Cautious</span><span>Balanced</span><span>Bold</span></div>
+                    </div>
+                </div>
+
+                <div class="form-group floating-group">
+                    <input type="text" id="signupEmergency" class="floating-input" placeholder=" " autocomplete="tel">
+                    <label for="signupEmergency" class="floating-label"><i class="fas fa-phone-volume"></i> Emergency Contact</label>
+                </div>
+
+                <div class="consent-box">
+                    <label class="consent-label">
+                        <input type="checkbox" id="signupConsent" class="consent-check">
+                        <div class="consent-custom"></div>
+                        <span>I consent to SafeNav storing my health &amp; travel profile to personalise safety recommendations.</span>
+                    </label>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="back-btn" id="backStep3"><i class="fas fa-arrow-left"></i> Back</button>
+                    <button type="submit" class="auth-btn flex-grow" id="signupBtn">
+                        <span class="btn-content"><span>Complete Setup</span> <i class="fas fa-check"></i></span>
+                        <div class="shimmer"></div>
+                    </button>
+                </div>
+
+                <p class="toggle-text">Already have an account? <a href="login.html" class="toggle-link">Sign In</a></p>
+            </div>
+
         </form>
 
         <div id="authMessage" class="auth-message"></div>
     </div>
 
-    <script src="js/auth.js"></script>
+    <!-- Wizard controller (inline, runs before auth.js, no deps) -->
+    <script>
+    (function () {
+        var cur = 1;
+
+        function setProgress(step) {
+            document.querySelectorAll('.step-dot').forEach(function(d, i) {
+                d.classList.toggle('active',    i < step);
+                d.classList.toggle('completed', i < step - 1);
+            });
+            document.getElementById('stepProgress').style.width = ((step - 1) / 2 * 100) + '%';
+        }
+
+        function go(next, dir) {
+            var from = document.getElementById('step' + cur);
+            var to   = document.getElementById('step' + next);
+            from.classList.add(dir === 'fwd' ? 'slide-out-l' : 'slide-out-r');
+            setTimeout(function () {
+                from.classList.remove('active', 'slide-out-l', 'slide-out-r');
+                to.classList.add('active', dir === 'fwd' ? 'slide-in-r' : 'slide-in-l');
+                setTimeout(function () { to.classList.remove('slide-in-r', 'slide-in-l'); }, 340);
+                cur = next;
+                setProgress(next);
+            }, 290);
+        }
+
+        function warn(msg) {
+            var el = document.getElementById('authMessage');
+            el.style.display = 'block';
+            el.style.color = '#ef4444';
+            el.style.backgroundColor = 'rgba(239,68,68,0.1)';
+            el.innerText = msg;
+            setTimeout(function () { el.style.display = 'none'; }, 3200);
+        }
+
+        function ok1() {
+            if (!document.getElementById('signupName').value.trim()) { warn('Please enter your full name.'); return false; }
+            var em = document.getElementById('signupEmail').value.trim();
+            if (!em || !/\S+@\S+\.\S+/.test(em)) { warn('Please enter a valid email.'); return false; }
+            if (document.getElementById('signupPassword').value.length < 6) { warn('Password must be at least 6 characters.'); return false; }
+            return true;
+        }
+
+        document.getElementById('nextStep1').addEventListener('click', function () { if (ok1()) go(2, 'fwd'); });
+        document.getElementById('nextStep2').addEventListener('click', function () { go(3, 'fwd'); });
+        document.getElementById('backStep2').addEventListener('click', function () { go(1, 'bwd'); });
+        document.getElementById('backStep3').addEventListener('click', function () { go(2, 'bwd'); });
+
+        // Live slider values
+        ['signupHeatSense','signupAirSense','signupRiskTolerance'].forEach(function (id) {
+            var inp  = document.getElementById(id);
+            var valId = id === 'signupHeatSense' ? 'heatSenseVal' : id === 'signupAirSense' ? 'airSenseVal' : 'riskVal';
+            var lbl  = document.getElementById(valId);
+            function update() { lbl.textContent = inp.value; inp.style.background = 'linear-gradient(to right,#38bdf8 0%,#38bdf8 ' + ((inp.value-1)/4*100) + '%,rgba(255,255,255,0.09) ' + ((inp.value-1)/4*100) + '%)'; }
+            inp.addEventListener('input', update);
+            update();
+        });
+    })();
+    </script>
+
+    <script src="js/bg-canvas.js" defer></script>
+    <script src="js/auth.js" defer></script>
 </body>
 </html>

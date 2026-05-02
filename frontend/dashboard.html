@@ -34,11 +34,215 @@
             });
         }
     </script>
-</head>
-<body>
-<div id="navbar-placeholder"></div>
-    
 
+    <style>
+        /* ========================================== */
+        /* 🚨 PREMIUM EMERGENCY BROADCAST STYLES      */
+        /* ========================================== */
+        .emergency-toast {
+            display: none;
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translate(-50%, -30px);
+            opacity: 0;
+            width: 90%;
+            max-width: 450px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-left: 5px solid #ef4444;
+            border-radius: 12px;
+            color: white;
+            z-index: 999999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 20px rgba(239, 68, 68, 0.15);
+            overflow: hidden;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+        }
+
+        .emergency-toast.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        .emergency-toast-content {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            gap: 15px;
+        }
+
+        .emergency-icon-wrapper {
+            background: rgba(239, 68, 68, 0.15);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ef4444;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .emergency-text {
+            flex-grow: 1;
+        }
+
+        .emergency-text strong {
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            color: #f8fafc;
+        }
+
+        #emergencyMessage {
+            font-size: 0.9rem;
+            margin-top: 4px;
+            color: #cbd5e1;
+            line-height: 1.4;
+        }
+
+        .emergency-close-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .emergency-close-btn:hover {
+            color: #f1f5f9;
+        }
+
+        .emergency-progress-bar {
+            height: 4px;
+            background: #ef4444;
+            width: 100%;
+            transform-origin: left;
+        }
+
+        @keyframes shrinkProgress {
+            0% { transform: scaleX(1); }
+            100% { transform: scaleX(0); }
+        }
+
+        @keyframes pulseAlert { 
+            0% { transform: scale(1); opacity: 1; } 
+            50% { transform: scale(1.15); opacity: 0.8; } 
+            100% { transform: scale(1); opacity: 1; } 
+        }
+        
+        .pulse-icon {
+            animation: pulseAlert 1.5s infinite;
+        }
+
+        /* ========================================== */
+        /* 📱 PROFILE DRAWER STYLES                   */
+        /* ========================================== */
+        .profile-drawer {
+            position: fixed;
+            top: 70px;
+            right: -100%; 
+            width: 100%;
+            max-width: 400px;
+            height: calc(100vh - 70px); 
+            overflow-y: auto !important; 
+            overflow-x: hidden;
+            background: white;
+            z-index: 99999;
+            transition: right 0.3s ease-in-out;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            padding-bottom: 100px; 
+            pointer-events: auto !important;
+        }
+
+        .profile-drawer.open {
+            right: 0 !important;
+        }
+
+        .profile-drawer::-webkit-scrollbar {
+            width: 5px;
+        }
+        .profile-drawer::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* ========================================== */
+        /* 🗺️ MODAL OVERLAY STYLES                    */
+        /* ========================================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 100000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content-container {
+            width: 100%;
+            max-width: 850px;
+            max-height: 90vh;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .close-modal-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .itinerary-details {
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="emergencyBanner" class="emergency-toast">
+        <div class="emergency-toast-content">
+            <div class="emergency-icon-wrapper">
+                <i class="fas fa-exclamation-triangle pulse-icon"></i>
+            </div>
+            <div class="emergency-text">
+                <strong>SAFENAV GLOBAL ALERT</strong>
+                <div id="emergencyMessage"></div>
+            </div>
+            <button onclick="dismissEmergency()" class="emergency-close-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="emergency-progress-bar"></div>
+    </div>
+
+    <div id="navbar-placeholder"></div>
+    
     <main class="main-container">
         
         <div class="glass-panel safe-exit-panel">
@@ -112,6 +316,18 @@
                 <h4>Basic Identity</h4>
                 <input type="text" id="profName" class="premium-input" placeholder="Full Name">
                 <input type="email" id="profEmail" class="premium-input disabled-input" disabled title="Email cannot be changed">
+                <div class="input-row" style="margin-top: 10px;">
+                    <input type="tel" id="profPhone" class="premium-input flex-2" placeholder="Your Phone (+91...)">
+                    <button type="button" id="sendOtpBtn" class="btn-outline-primary flex-1" style="padding: 10px; font-size: 0.8rem; border-radius: 8px;">Verify</button>
+                </div>
+
+                <div id="otpSection" class="input-row" style="display: none; margin-top: 10px;">
+                    <input type="text" id="otpCode" class="premium-input flex-2" placeholder="Enter 6-digit OTP">
+                    <button type="button" id="verifyOtpBtn" class="btn-primary flex-1" style="padding: 10px; font-size: 0.8rem; border-radius: 8px;">Confirm</button>
+                </div>
+
+                <div id="recaptcha-container"></div>
+                <p id="phoneVerifyMsg" style="font-size: 0.8rem; margin-top: 5px; display: none;"></p>
                 <div class="input-row">
                     <select id="profCountry" class="premium-input flex-2">
                         <option value="">Select Home Country...</option>
@@ -133,21 +349,47 @@
             </div>
 
             <div class="profile-section highlight-danger">
-                <h4 class="text-danger"><i class="fas fa-shield-alt"></i> Safety Engine Settings</h4>
-                <select id="profSafetyMode" class="premium-input border-warning">
-                    <option value="Normal">Normal (Balanced recommendations)</option>
-                    <option value="Cautious">Cautious (Avoid moderate risks)</option>
-                    <option value="Maximum">Maximum (Strict safety filters)</option>
+                <h4 class="text-danger"><i class="fas fa-shield-alt"></i> Core Safety & Health</h4>
+                
+                <div class="input-row">
+                    <input type="number" id="profAge" class="premium-input flex-1" placeholder="Age" min="13" max="120">
+                    <select id="profGender" class="premium-input flex-2">
+                        <option value="">Gender...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <select id="profMedical" class="premium-input">
+                    <option value="none">Condition: None</option>
+                    <option value="asthma">Condition: Asthma</option>
+                    <option value="heart">Condition: Heart</option>
+                    <option value="diabetes">Condition: Diabetes</option>
                 </select>
-                <select id="profHealth" class="premium-input">
-                    <option value="Standard">Standard / No Conditions</option>
-                    <option value="Asthma">Asthma / Respiratory</option>
-                    <option value="Elderly">Elderly / Mobility</option>
-                    <option value="Heart">Heart Condition</option>
+                
+                <select id="profFitness" class="premium-input">
+                    <option value="sedentary">Fitness: Low / Sedentary</option>
+                    <option value="moderate">Fitness: Moderate</option>
+                    <option value="active">Fitness: Highly Active</option>
                 </select>
-                <label class="checkbox-label">
+
+                <div class="input-row">
+                    <select id="profHeatSense" class="premium-input flex-1">
+                        <option value="1">Heat Sense: Low</option>
+                        <option value="3">Heat Sense: Med</option>
+                        <option value="5">Heat Sense: High</option>
+                    </select>
+                    <select id="profAirSense" class="premium-input flex-1">
+                        <option value="1">Air Sense: Low</option>
+                        <option value="3">Air Sense: Med</option>
+                        <option value="5">Air Sense: High</option>
+                    </select>
+                </div>
+
+                <label class="checkbox-label" style="margin-top: 10px;">
                     <input type="checkbox" id="profAutoApplyHealth" checked> 
-                    <span>Auto-apply to all risk calculations</span>
+                    <span>Auto-apply to all AI route calculations</span>
                 </label>
             </div>
 
@@ -208,9 +450,9 @@
                 <a href="#" class="upgrade-link">Upgrade for Unlimited AI & Swaps ✨</a>
             </div>
 
-<button id="saveProfileBtn" name="saveBtn" onclick="saveUserProfile()" class="btn-primary w-100 mb-3">
-    <i class="fas fa-save"></i> Save Intelligence Profile
-</button>
+            <button type="button" id="saveProfileBtn" name="saveBtn" onclick="saveUserProfile()" class="btn-primary w-100 mb-3">
+                <i class="fas fa-save"></i> Save Intelligence Profile
+            </button>
             <button id="logoutBtnDrawer" class="btn-outline-danger w-100 mb-3">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </button>
@@ -220,90 +462,122 @@
         </div>
     </div>
 
+    <div id="tripModal" class="modal-overlay">
+        <div class="modal-content-container glass-panel">
+            <div class="modal-header">
+                <h3><i class="fas fa-map-marked-alt"></i> Trip Itinerary</h3>
+                <button onclick="closeModal()" class="close-modal-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modalContent" class="itinerary-details">
+            </div>
+            <div class="modal-footer" style="position: relative; z-index: 100001; margin-top: 20px;">
+                <button onclick="closeModal()" class="btn-primary">Close Details</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/navbar.js"></script>
     <script src="js/dashboard.js"></script>
+    
     <script>
-        // Currency Auto-updater
+        // 1. Currency Auto-updater
         document.getElementById('profCountry').addEventListener('change', function() {
             const currency = document.getElementById('profCurrency');
             if(this.value === 'India') currency.value = 'INR';
             else if(this.value === 'USA') currency.value = 'USD';
             else if(this.value === 'Germany' || this.value === 'France') currency.value = 'EUR';
         });
-    </script>
-    <script>
-        // Emergency Global Hook
+
+        // 2. Profile Drawer Logic
         window.toggleProfileDrawer = function() {
             const drawer = document.getElementById('profileDrawer');
             if (drawer) {
-                drawer.classList.toggle('open');
+                if (drawer.style.right === '0px' || drawer.classList.contains('open')) {
+                    drawer.style.right = '-400px'; 
+                    drawer.classList.remove('open');
+                } else {
+                    drawer.style.right = '0px'; 
+                    drawer.classList.add('open');
+                }
+            } else {
+                console.error("SafeNav: profileDrawer element not found in HTML!");
             }
         };
+
+        // 3. Bind Profile Picture
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const navProfilePic = document.querySelector('.profile-pic-nav');
+                if (navProfilePic) {
+                    navProfilePic.onclick = (e) => {
+                        e.preventDefault(); 
+                        window.toggleProfileDrawer();
+                    };
+                }
+            }, 1000); 
+        });
+
+        // 4. Emergency Broadcast Logic
+        let currentAlertId = null;
+        let autoDismissTimer = null;
+
+        function triggerEmergencyUI(message, id) {
+            currentAlertId = id;
+            const banner = document.getElementById('emergencyBanner');
+            const msgEl = document.getElementById('emergencyMessage');
+            
+            msgEl.textContent = message;
+            banner.style.display = 'block';
+            
+            void banner.offsetWidth; // Reflow
+            banner.classList.add('show');
+
+            const progressBar = document.querySelector('.emergency-progress-bar');
+            progressBar.style.animation = 'none';
+            void progressBar.offsetWidth; 
+            progressBar.style.animation = 'shrinkProgress 5s linear forwards';
+
+            if (autoDismissTimer) clearTimeout(autoDismissTimer);
+
+            autoDismissTimer = setTimeout(() => {
+                dismissEmergency();
+            }, 5000);
+        }
+
+        function dismissEmergency() {
+            const banner = document.getElementById('emergencyBanner');
+            banner.classList.remove('show');
+            
+            if (currentAlertId) {
+                localStorage.setItem(`dismissed_alert_${currentAlertId}`, 'true');
+            }
+
+            if (autoDismissTimer) clearTimeout(autoDismissTimer);
+
+            setTimeout(() => { banner.style.display = 'none'; }, 500);
+        }
+
+        function initializeAlertListener() {
+            if (typeof db === 'undefined') {
+                setTimeout(initializeAlertListener, 1000);
+                return;
+            }
+
+            db.collection('system_alerts').orderBy('timestamp', 'desc').limit(1)
+              .onSnapshot((snapshot) => {
+                  if (!snapshot.empty) {
+                      const alertDoc = snapshot.docs[0];
+                      const alertId = alertDoc.id;
+                      if (!localStorage.getItem(`dismissed_alert_${alertId}`)) {
+                          triggerEmergencyUI(alertDoc.data().message, alertId);
+                      }
+                  }
+              }, (error) => console.error("Broadcast listener error:", error));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeAlertListener, 1000); 
+        });
     </script>
-    <div id="tripModal" class="modal-overlay">
-    <div class="modal-content-container glass-panel">
-        <div class="modal-header">
-            <h3><i class="fas fa-map-marked-alt"></i> Trip Itinerary</h3>
-            <button onclick="closeModal()" class="close-modal-btn"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="modalContent" class="itinerary-details">
-            </div>
-      <div class="modal-footer" style="position: relative; z-index: 100001;">
-    
-    <button onclick="closeModal()" class="btn-primary">Close Details</button>
-</div>
-    </div>
-</div>
-
-<style>
-/* Instant CSS for the Modal Overlay */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 23, 42, 0.9);
-    backdrop-filter: blur(8px);
-    z-index: 100000;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
-.modal-content-container {
-    width: 100%;
-    max-width: 850px;
-    max-height: 90vh;
-    background: var(--card-bg);
-    border-radius: 24px;
-    padding: 30px;
-    overflow-y: auto;
-    position: relative;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--glass-border);
-}
-
-.close-modal-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-.itinerary-details {
-    color: var(--text-main);
-    line-height: 1.6;
-}
-</style>
 </body>
 </html>

@@ -84,13 +84,21 @@ function updateLiveAnalytics() {
 }
 
 // ============================
-// 5. USER PREFERENCES
+// 5. USER PREFERENCES (Powered by Global Brain 🧠)
 // ============================
 function initializeUserPreferences() {
-    const saved = localStorage.getItem('userPreferences');
-    if (saved) {
-        try { userPreferences = JSON.parse(saved); } 
-        catch (e) { console.warn('Failed to load preferences:', e); }
+    // Pull from the exact same Global Cache as the rest of the app!
+    const globalProfile = JSON.parse(localStorage.getItem('safeNav_globalProfile'));
+    
+    if (globalProfile) {
+        // Automatically adjust premium settings based on their Health & Travel profile
+        userPreferences.priority = parseInt(globalProfile.riskTolerance) > 3 ? 'fastest' : 'balanced';
+        userPreferences.ecoMode = (globalProfile.travelMode === 'cycling' || globalProfile.travelMode === 'walking');
+        userPreferences.autoReroute = true; // Always true for logged-in users
+        
+        console.log('🧠 Premium Features synced with Global Profile!');
+    } else {
+        console.warn('No Global Profile found. Using default premium settings.');
     }
 }
 

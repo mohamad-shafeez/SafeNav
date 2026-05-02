@@ -154,14 +154,17 @@ class TravelMateVault {
 
     updateFileUI(files) {
         const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput'); // 🛡️ Save the input from being destroyed!
         const fileCount = files.length;
         
         if (fileCount > 0) {
             dropArea.innerHTML = `
-                <i class="fas fa-file-check" style="font-size: 3rem; color: #10b981; margin-bottom: 15px;"></i>
+                <i class="fas fa-check-circle" style="font-size: 3rem; color: #10b981; margin-bottom: 15px;"></i>
                 <p style="margin: 0 0 5px 0; font-weight: 500;">${fileCount} file${fileCount > 1 ? 's' : ''} ready to secure</p>
                 <span class="upload-info" style="font-size: 0.85rem; color: gray;">${files[0].name}</span>
             `;
+            
+            dropArea.appendChild(fileInput); // 🛡️ Put the hidden file input back inside!
             this.showToast(`${fileCount} file${fileCount > 1 ? 's' : ''} added to queue`, 'info');
         }
     }
@@ -238,6 +241,8 @@ class TravelMateVault {
                 <p style="margin: 0 0 5px 0; font-weight: 500;">Drag & drop documents or click to browse</p>
                 <span class="upload-info" style="font-size: 0.85rem; color: gray;">Supports PDF, JPG, PNG, DOCX (Max 50MB)</span>
             `;
+            
+            document.getElementById('dropArea').appendChild(fileInput); 
             
             // Reload documents to get fresh data
             await this.loadVaultData();

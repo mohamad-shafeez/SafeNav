@@ -55,6 +55,18 @@ let currentSpeedLimit = null;
 let navWatchId = null; // Secret ID to stop the GPS when we exit
 let simInterval = null;
 
+// --- SAFENAV GLOBAL PROFILE ENGINE ---
+window.safeNavProfile = JSON.parse(localStorage.getItem('safeNav_globalProfile')) || {
+    airSensitivity: 3,
+    heatSensitivity: 3,
+    riskTolerance: 3,
+    autoApplyHealth: true,
+    travelMode: 'car'
+};
+console.log("🧠 Route Engine loaded Global Profile:", window.safeNavProfile);
+
+// Set the global travel mode instantly
+window.currentTravelMode = window.safeNavProfile.travelMode;
 
 // BASIC CONFIGURATION
 const CONFIG_APP = {
@@ -178,6 +190,30 @@ function createDestinationMarkerElement() {
             <span style="transform: rotate(45deg); color: white; font-weight: 800; font-size: 14px;">B</span>
         </div>`;
     return el;
+}
+
+// 🚩 NEW: Professional Destination Pin (📍)
+function addDestinationMarker(lastCoord) {
+    // 1. Remove the old "B" marker if it exists
+    if (endMarker) endMarker.remove();
+
+    // 2. Create the custom 📍 element
+    const el = document.createElement('div');
+    el.className = 'destination-icon';
+    el.innerHTML = '📍';
+    el.style.fontSize = '30px';
+    el.style.cursor = 'pointer';
+    el.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
+
+    // 3. Attach it to the map
+    endMarker = new maplibregl.Marker({ 
+        element: el,
+        anchor: 'bottom' // Ensures the tip of the pin touches the exact coordinate
+    })
+    .setLngLat(lastCoord) 
+    .addTo(map);
+
+    console.log("🏁 Destination Pin Placed at Line End:", lastCoord);
 }
 
 // ============================
@@ -342,6 +378,9 @@ window.calculateRoute = async function() {
 
             // 2. DRAW ROUTE
             drawAnimatedRoute(route.coordinates);
+            // 📍 SNAP PIN TO END OF LINE
+            const finalPoint = route.coordinates[route.coordinates.length - 1];
+            addDestinationMarker(finalPoint);
 
             // 3. ZOOM TO FIT (Turf.js Bounding Box)
             const line = turf.lineString(route.coordinates);
@@ -1230,10 +1269,18 @@ function speak(text) {
     window.speechSynthesis.speak(utterance);
 }
 
+// 🤖 Open the AI Analysis Sheet
 document.getElementById('aiAdviceBtn')?.addEventListener('click', () => {
     document.getElementById('safetyAnalysisSheet').classList.remove('hidden');
-    document.getElementById('routePlanningSheet').style.transform = "translateY(150%)";
+    document.getElementById('routePlanningSheet').style.transform = "translateY(150%)"; // Hide main sheet
 });
+
+// 🤖 Close the AI Analysis Sheet
+window.closeAIAnalysis = function() {
+    document.getElementById('safetyAnalysisSheet').classList.add('hidden');
+    // Bring the main sheet back to its normal position!
+    document.getElementById('routePlanningSheet').style.transform = "translateY(0)"; 
+};
 
 // EVENT LISTENERS
 document.addEventListener("DOMContentLoaded", () => {
@@ -1621,129 +1668,214 @@ window.calculateRoute = function() {
         return;
     }
 
-    console.log("🛣️ Fetching route from TomTom...");
-
-    // TomTom requires coordinates in Latitude,Longitude order for the routing API
+    console.log("🛣️ Fetching Dual Routes from TomTom...");
     const start = `${window.startCoords[1]},${window.startCoords[0]}`; 
     const end = `${window.endCoords[1]},${window.endCoords[0]}`; 
 
-    const routeUrl = `https://api.tomtom.com/routing/1/calculateRoute/${start}:${end}/json?key=${CONFIG.TOMTOM_KEY}&routeType=fastest&traffic=true&instructionsType=text&travelMode=${window.currentTravelMode || 'car'}`;
+    // 🔥 NEW: Added maxAlternatives=1 so the API gives us TWO paths!
+    const routeUrl = `https://api.tomtom.com/routing/1/calculateRoute/${start}:${end}/json?key=${CONFIG.TOMTOM_KEY}&routeType=fastest&traffic=true&instructionsType=text&travelMode=${window.currentTravelMode || 'car'}&maxAlternatives=1`;
 
-    // 1. FETCH TOMTOM (For Map Drawing & 60FPS Simulation)
     fetch(routeUrl)
         .then(res => res.json())
         .then(data => {
             if (data.routes && data.routes.length > 0) {
                 
-                // Save the driving instructions globally so the Simulator can read them
-                if (data.routes[0].guidance && data.routes[0].guidance.instructions) {
-                    window.routeInstructions = data.routes[0].guidance.instructions;
-                }
+                // 1. Store Both Routes in Memory
+                window.fastestRouteData = data.routes[0];
+                // If TomTom only finds 1 route, duplicate it to prevent crashes
+                window.safestRouteData = data.routes.length > 1 ? data.routes[1] : data.routes[0]; 
 
-                // Convert TomTom's points into a format MapLibre understands
-                const coordinates = data.routes[0].legs[0].points.map(p => [p.longitude, p.latitude]);
-                
-                const geojson = {
-                    type: 'Feature',
-                    properties: {},
-                    geometry: {
-                        type: 'LineString',
-                        coordinates: coordinates
-                    }
+                // 2. Unhide the UI Selection Cards
+                document.getElementById('routeOptionsContainer').style.display = 'flex';
+
+                // 3. Populate Card Text (Time & Distance)
+                const updateCardUI = (route, prefix) => {
+                    const distKm = (route.summary.lengthInMeters / 1000).toFixed(1);
+                    const mins = Math.round(route.summary.travelTimeInSeconds / 60);
+                    const timeStr = mins > 59 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins} min`;
+                    
+                    document.getElementById(`${prefix}Dist`).innerText = `${distKm} km`;
+                    document.getElementById(`${prefix}Time`).innerText = timeStr;
                 };
 
-                // Draw the Blue Line on the Map
-                if (map.getSource('route')) {
-                    map.getSource('route').setData(geojson); 
-                } else {
-                    map.addSource('route', { type: 'geojson', data: geojson });
-                    map.addLayer({
-                        id: 'route-line',
-                        type: 'line',
-                        source: 'route',
-                        layout: { 'line-join': 'round', 'line-cap': 'round' },
-                        paint: { 'line-color': '#3b82f6', 'line-width': 6 } 
-                    });
-                }
+                updateCardUI(window.fastestRouteData, 'fastest');
+                updateCardUI(window.safestRouteData, 'safest');
 
-                // Neatly zoom the camera out
-                const bounds = new maplibregl.LngLatBounds();
-                coordinates.forEach(point => bounds.extend(point));
-                map.fitBounds(bounds, { padding: 60, maxZoom: 15 });
+                // 4. Force the app to auto-select the "SafeNav" route first!
+                window.selectRouteOption('safest');
                 
-                console.log("✅ Route successfully drawn on the map!");
                 if (typeof window.updateRealTransportETAs === 'function') window.updateRealTransportETAs();
-                // ==========================================
-                // 🔥 2. FETCH PYTHON BACKEND (For Safety, Weather & Analytics)
-                // ==========================================
-                console.log("🧠 Fetching AI Analytics from Python Backend...");
-                
-                const requestData = {
-                    start: { lat: window.startCoords[1], lng: window.startCoords[0] },
-                    end: { lat: window.endCoords[1], lng: window.endCoords[0] },
-                    speed: 65,
-                    preferences: {
-                        aqi_weight: parseInt(document.getElementById('aqiWeight')?.value || 2),
-                        heat_weight: parseInt(document.getElementById('heatWeight')?.value || 2),
-                        risk_tolerance: document.getElementById('riskVal')?.innerText.toLowerCase() || 'balanced',
-                        avoid_hazards: document.getElementById('hazardToggle')?.checked ?? true
-                    }
-                };
-
-                // NOTE: Change this URL if your Flask backend is hosted online (e.g., https://your-app.com/calculate)
-               const backendUrl = 'http://127.0.0.1:5000/api/route/calculate';
-
-                fetch(backendUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData)
-                })
-                .then(res => res.json())
-                .then(backendData => {
-                    if (backendData.success) {
-                        // 🟢 DYNAMIC RISK COLORING 🔴
-// SafeNav Logic: Lower score is safer. <50 Green, 50-100 Yellow, >100 Red.
-if (backendData.route.analytics && backendData.route.analytics.safety_score) {
-    const exposureScore = backendData.route.analytics.safety_score;
-    let routeColor = '#10b981'; // Default Green (Safe)
-    
-    if (exposureScore > 100) {
-        routeColor = '#ef4444'; // Red (High Risk)
-    } else if (exposureScore >= 50) {
-        routeColor = '#f59e0b'; // Yellow (Moderate)
-    }
-
-    // Repaint the MapLibre line instantly
-    if (map.getLayer('route-line')) {
-        map.setPaintProperty('route-line', 'line-color', routeColor);
-    }
-}
-                        console.log("🎯 Python Data Received!", backendData);
-                        
-                      // Update the Safety Score and bottom sheet using Python data!
-                        if (typeof updateRouteInfoUI === 'function') {
-                            updateRouteInfoUI(backendData.route);
-                        }
-
-                        // 🔥 NEW: Draw the real TomTom accidents on the map!
-                        if (backendData.route.analytics && backendData.route.analytics.congestion_points) {
-                            drawRealHazards(backendData.route.analytics.congestion_points);
-                        }
-
-                        // Trigger the Weather Pop-up!
-                        if (backendData.analysis && backendData.analysis.weather) {
-                            showWeatherAlert(backendData.analysis.weather);
-                        }
-                    }
-                })
-                .catch(err => console.warn("⚠️ Backend Analytics failed (Is Flask running?):", err));
-
             } else {
                 alert("⚠️ Could not find a driving route between these two locations.");
             }
         })
         .catch(err => console.error("Routing error:", err));
 };
+
+// ==========================================
+// 🔀 ROUTE TOGGLE ENGINE (Fastest vs Safest)
+// ==========================================
+window.selectRouteOption = function(routeType) {
+    console.log(`🔀 User switched to: ${routeType}`);
+    
+    // 1. Highlight the Selected Card
+    const cardFastest = document.getElementById('cardFastest');
+    const cardSafest = document.getElementById('cardSafest');
+    
+    if (routeType === 'fastest') {
+        cardFastest.style.borderColor = '#f59e0b'; // Orange
+        cardSafest.style.borderColor = 'transparent';
+        window.currentRouteData = window.fastestRouteData;
+    } else {
+        cardSafest.style.borderColor = '#10b981'; // Green
+        cardFastest.style.borderColor = 'transparent';
+        window.currentRouteData = window.safestRouteData;
+    }
+
+    // Save instructions for the Simulator / Zen Mode
+    if (window.currentRouteData.guidance && window.currentRouteData.guidance.instructions) {
+        window.routeInstructions = window.currentRouteData.guidance.instructions;
+    }
+
+    // 2. Draw the Route Line on the Map
+    const coordinates = window.currentRouteData.legs[0].points.map(p => [p.longitude, p.latitude]);
+    const geojson = { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coordinates } };
+
+    if (map.getSource('route')) {
+        map.getSource('route').setData(geojson); 
+    } else {
+        map.addSource('route', { type: 'geojson', data: geojson });
+        map.addLayer({
+            id: 'route-line', type: 'line', source: 'route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-width': 6 } 
+        });
+    }
+
+    // Initially paint it Blue or Orange based on choice (Python will overwrite this with the real risk color in a second!)
+    if (map.getLayer('route-line')) {
+        map.setPaintProperty('route-line', 'line-color', routeType === 'fastest' ? '#f59e0b' : '#3b82f6');
+    }
+
+    // Smoothly zoom the camera to frame the new route
+    const bounds = new maplibregl.LngLatBounds();
+    coordinates.forEach(point => bounds.extend(point));
+    map.fitBounds(bounds, { padding: 60, maxZoom: 15 });
+
+    // 3. Trigger Python AI Analytics for the newly selected route!
+    triggerPythonSafetyScan(routeType);
+    // 🔥 NEW: Sync the Car/Bike/Bus ETAs to match the selected route!
+    if (window.fastestRouteData && window.currentRouteData) {
+        // Calculate how much longer the safe route is compared to the fastest
+        const timeRatio = window.currentRouteData.summary.travelTimeInSeconds / window.fastestRouteData.summary.travelTimeInSeconds;
+        
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            const timeSpan = btn.querySelector('.time');
+            // Extract the numbers from the current text (e.g. "35 hr 37 min")
+            let totalMins = 0;
+            const text = timeSpan.innerText;
+            if (text.includes('hr')) {
+                const parts = text.match(/(\d+)\s*hr\s*(\d+)?/);
+                if (parts) totalMins = (parseInt(parts[1]) * 60) + (parseInt(parts[2]) || 0);
+            } else {
+                const parts = text.match(/(\d+)/);
+                if (parts) totalMins = parseInt(parts[1]);
+            }
+            
+            // If we found a valid time, scale it and write it back!
+            if (totalMins > 0) {
+                // If switching to SafeNav, increase the time. If switching to Fastest, reset it.
+                const adjustedMins = routeType === 'safest' ? Math.round(totalMins * timeRatio) : Math.round(totalMins / timeRatio);
+                const newText = adjustedMins > 59 ? `${Math.floor(adjustedMins/60)}h ${adjustedMins%60}m` : `${adjustedMins} min`;
+                timeSpan.innerText = newText;
+            }
+        });
+    }
+};
+
+// ==========================================
+// 🧠 PYTHON AI SAFETY SCANNER
+// ==========================================
+function triggerPythonSafetyScan(routeType) {
+    console.log(`🧠 Fetching AI Analytics for the ${routeType} route...`);
+    
+    const requestData = {
+        start: { lat: window.startCoords[1], lng: window.startCoords[0] },
+        end: { lat: window.endCoords[1], lng: window.endCoords[0] },
+        speed: 65,
+        preferences: {
+            // Read directly from the Global Cache we set up!
+            aqi_weight: window.safeNavProfile && window.safeNavProfile.autoApplyHealth ? parseInt(window.safeNavProfile.airSensitivity || 2) : 2,
+            heat_weight: window.safeNavProfile && window.safeNavProfile.autoApplyHealth ? parseInt(window.safeNavProfile.heatSensitivity || 2) : 2,
+            risk_tolerance: routeType === 'fastest' ? 'aggressive' : 'conservative', // Tell Python which route we are testing
+            avoid_hazards: true
+        }
+    };
+
+    fetch('http://127.0.0.1:5000/api/route/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+    })
+    .then(res => res.json())
+    .then(backendData => {
+        if (backendData.success) {
+            
+            // 🎨 DYNAMIC RISK COLORING: Color the line based on Python's Safety Score
+            if (backendData.route.analytics && backendData.route.analytics.safety_score) {
+                const exposureScore = backendData.route.analytics.safety_score;
+                let routeColor = '#10b981'; // Green (Safe)
+                if (exposureScore > 100) routeColor = '#ef4444'; // Red (Danger)
+                else if (exposureScore >= 50) routeColor = '#f59e0b'; // Yellow (Moderate)
+
+                if (map.getLayer('route-line')) {
+                    map.setPaintProperty('route-line', 'line-color', routeColor);
+                }
+            }
+            
+            // Update UI widgets
+            if (typeof updateRouteInfoUI === 'function') updateRouteInfoUI(backendData.route);
+            if (backendData.route.analytics && backendData.route.analytics.congestion_points) drawRealHazards(backendData.route.analytics.congestion_points);
+            if (backendData.analysis && backendData.analysis.weather) showWeatherAlert(backendData.analysis.weather);
+           // ==========================================
+            // 📊 POPULATE THE "AI ROUTE ANALYSIS" SHEET
+            // ==========================================
+            if (backendData.route && backendData.route.analytics) {
+                const score = backendData.route.analytics.safety_score || 0;
+                
+                const riskPanel = document.getElementById('recommendedRisk');
+                if (riskPanel) {
+                    riskPanel.innerHTML = `Overall Safety Rating: <span style="font-size: 1.5rem; margin-left: 10px;">${score}%</span>`;
+                    riskPanel.style.color = score > 80 ? '#ef4444' : (score > 50 ? '#f59e0b' : '#10b981');
+                    riskPanel.style.backgroundColor = score > 80 ? '#ef444415' : (score > 50 ? '#f59e0b15' : '#10b98115');
+                }
+
+                const detailsEl = document.getElementById('recommendedDetails');
+                if (detailsEl) {
+                    detailsEl.innerText = backendData.route.analytics.safety_description || "Route analyzed successfully.";
+                }
+
+               const explanationList = document.getElementById('explanationList');
+                if (explanationList && backendData.analysis && backendData.analysis.factors) {
+                    explanationList.innerHTML = ''; // Clear old factors
+                    
+                    backendData.analysis.factors.forEach(factor => {
+                        const isWarning = factor.text.toLowerCase().includes('high') || factor.text.toLowerCase().includes('traffic');
+                        const iconColor = isWarning ? '#f59e0b' : '#10b981';
+                        
+                        explanationList.innerHTML += `
+                            <li style="margin-bottom: 12px; display: flex; gap: 12px; align-items: flex-start; padding: 10px; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--glass-border);">
+                                <i class="${factor.icon}" style="color: ${iconColor}; margin-top: 3px; font-size: 1.1rem;"></i>
+                                <span style="font-weight: 500; color: var(--text-main); line-height: 1.4;">${factor.text}</span>
+                            </li>
+                        `;
+                    });
+                }
+            } 
+        } 
+    }) 
+    .catch(err => console.error("Python Scan Error:", err));
+} 
 
 // ==========================================
 // ☁️ WEATHER POP-UP NOTIFICATION LOGIC
@@ -1796,7 +1928,7 @@ function showWeatherAlert(weatherData) {
         setTimeout(() => alertDiv.remove(), 400);
     }, 5000);
 }
-function exitZenMode() {
+window.exitZenMode = function() {
     console.log("🛑 Exiting Zen Mode...");
 
     // 1. KILL THE GPS WATCH (Saves battery)
@@ -2249,10 +2381,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // 🛑 EXIT ZEN MODE & KILL SIMULATION
 // ==========================================
 // Declare global lock for transport buttons
-if (typeof isCalculating === 'undefined') 
+if (typeof isCalculating === 'undefined') {
+    window.isCalculating = false;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
-   
+    
     const exitZenBtn = document.getElementById('exitZenBtn');
     
     if (exitZenBtn) {
@@ -2314,6 +2448,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+});
 
   // ==========================================
 // 💥 1. BULLETPROOF TRANSPORT BUTTONS (With Anti-Spam Lock)
@@ -2460,7 +2595,6 @@ document.addEventListener('click', (e) => {
         });
     }
 
-}); 
 
 // ==========================================
 // 🧮 4. THE REAL TOMTOM ETA ENGINE (No Fake Math!)
@@ -2669,6 +2803,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
     };
+// 🛡️ SPLASH SCREEN FAILSAFE (Maximum 4 seconds)
+setTimeout(() => {
+    const splash = document.getElementById('safenav-splash');
+    if (splash && splash.style.opacity !== '0') {
+        console.warn("Failsafe: Forcing splash screen closed.");
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.visibility = 'hidden', 600);
+    }
+}, 4000);
 
     updateLabelAndRecalculate('aqiWeight', 'aqiVal', textMap);
     updateLabelAndRecalculate('heatWeight', 'heatVal', textMap);
@@ -2677,67 +2820,5 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('hazardToggle')?.addEventListener('change', () => {
         if (window.startCoords && window.endCoords) window.calculateRoute();
     });
-});
-// ==========================================
-// 🧠 AI SAFETY SLIDER LOGIC
-// ==========================================
 
-// PART 1: THE ENGINE (Talks to Python)
-async function fetchRouteRisk(destLat, destLng) {
-    const aqiVal = document.getElementById('aqiWeight')?.value || 2;
-    const heatVal = document.getElementById('heatWeight')?.value || 2;
-    const riskVal = document.getElementById('riskTolerance')?.value || 2;
-
-    const payload = {
-        lat: destLat,
-        lng: destLng,
-        aqi_weight: parseInt(aqiVal),
-        heat_weight: parseInt(heatVal),
-        risk_tolerance: parseInt(riskVal)
-    };
-
-    try {
-        const response = await fetch('/api/route/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        // Update the UI
-        const riskElement = document.getElementById('recommendedRisk');
-        if (riskElement) riskElement.innerText = `${data.score}% - ${data.label}`;
-        
-        const aqiElement = document.getElementById('bd-distance');
-        if (aqiElement) aqiElement.innerText = `Air Quality: ${data.breakdown.aqi}`;
-        
-        const heatElement = document.getElementById('bd-weather');
-        if (heatElement) heatElement.innerText = `Weather: ${data.breakdown.heat}`;
-        
-        const hazardElement = document.getElementById('bd-accidents');
-        if (hazardElement) hazardElement.innerText = `Hazards: ${data.breakdown.hazards}`;
-
-    } catch (error) {
-        console.error("Failed to analyze risk:", error);
-    }
-}
-
-// PART 2: THE GAS PEDAL (Listens for your drag)
-document.addEventListener("DOMContentLoaded", () => {
-    const sliders = ['aqiWeight', 'heatWeight', 'riskTolerance'];
-    
-    sliders.forEach(id => {
-        const slider = document.getElementById(id);
-        if (slider) {
-            slider.addEventListener('input', () => {
-                // Get the current destination coordinates
-                // (Update these variable names if your map uses different ones!)
-                const lat = window.currentDestLat || 12.2958; // Defaulting to Mysuru latitude
-                const lng = window.currentDestLng || 76.6394; // Defaulting to Mysuru longitude
-                
-                fetchRouteRisk(lat, lng);
-            });
-        }
-    });
 });

@@ -312,8 +312,23 @@ window.bookSafeRide = function(platform) {
 window.loadUserProfile = async function(user) {
     if (!user) return;
     
-    document.getElementById('profEmail').value = user.email;
-    document.getElementById('navAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=2563eb&color=fff`;
+    const safeSet = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
+
+    const safeCheck = (id, isChecked) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = isChecked;
+    };
+
+    // Use the safe helper instead of direct assignment
+    safeSet('profEmail', user.email);
+    
+    const navAvatar = document.getElementById('navAvatar');
+    if (navAvatar) {
+        navAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=2563eb&color=fff`;
+    }
 
     const db = firebase.firestore();
     try {
@@ -322,17 +337,38 @@ window.loadUserProfile = async function(user) {
             const data = doc.data();
             
             // 1. Identity
-            if(data.name) document.getElementById('profName').value = data.name;
-            if(data.country) document.getElementById('profCountry').value = data.country;
-            if(data.currency) document.getElementById('profCurrency').value = data.currency;
+            if(data.name) safeSet('profName', data.name);
+            if(data.country) safeSet('profCountry', data.country);
+            if(data.currency) safeSet('profCurrency', data.currency);
             
-            // 2. Safety Engine & Settings Drawer
-            if(data.safetyMode) document.getElementById('profSafetyMode').value = data.safetyMode;
-            if(data.healthProfile) document.getElementById('profHealth').value = data.healthProfile;
+            // Phone Verification Status
+            if (data.phone) safeSet('profPhone', data.phone);
+            if (data.phoneVerified) {
+                const verifyBtn = document.getElementById('sendOtpBtn');
+                if(verifyBtn) {
+                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verified';
+                    verifyBtn.style.color = '#10b981'; // Success Green
+                    verifyBtn.style.borderColor = '#10b981';
+                    verifyBtn.disabled = true;
+                }
+            }
             
-            // 👉 NEW: Load Radar Settings
-            if(data.radarAlertType) document.getElementById('profRadarType').value = data.radarAlertType;
-            if(data.radarThreshold) document.getElementById('profRadarDistance').value = data.radarThreshold;
+          // 2. Core Safety & Health
+            if(data.safetyMode) safeSet('profSafetyMode', data.safetyMode);
+            if(data.age) safeSet('profAge', data.age);
+            if(data.gender) safeSet('profGender', data.gender);
+            if(data.healthProfile) safeSet('profMedical', data.healthProfile); 
+            if(data.fitnessLevel) safeSet('profFitness', data.fitnessLevel);
+            if(data.heatSensitivity) safeSet('profHeatSense', data.heatSensitivity);
+            if(data.airSensitivity) safeSet('profAirSense', data.airSensitivity);
+            if(data.autoApplyHealth !== undefined) safeCheck('profAutoApplyHealth', data.autoApplyHealth); // Brought this back!
+            
+            // Radar Settings
+            if(data.radarAlertType) safeSet('profRadarType', data.radarAlertType);
+            if(data.radarThreshold) safeSet('profRadarDistance', data.radarThreshold);
+            
+            // Emergency Quick Share
+            if(data.quickShare !== undefined) safeCheck('profQuickShare', data.quickShare);
             
             // 👉 SMART SYNC 1: Predict Page Dropdown
             const predictDropdown = document.getElementById('userProfile'); 
@@ -347,7 +383,6 @@ window.loadUserProfile = async function(user) {
             }
 
             // 👉 SMART SYNC 2: Planner Page Dropdown 
-            // ⚠️ Pro Tip: Make sure this ID is 'plannerHealthProfile' if you used that in your HTML earlier!
             const plannerDropdown = document.getElementById('plannerHealthProfile'); 
             if (plannerDropdown && data.healthProfile) {
                 Array.from(plannerDropdown.options).forEach(opt => {
@@ -358,19 +393,20 @@ window.loadUserProfile = async function(user) {
                 });
             }
             
-            if(data.autoApplyHealth !== undefined) document.getElementById('profAutoApplyHealth').checked = data.autoApplyHealth;
+            // Safely check the auto-apply checkbox
+            if(data.autoApplyHealth !== undefined) safeCheck('profAutoApplyHealth', data.autoApplyHealth);
             
-            // 3. Travel Defaults
-            if(data.tripStyle) document.getElementById('profStyle').value = data.tripStyle;
-            if(data.budgetDefault) document.getElementById('profBudget').value = data.budgetDefault;
-            if(data.travelGroup) document.getElementById('profGroup').value = data.travelGroup;
-            if(data.transportDefault) document.getElementById('profTransport').value = data.transportDefault;
-            if(data.foodDefault) document.getElementById('profFood').value = data.foodDefault;
+            // 3. Travel Defaults - NOW FULLY PROTECTED
+            if(data.tripStyle) safeSet('profStyle', data.tripStyle);
+            if(data.budgetDefault) safeSet('profBudget', data.budgetDefault);
+            if(data.travelGroup) safeSet('profGroup', data.travelGroup);
+            if(data.transportDefault) safeSet('profTransport', data.transportDefault);
+            if(data.foodDefault) safeSet('profFood', data.foodDefault);
             
-            // 4. Emergency
+            // 4. Emergency - NOW FULLY PROTECTED
             if(data.emergency) {
-                if(data.emergency.name) document.getElementById('profIceName').value = data.emergency.name;
-                if(data.emergency.phone) document.getElementById('profIcePhone').value = data.emergency.phone;
+                if(data.emergency.name) safeSet('profIceName', data.emergency.name);
+                if(data.emergency.phone) safeSet('profIcePhone', data.emergency.phone);
             }
         }
     } catch (error) {
@@ -378,67 +414,104 @@ window.loadUserProfile = async function(user) {
     }
 };
 
+// ==========================================
+// 💾 SMART SAVE PROFILE ENGINE (Anti-Wipe)
+// ==========================================
 window.saveUserProfile = async function() {
     const user = firebase.auth().currentUser;
     if (!user) return alert("You must be logged in to save settings.");
 
-    // FIX 1: Look for the new 'btn-primary' class instead of the old 'generate-btn'
-    const saveBtn = document.querySelector('.profile-drawer .btn-primary');
+    const saveBtn = document.querySelector('.profile-drawer .btn-primary') || document.getElementById('saveProfileBtn');
+    if (!saveBtn) return console.error("❌ Save button not found!");
+
     const originalText = saveBtn.innerHTML;
     saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
     saveBtn.disabled = true;
 
-    const profileData = {
-        name: document.getElementById('profName').value.trim(),
-        country: document.getElementById('profCountry').value.trim(),
-        currency: document.getElementById('profCurrency').value,
-        
-        // 🛡️ Safety Engine Settings
-        safetyMode: document.getElementById('profSafetyMode').value,
-        healthProfile: document.getElementById('profHealth').value,
-        autoApplyHealth: document.getElementById('profAutoApplyHealth').checked,
-        
-        // 👉 NEW: Save Radar Settings right here!
-        radarAlertType: document.getElementById('profRadarType').value,
-        radarThreshold: parseFloat(document.getElementById('profRadarDistance').value) || 5,
-        
-        // 🧳 Trip Defaults
-        tripStyle: document.getElementById('profStyle').value,
-        budgetDefault: document.getElementById('profBudget').value,
-        travelGroup: document.getElementById('profGroup').value,
-        transportDefault: document.getElementById('profTransport').value,
-        foodDefault: document.getElementById('profFood').value,
-        
-        emergency: {
-            name: document.getElementById('profIceName').value.trim(),
-            phone: document.getElementById('profIcePhone').value.trim()
-        },
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    // Start with an empty object. Only add things if we find them on the screen!
+    const profileData = { 
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
     };
 
+    // 👉 SMART HELPER 1: Only adds to database if the HTML element actually exists
+    const addIfFound = (dbKey, htmlId) => {
+        const el = document.getElementById(htmlId);
+        if (el) {
+            profileData[dbKey] = el.value.trim();
+        }
+    };
+
+    // 👉 SMART HELPER 2: For Checkboxes
+    const addCheckIfFound = (dbKey, htmlId) => {
+        const el = document.getElementById(htmlId);
+        if (el) {
+            profileData[dbKey] = el.checked;
+        }
+    };
+
+    // 1. Identity
+    addIfFound('name', 'profName');
+    addIfFound('country', 'profCountry');
+    addIfFound('currency', 'profCurrency');
+    
+    // 2. Core Safety & Health (Matched to HTML!)
+    addIfFound('age', 'profAge');
+    addIfFound('gender', 'profGender');
+    addIfFound('healthProfile', 'profMedical'); // Notice we mapped 'profMedical' here!
+    addIfFound('fitnessLevel', 'profFitness');
+    addIfFound('heatSensitivity', 'profHeatSense');
+    addIfFound('airSensitivity', 'profAirSense');
+    addCheckIfFound('autoApplyHealth', 'profAutoApplyHealth');
+    
+    // 3. Radar Settings
+    addIfFound('radarAlertType', 'profRadarType');
+    
+    // Custom check for numbers
+    const radarDistEl = document.getElementById('profRadarDistance');
+    if (radarDistEl) profileData.radarThreshold = parseFloat(radarDistEl.value) || 5;
+
+    // 4. Trip Defaults
+    addIfFound('tripStyle', 'profStyle');
+    addIfFound('budgetDefault', 'profBudget');
+    addIfFound('travelGroup', 'profGroup');
+    addIfFound('transportDefault', 'profTransport');
+    addIfFound('foodDefault', 'profFood');
+
+    // 5. Emergency (Nested Object)
+    const iceNameEl = document.getElementById('profIceName');
+    const icePhoneEl = document.getElementById('profIcePhone');
+    if (iceNameEl || icePhoneEl) {
+        profileData.emergency = {};
+        if (iceNameEl) profileData.emergency.name = iceNameEl.value.trim();
+        if (icePhoneEl) profileData.emergency.phone = icePhoneEl.value.trim();
+    }
+    addCheckIfFound('quickShare', 'profQuickShare');
     const db = firebase.firestore();
     try {
+        // { merge: true } combined with our smart object means we NEVER overwrite missing fields!
         await db.collection('users').doc(user.uid).set(profileData, { merge: true });
         
+        // Update Firebase Auth Display Name if it was changed
         if (profileData.name) {
             await user.updateProfile({ displayName: profileData.name });
-            // Update the top right avatar image immediately
-            document.getElementById('navAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name)}&background=2563eb&color=fff`;
+            const navAvatar = document.getElementById('navAvatar');
+            if (navAvatar) {
+                navAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name)}&background=2563eb&color=fff`;
+            }
         }
-
+        
         saveBtn.innerHTML = `<i class="fas fa-check"></i> Intelligence Updated`;
-        saveBtn.style.background = '#10b981'; // Turn green for success
+        saveBtn.style.background = '#10b981'; 
         
         setTimeout(() => {
             saveBtn.innerHTML = originalText;
-            // FIX 2: Reset to our new blue variable
             saveBtn.style.background = 'var(--primary-blue)';
             saveBtn.disabled = false;
         }, 2000);
 
     } catch (error) {
         console.error("Error saving profile:", error);
-        alert("Failed to save profile. Please check your connection.");
+        alert("Failed to save profile. Check your connection.");
         saveBtn.innerHTML = originalText;
         saveBtn.disabled = false;
         saveBtn.style.background = 'var(--primary-blue)';
@@ -524,3 +597,95 @@ window.toggleProfileDrawer = function(event) {
         console.warn("Profile drawer element not found in HTML");
     }
 };
+// ==========================================
+// 📱 SMS OTP VERIFICATION ENGINE
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize Invisible reCAPTCHA (Required by Firebase to stop spam bots)
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+            'size': 'invisible'
+        });
+    }
+
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    const msgBox = document.getElementById('phoneVerifyMsg');
+    let confirmationResult = null;
+
+    // Helper to show mini messages under the input
+    const showMsg = (text, isError) => {
+        msgBox.style.display = 'block';
+        msgBox.style.color = isError ? '#ef4444' : '#10b981';
+        msgBox.innerText = text;
+        setTimeout(() => msgBox.style.display = 'none', 5000);
+    };
+
+    // 2. SEND THE SMS
+    if (sendOtpBtn) {
+        sendOtpBtn.addEventListener('click', async () => {
+            const phoneStr = document.getElementById('profPhone').value.trim();
+            
+            // Basic validation
+            if (!phoneStr.startsWith('+')) {
+                return showMsg("Number must include country code (e.g., +91)", true);
+            }
+
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneStr, window.recaptchaVerifier);
+                
+                // Show the OTP input box
+                document.getElementById('otpSection').style.display = 'flex';
+                showMsg("OTP Sent! Check your messages.", false);
+                sendOtpBtn.innerHTML = '<i class="fas fa-envelope"></i> Sent';
+            } catch (error) {
+                console.error("SMS Error:", error);
+                showMsg(error.message, true);
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = 'Verify';
+            }
+        });
+    }
+
+    // 3. VERIFY THE OTP CODE
+    if (verifyOtpBtn) {
+        verifyOtpBtn.addEventListener('click', async () => {
+            const code = document.getElementById('otpCode').value.trim();
+            if (!code || code.length !== 6) return showMsg("Enter the 6-digit code.", true);
+
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                // Confirm the code
+                const credential = firebase.auth.PhoneAuthProvider.credential(confirmationResult.verificationId, code);
+                const user = firebase.auth().currentUser;
+
+                // Link the phone number to their existing email account
+                await user.linkWithCredential(credential);
+
+                // Update Firestore to mark them as officially verified
+                await firebase.firestore().collection('users').doc(user.uid).update({
+                    phone: document.getElementById('profPhone').value.trim(),
+                    phoneVerified: true
+                });
+
+                // Update UI Success State
+                document.getElementById('otpSection').style.display = 'none';
+                sendOtpBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verified';
+                sendOtpBtn.style.color = '#10b981';
+                sendOtpBtn.style.borderColor = '#10b981';
+                showMsg("Phone successfully verified!", false);
+
+            } catch (error) {
+                console.error("OTP Error:", error);
+                showMsg("Invalid code. Please try again.", true);
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerHTML = 'Confirm';
+            }
+        });
+    }
+});

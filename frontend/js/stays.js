@@ -2,7 +2,7 @@
    SAFE STAYS & TRAVEL — MAPLIBRE + TOMTOM (V3 FULL UX)
    ========================================================= */
 
-let map;
+let staysMap;
 let userMarker = null;
 let markersArray = []; 
 let startCoords = null;

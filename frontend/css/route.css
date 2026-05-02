@@ -796,3 +796,18 @@ body.dark-mode #reverseRouteBtn {
     padding: 0 10px;
     text-align: center;
 }
+
+.destination-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    cursor: pointer;
+    transition: transform 0.2s;
+    /* Ensure it's centered over the coordinate */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.destination-icon:hover {
+    transform: scale(1.2);
+}

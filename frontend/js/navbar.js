@@ -1,86 +1,87 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const placeholder = document.getElementById("navbar-placeholder");
+// ==========================================
+// 1. THE GLOBAL "ALWAYS-ON" LISTENER
+// ==========================================
+let clickLock = false;
 
-    // Check if the page uses the dynamic placeholder
-    if (placeholder) {
-        fetch("navbar.html")
-            .then(response => {
-                if (!response.ok) throw new Error("Navbar failed to load");
-                return response.text();
-            })
-            .then(html => {
-                // 1. Inject the HTML
-                placeholder.innerHTML = html;
-                
-                // 2. Run all your original logic NOW that the navbar actually exists on the page
-                initNavbarFeatures();
-            })
-            .catch(error => console.error("Error loading navbar:", error));
-    } else {
-        // Fallback: If a page still has the hardcoded navbar, just run the logic immediately
-        initNavbarFeatures();
+document.addEventListener('click', function(e) {
+    // Detect click on the avatar container or the image itself
+    const isAvatar = e.target.closest('.profile-pic-nav') || e.target.id === 'navAvatar';
+    
+    if (isAvatar) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (clickLock) return;
+        clickLock = true;
+        setTimeout(() => clickLock = false, 300); // Prevent double-triggering
+
+        const drawer = document.getElementById('profileDrawer');
+        if (drawer) {
+            console.log("🎯 Drawer Found - Toggling");
+            drawer.classList.toggle('open');
+            
+            // Sync the manual style just in case CSS classes are being blocked
+            if (drawer.classList.contains('open')) {
+                drawer.style.right = "0px";
+            } else {
+                drawer.style.right = "-100%";
+            }
+        } else {
+            console.warn("⚠️ Not on Dashboard. Redirecting...");
+            window.location.href = "dashboard.html";
+        }
     }
 });
 
-// All of your exact original logic, safely wrapped in a function
-function initNavbarFeatures() {
-    // 1. Mobile Toggle Logic
+// ==========================================
+// 2. NAVBAR HTML INJECTOR
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+    const placeholder = document.getElementById("navbar-placeholder");
+    if (placeholder) {
+        fetch("navbar.html")
+            .then(res => res.text())
+            .then(html => {
+                placeholder.innerHTML = html;
+                initNavbarUI();
+            });
+    } else {
+        initNavbarUI();
+    }
+});
+
+// ==========================================
+// 3. UI INITIALIZATION (Themes, Menu)
+// ==========================================
+function initNavbarUI() {
     const toggle = document.getElementById('navbarToggle');
     const menu = document.getElementById('navMenu');
-
     if (toggle && menu) {
-        toggle.addEventListener('click', () => {
-            menu.classList.toggle('active');
-        });
+        toggle.onclick = () => menu.classList.toggle('active');
     }
 
-    // 2. Active Page Highlight
-    const current = window.location.pathname.split('/').pop() || 'dashboard.html';
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.getAttribute('href') === current) {
-            link.classList.add('active-page');
-        } else {
-            link.classList.remove('active-page'); // Clean up others just in case
-        }
-    });
-
-    // 3. Global Dark Mode Toggle ("One button lights up all")
     const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
-
-    // Check LocalStorage for saved theme
-    const savedTheme = localStorage.getItem('safenav_theme');
-    if (savedTheme === 'dark') {
-        body.classList.add('dark-mode');
-        if(themeToggle) themeToggle.textContent = '☀️';
+    if (themeToggle) {
+        if (localStorage.getItem('safenav_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+        themeToggle.onclick = () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('safenav_theme', isDark ? 'dark' : 'light');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+        };
     }
 
-    // Toggle click event
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            
-            if (body.classList.contains('dark-mode')) {
-                localStorage.setItem('safenav_theme', 'dark');
-                themeToggle.textContent = '☀️';
-            } else {
-                localStorage.setItem('safenav_theme', 'light');
-                themeToggle.textContent = '🌙';
+    // Background Firebase Sync for the Avatar Image
+    if (typeof firebase !== 'undefined') {
+        firebase.auth().onAuthStateChanged(user => {
+            const avatarImg = document.getElementById('navAvatar');
+            if (user && avatarImg) {
+                const name = user.displayName || user.email || "User";
+                avatarImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563eb&color=fff`;
             }
         });
     }
 }
-const profileAvatar = document.getElementById('navAvatar'); 
-    if (profileAvatar) {
-        profileAvatar.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Check if we are on a page that actually has a drawer (like Dashboard)
-            if (typeof toggleProfileDrawer === 'function') {
-                toggleProfileDrawer();
-            } else {
-                // If on another page, maybe redirect to dashboard
-                window.location.href = "dashboard.html";
-            }
-        });
-        profileAvatar.style.cursor = 'pointer';
-    }
