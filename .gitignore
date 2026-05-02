@@ -85,3 +85,13 @@ backend/venv/
 firebase_key.json
 serviceAccountKey.json
 *.key
+
+# Development utilities & generated files
+add_borders.py
+generate_coding_pdf.py
+structure.txt
+pdf/
+backend/vault_storage/
+
+# Video assets
+*.mp4
