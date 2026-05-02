@@ -83,9 +83,5 @@ backend/venv/
 
 # Secure Keys
 firebase_key.json
+serviceAccountKey.json
 *.key
-
-# Secure Keys
-firebase_key.json
-*.key
-config.js
