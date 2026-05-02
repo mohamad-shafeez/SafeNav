@@ -1,59 +1,136 @@
-/* ==========================================================================
-   SAFENAV PRO - HIGH-SPEED MAP CACHE ENGINE
-   ========================================================================== */
+// ==========================================
+// SAFENAV PROGRESSIVE WEB APP (PWA) CORE
+// ⚡ Upgraded: Zero-Latency Engine
+// ==========================================
 
-const MAP_CACHE_NAME = 'safenav-map-cache-v1';
+const CACHE_NAME = 'safenav-core-v1.2'; 
 
-// Install event - take over immediately
+// 📦 The App Shell: Every file needed to run the UI offline
+const ASSETS_TO_CACHE = [
+  'index.html',
+  '404.html',
+  'dashboard.html',
+  'documents.html',
+  'login.html',
+  'navbar.html',
+  'package.html',
+  'planner.html',
+  'prediction.html',
+  'route.html',
+  'signup.html',
+  'stays.html',
+  'tools.html',
+  'manifest.json',
+  'assets/icon-192.png',
+
+  // 🎨 Stylesheets
+  'css/auth.css',
+  'css/dashboard.css',
+  'css/package.css',
+  'css/planner.css',
+  'css/route.css',
+  'css/style.css',
+  'css/tools.css',
+  'css/vault.css',
+
+  // 🧠 Logic Scripts
+  'js/auth.js',
+  'js/dashboard.js',
+  'js/firebase.js',
+  'js/navbar.js',
+  'js/package.js',
+  'js/planner.js',
+  'js/prediction.js',
+  'js/route-core.js',
+  'js/route-premium.js',
+  'js/stays.js',
+  'js/tools.js',
+  'js/translation.js',
+  'js/vault.js',
+  'js/voice-alerts.js'
+];
+
+// 1. INSTALL EVENT: Pre-cache all essential assets
 self.addEventListener('install', (event) => {
-    self.skipWaiting();
-    console.log('⚡ SafeNav Service Worker Installed');
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SafeNav SW] 📦 Caching App Shell...');
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).catch(err => console.error('[SafeNav SW] Cache failed:', err))
+  );
+  self.skipWaiting(); // Force the waiting service worker to become the active service worker
 });
 
+// 2. ACTIVATE EVENT: Clean up old caches when we update the app
 self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('[SafeNav SW] 🧹 Clearing Old Cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim(); // Take control of all open pages immediately
 });
 
-// The Interceptor: Network-First, fallback to Cache, then Cache the new data
+// 3. FETCH EVENT: Stale-While-Revalidate Strategy (ZERO LATENCY)
 self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
+  // 🚫 DO NOT CACHE API CALLS, EXTERNAL MAPS, OR LIVE WEATHER
+  if (event.request.url.includes('/api/') || 
+      event.request.url.includes('nominatim.openstreetmap.org') ||
+      event.request.url.includes('rainviewer.com') ||        // 🔥 NEW: Ignore Weather Radar
+      event.request.url.includes('openweathermap.org') ||    // 🔥 NEW: Ignore Weather Tiles
+      event.request.url.includes('firebase') ||
+      event.request.url.includes('firestore.googleapis.com') || 
+      event.request.url.includes('apis.google.com') ||
+      event.request.url.includes('identitytoolkit.googleapis.com') ||
+      event.request.method !== 'GET') {
+      return; // Let the browser handle these normally
+  }
 
-    // ONLY cache MapLibre/TomTom Tiles, Fonts, and OSRM Routes
-    if (url.hostname.includes('api.tomtom.com') || 
-        url.hostname.includes('project-osrm.org') ||
-        url.hostname.includes('photon.komoot.io')) {
-        
-        event.respondWith(
-            caches.match(event.request).then((cachedResponse) => {
-                // 1. IF we have it in the cache, load it INSTANTLY (0ms latency)
-                if (cachedResponse) {
-                    return cachedResponse; 
-                }
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      
+      // ⚡ 1. THE SPEED TRICK: If it's in the cache, return it IMMEDIATELY!
+      if (cachedResponse) {
+          // 🔄 Background Update: Fetch a fresh copy silently
+          fetch(event.request).then((networkResponse) => {
+              if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                  const responseToCache = networkResponse.clone();
+                  caches.open(CACHE_NAME).then((cache) => {
+                      cache.put(event.request, responseToCache);
+                  });
+              }
+          }).catch(() => { /* Ignore background network errors */ });
+          
+          return cachedResponse; // Instant 0ms load!
+      }
 
-                // 2. IF NOT, fetch it from the internet
-                return fetch(event.request).then((networkResponse) => {
-                    // Safety check: only cache valid responses
-                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                        if(networkResponse.type === 'cors') { // Allow API caching
-                            const responseToCache = networkResponse.clone();
-                            caches.open(MAP_CACHE_NAME).then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-                        }
-                        return networkResponse;
-                    }
-
-                    // 3. Save it to the cache for next time
-                    const responseToCache = networkResponse.clone();
-                    caches.open(MAP_CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-
-                    return networkResponse;
-                }).catch(() => {
-                    console.warn("Offline: Map tile could not be loaded.");
-                });
-            })
-        );
-    }
+      // 🌐 2. If it's NOT in the cache yet, go to the network
+      return fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+              const responseToCache = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(event.request, responseToCache);
+              });
+          }
+          return networkResponse;
+      }).catch(() => {
+          // 🛑 3. Offline Fallback (THE FIX)
+          console.log('[SafeNav SW] 🛑 User is offline or resource missing:', event.request.url);
+          
+          if (event.request.mode === 'navigate') {
+              return caches.match('404.html');
+          }
+          
+          
+          return Response.error(); 
+      });
+    })
+  );
 });
