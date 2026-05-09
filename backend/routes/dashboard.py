@@ -230,3 +230,256 @@ def vault_update():
         import logging
         logging.error(f"Admin Vault Update Error: {str(e)}")
         return jsonify({"error": f"Failed to update document: {str(e)}"}), 500
+
+
+# ==========================================
+# 📊 ANALYTICS & MONITORING ENDPOINTS
+# ==========================================
+
+@dashboard_bp.route("/analytics/system-health", methods=["GET"])
+def system_health():
+    """Real-time system health monitoring"""
+    is_admin, _, _ = verify_admin_token()
+    if not is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        db = firestore.client()
+
+        # Get daily stats
+        daily_stats = db.collection('analytics').document('daily_stats').get()
+        stats = daily_stats.to_dict() if daily_stats.exists else {}
+
+        # Get API usage
+        api_usage = db.collection('analytics').document('api_usage').get()
+        api_data = api_usage.to_dict() if api_usage.exists else {}
+
+        # Get system config (kill switch)
+        sys_config = db.collection('system_config').document('kill_switch').get()
+        kill_switch = sys_config.to_dict() if sys_config.exists else {"level": 0}
+
+        return jsonify({
+            "daily_stats": stats,
+            "api_usage": api_data,
+            "kill_switch": kill_switch,
+            "timestamp": datetime.datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        logging.error(f"System Health Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@dashboard_bp.route("/analytics/audit-logs", methods=["GET"])
+def get_audit_logs():
+    """Retrieve audit logs with filtering"""
+    is_admin, _, _ = verify_admin_token()
+    if not is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        db = firestore.client()
+
+        # Query parameters for filtering
+        severity = request.args.get('severity')  # CRITICAL, WARN, INFO
+        limit = int(request.args.get('limit', 100))
+
+        query = db.collection("audit_logs").order_by("timestamp", direction=firestore.Query.DESCENDING)
+
+        if severity:
+            query = query.where("severity", "==", severity)
+
+        docs = query.limit(limit).stream()
+        logs = []
+
+        for doc in docs:
+            log_data = doc.to_dict()
+            logs.append({
+                "id": doc.id,
+                "action": log_data.get("action"),
+                "actor": log_data.get("actorEmail"),
+                "target": log_data.get("targetId"),
+                "severity": log_data.get("severity"),
+                "timestamp": log_data.get("timestamp").isoformat() if log_data.get("timestamp") else None,
+                "metadata": log_data.get("metadata")
+            })
+
+        return jsonify({"logs": logs, "count": len(logs)}), 200
+    except Exception as e:
+        logging.error(f"Audit Log Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@dashboard_bp.route("/analytics/users", methods=["GET"])
+def get_users_analytics():
+    """Get user list with stats and filtering"""
+    is_admin, _, _ = verify_admin_token()
+    if not is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        db = firestore.client()
+
+        # Query parameters
+        limit = int(request.args.get('limit', 50))
+        search_email = request.args.get('search')
+
+        query = db.collection("users")
+
+        if search_email:
+            # Search by email prefix
+            query = query.where("email", ">=", search_email).where("email", "<", search_email + "\uf8ff")
+
+        docs = query.limit(limit).stream()
+        users = []
+
+        for doc in docs:
+            user_data = doc.to_dict()
+            users.append({
+                "uid": doc.id,
+                "email": user_data.get("email"),
+                "status": user_data.get("status", "Offline"),
+                "role": user_data.get("role", "User"),
+                "health_profile": user_data.get("health_conditions", []),
+                "created_at": user_data.get("createdAt"),
+                "last_login": user_data.get("lastLogin")
+            })
+
+        return jsonify({"users": users, "count": len(users)}), 200
+    except Exception as e:
+        logging.error(f"Users Analytics Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@dashboard_bp.route("/analytics/health-profiles", methods=["GET"])
+def health_profiles_analytics():
+    """Get analytics on user health profiles"""
+    is_admin, _, _ = verify_admin_token()
+    if not is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        db = firestore.client()
+
+        # Aggregate health conditions across all users
+        docs = db.collection("users").stream()
+
+        health_stats = {
+            "cardiac": 0,
+            "asthma": 0,
+            "diabetes": 0,
+            "hypertension": 0,
+            "standard": 0,
+            "total_users": 0
+        }
+
+        for doc in docs:
+            user_data = doc.to_dict()
+            health_stats["total_users"] += 1
+
+            conditions = user_data.get("health_conditions", [])
+            if not conditions or conditions == ["Standard"]:
+                health_stats["standard"] += 1
+            else:
+                for condition in conditions:
+                    key = condition.lower().replace(" ", "_")
+                    if key in health_stats:
+                        health_stats[key] += 1
+
+        return jsonify(health_stats), 200
+    except Exception as e:
+        logging.error(f"Health Profiles Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@dashboard_bp.route("/analytics/api-quota", methods=["GET"])
+def api_quota_status():
+    """Get API quota usage for all external APIs"""
+    is_admin, _, _ = verify_admin_token()
+    if not is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        db = firestore.client()
+
+        api_usage = db.collection('analytics').document('api_usage').get()
+        usage_data = api_usage.to_dict() if api_usage.exists else {}
+
+        # Define daily limits
+        limits = {
+            "openweather": 1000,
+            "waqi": 100,
+            "gemini": 1000,
+            "nominatim": 10000
+        }
+
+        quota_status = {}
+        for api, limit in limits.items():
+            current = usage_data.get(api, 0)
+            percentage = (current / limit * 100) if limit > 0 else 0
+            quota_status[api] = {
+                "current": current,
+                "limit": limit,
+                "remaining": max(0, limit - current),
+                "percentage": round(percentage, 1),
+                "status": "CRITICAL" if percentage > 90 else "WARNING" if percentage > 70 else "OK"
+            }
+
+        return jsonify(quota_status), 200
+    except Exception as e:
+        logging.error(f"API Quota Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@dashboard_bp.route("/analytics/routes-today", methods=["GET"])
+def routes_today_analytics():
+    """Get route generation statistics"""
+    is_admin, _, _ = verify_admin_token()
+    if not is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        db = firestore.client()
+
+        daily_stats = db.collection('analytics').document('daily_stats').get()
+        stats = daily_stats.to_dict() if daily_stats.exists else {}
+
+        return jsonify({
+            "routes_generated": stats.get("routesToday", 0),
+            "avg_safety_score": stats.get("avgSafetyScore", 0),
+            "trips_completed": stats.get("tripsCompleted", 0),
+            "timestamp": datetime.datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        logging.error(f"Routes Analytics Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@dashboard_bp.route("/analytics/recent-activity", methods=["GET"])
+def recent_activity():
+    """Get recent user activities"""
+    is_admin, _, _ = verify_admin_token()
+    if not is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        db = firestore.client()
+
+        limit = int(request.args.get('limit', 20))
+
+        # Get recent audit logs (filtered to user actions)
+        audit_logs = db.collection("audit_logs").order_by("timestamp", direction=firestore.Query.DESCENDING).limit(limit).stream()
+
+        activities = []
+        for log in audit_logs:
+            log_data = log.to_dict()
+            activities.append({
+                "action": log_data.get("action"),
+                "actor": log_data.get("actorEmail"),
+                "timestamp": log_data.get("timestamp").isoformat() if log_data.get("timestamp") else None,
+                "severity": log_data.get("severity")
+            })
+
+        return jsonify({"activities": activities}), 200
+    except Exception as e:
+        logging.error(f"Recent Activity Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500

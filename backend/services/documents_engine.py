@@ -809,7 +809,7 @@ class DocumentVault:
                 'upload_date': document.upload_date.isoformat(),
                 'expiry_date': document.expiry_date.isoformat() if document.expiry_date else None,
                 'status': document.status.value,
-                'security': document.security_level.value,
+                'security': document.encryption_level.value,
                 'tags': document.tags,
                 'notes': document.notes,
                 'metadata': document.metadata.to_dict()
@@ -833,7 +833,7 @@ class DocumentVault:
                     'type': doc.document_type.value,
                     'status': doc.status.value,
                     'expiry_date': doc.expiry_date.isoformat() if doc.expiry_date else None,
-                    'security': doc.security_level.value,
+                    'security': doc.encryption_level.value,
                     'category': doc.category
                 }
                 for doc in self.documents.values()

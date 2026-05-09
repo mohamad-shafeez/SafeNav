@@ -2,9 +2,12 @@
 
 class TravelMateVault {
     constructor() {
-        // FIXED: Pointing to your local Python Flask Server
-        this.apiBaseUrl = 'http://127.0.0.1:5000/api'; 
-            
+        // Detect environment and use correct API URL
+        const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        this.apiBaseUrl = isDev
+            ? 'http://127.0.0.1:5000/api'
+            : 'https://safenav-18sk.onrender.com/api';
+
         this.documents = [];
         this.currentFilters = {};
         this.voiceEnabled = true;

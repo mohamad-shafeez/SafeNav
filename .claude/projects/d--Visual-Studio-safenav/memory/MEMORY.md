@@ -1,0 +1,3 @@
+- [Project Overview](project_overview.md) — SafeNav: AI travel safety engine with real-time risk scoring
+- [Architecture Notes](architecture_notes.md) — Three-tier design with Firebase backend
+- [Completed Work (May 2026)](completed_work_may2026.md) — Infrastructure refactor, backend routes, comprehensive documentation

@@ -1,7 +1,9 @@
 // ================= CONFIGURATION =================
-const API_BASE_URL = 'https://safenav-18sk.onrender.com';
-// Note: Currency API key is okay here if it's a free public tier, 
-// but ideally move to backend later. For now, we focus on AI.
+// Detect if running locally or on production
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:5000/api'
+    : 'https://safenav-18sk.onrender.com/api';
+
 const EXCHANGE_API_KEY = "767d15c92cbc866c2e3d4159";
 // ================= LANGUAGES SUPPORT =================
 // ================= LANGUAGES SUPPORT (MAX EXTENDED) =================
@@ -572,30 +574,13 @@ function swapLanguages() {
 function speakTranslation() {
     const text = document.getElementById('voiceResult').textContent;
     const lang = document.getElementById('voiceTo').value;
-    
+
     if (!text.trim()) {
         showToast("No text to speak", "warning");
         return;
     }
-    
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
-        
-        utterance.onstart = () => {
-            showToast("Speaking...", "info");
-        };
-        
-        utterance.onend = () => {
-            showToast("Speech completed", "success");
-        };
-        
-        speechSynthesis.speak(utterance);
-    } else {
-        showToast("Text-to-speech not supported", "error");
-    }
+
+    speakText(text, lang);
 }
 
 function copyTranslation() {
@@ -815,17 +800,57 @@ function speakText(text, lang) {
         showToast("No text to speak", "warning");
         return;
     }
-    
+
+    // Try backend TTS first
+    tryBackendTTS(text, lang).catch(() => {
+        // Fallback to browser Speech Synthesis
+        useBrowserTTS(text, lang);
+    });
+}
+
+function tryBackendTTS(text, lang) {
+    return fetch(`${API_BASE_URL}/voice/speak`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            text: text,
+            language: lang
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Backend TTS failed');
+        return response.blob();
+    })
+    .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
+        showToast("Speaking...", "info");
+        return new Promise(resolve => {
+            audio.onended = () => {
+                URL.revokeObjectURL(url);
+                showToast("Speech completed", "success");
+                resolve();
+            };
+        });
+    });
+}
+
+function useBrowserTTS(text, lang) {
     if ('speechSynthesis' in window) {
         // 1. THIS LINE FIXES THE LAG: Stop any current speech immediately
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        utterance.rate = 1.0; // Slightly faster for a natural feel
-        
-        window.speechSynthesis.speak(utterance);
+        utterance.rate = 1.0; // Natural pace
+
         showToast("Speaking...", "info");
+        window.speechSynthesis.speak(utterance);
+
+        utterance.onend = () => {
+            showToast("Speech completed", "success");
+        };
     } else {
         showToast("Text-to-speech not supported", "error");
     }

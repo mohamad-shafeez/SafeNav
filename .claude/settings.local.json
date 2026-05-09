@@ -1,0 +1,6 @@
+{
+  "enabledMcpjsonServers": [
+    "jetro"
+  ],
+  "enableAllProjectMcpServers": true
+}

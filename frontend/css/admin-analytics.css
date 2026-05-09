@@ -1,0 +1,445 @@
+/* ==========================================
+   Admin Dashboard Analytics Styles
+   Advanced monitoring and reporting UI
+========================================== */
+
+:root {
+  --stat-bg: #0f1f38;
+  --stat-border: #162946;
+  --stat-text: #ccdaf0;
+  --stat-ok: #00e68a;
+  --stat-warning: #ffb700;
+  --stat-critical: #ff3d5a;
+  --stat-info: #00d4ff;
+}
+
+/* ─── ANALYTICS GRID ─── */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--stat-bg);
+  border: 1px solid var(--stat-border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--stat-info);
+  box-shadow: 0 0 20px rgba(0,212,255,0.15);
+}
+
+.stat-card.alert {
+  border-color: var(--stat-critical);
+  background: rgba(255,61,90,0.05);
+}
+
+.stat-card.ok {
+  border-color: var(--stat-ok);
+  background: rgba(0,230,138,0.05);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #4a6a90;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--stat-text);
+  margin-bottom: 4px;
+  font-family: 'Space Mono', monospace;
+}
+
+.stat-sub {
+  font-size: 0.8rem;
+  color: #4a6a90;
+}
+
+/* ─── AUDIT TABLE ─── */
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--stat-bg);
+  border: 1px solid var(--stat-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.audit-table thead {
+  background: rgba(0,212,255,0.05);
+}
+
+.audit-table th {
+  padding: 12px;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--stat-info);
+  border-bottom: 1px solid var(--stat-border);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.audit-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(22,41,70,0.5);
+  font-size: 0.85rem;
+  color: var(--stat-text);
+}
+
+.audit-table tbody tr:hover {
+  background: rgba(0,212,255,0.05);
+}
+
+.severity-critical {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(255,61,90,0.2);
+  color: var(--stat-critical);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.severity-warn {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(255,183,0,0.2);
+  color: var(--stat-warning);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.severity-info {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(0,212,255,0.2);
+  color: var(--stat-info);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* ─── USERS TABLE ─── */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--stat-bg);
+  border: 1px solid var(--stat-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.users-table thead {
+  background: rgba(0,212,255,0.05);
+}
+
+.users-table th {
+  padding: 12px;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--stat-info);
+  border-bottom: 1px solid var(--stat-border);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.users-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(22,41,70,0.5);
+  font-size: 0.85rem;
+  color: var(--stat-text);
+}
+
+.users-table tbody tr:hover {
+  background: rgba(0,212,255,0.05);
+}
+
+.status-online {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(0,230,138,0.2);
+  color: var(--stat-ok);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.status-offline {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(74,106,144,0.2);
+  color: #4a6a90;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.status-banned {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(255,61,90,0.2);
+  color: var(--stat-critical);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  background: var(--stat-info);
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 0 2px;
+}
+
+.btn-xs:hover {
+  background: #00b8d4;
+}
+
+.btn-xs:active {
+  transform: scale(0.95);
+}
+
+/* ─── HEALTH DISTRIBUTION ─── */
+.health-distribution {
+  background: var(--stat-bg);
+  border: 1px solid var(--stat-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.health-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 80px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.health-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--stat-text);
+}
+
+.health-bar {
+  height: 24px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.health-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--stat-info), var(--stat-ok));
+  transition: width 0.5s ease;
+}
+
+.health-stat {
+  font-size: 0.8rem;
+  color: #4a6a90;
+  text-align: right;
+}
+
+.health-total {
+  border-top: 1px solid var(--stat-border);
+  margin-top: 12px;
+  padding-top: 12px;
+  font-weight: 600;
+  color: var(--stat-info);
+}
+
+/* ─── API QUOTA GRID ─── */
+.quota-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.quota-card {
+  background: var(--stat-bg);
+  border: 1px solid var(--stat-border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.quota-card.quota-ok {
+  border-color: var(--stat-ok);
+}
+
+.quota-card.quota-warning {
+  border-color: var(--stat-warning);
+}
+
+.quota-card.quota-critical {
+  border-color: var(--stat-critical);
+}
+
+.quota-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--stat-info);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.quota-usage {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--stat-text);
+  margin-bottom: 8px;
+  font-family: 'Space Mono', monospace;
+}
+
+.quota-bar {
+  height: 8px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.quota-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--stat-info), var(--stat-ok));
+}
+
+.quota-card.quota-critical .quota-fill {
+  background: linear-gradient(90deg, var(--stat-warning), var(--stat-critical));
+}
+
+.quota-remaining {
+  font-size: 0.75rem;
+  color: #4a6a90;
+  margin-bottom: 4px;
+}
+
+.quota-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: rgba(0,212,255,0.2);
+  color: var(--stat-info);
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.quota-card.quota-critical .quota-status {
+  background: rgba(255,61,90,0.2);
+  color: var(--stat-critical);
+}
+
+/* ─── ROUTES STATS ─── */
+.routes-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.stat-item {
+  background: var(--stat-bg);
+  border: 1px solid var(--stat-border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-item:hover {
+  border-color: var(--stat-info);
+}
+
+.stat-item .stat-label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.stat-item .stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--stat-info);
+  font-family: 'Space Mono', monospace;
+}
+
+/* ─── NOTIFICATIONS ─── */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-success {
+  background: rgba(0,230,138,0.2);
+  color: var(--stat-ok);
+  border: 1px solid rgba(0,230,138,0.4);
+}
+
+.notification-error {
+  background: rgba(255,61,90,0.2);
+  color: var(--stat-critical);
+  border: 1px solid rgba(255,61,90,0.4);
+}
+
+.notification-info {
+  background: rgba(0,212,255,0.2);
+  color: var(--stat-info);
+  border: 1px solid rgba(0,212,255,0.4);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .health-row {
+    grid-template-columns: 80px 1fr 60px;
+  }
+
+  .quota-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-table,
+  .users-table {
+    font-size: 0.75rem;
+  }
+
+  .audit-table th,
+  .users-table th {
+    padding: 8px;
+  }
+
+  .audit-table td,
+  .users-table td {
+    padding: 8px;
+  }
+}
