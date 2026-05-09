@@ -1,21 +1,23 @@
 # --- Core Web Server ---
-flask
-flask-cors
-python-dotenv
-gunicorn
+flask==3.1.2
+flask-cors==6.0.2
+python-dotenv==1.2.1
+gunicorn==25.1.0
 
 # --- Security & Authentication ---
-cryptography
-flask-jwt-extended
+cryptography==46.0.3
+flask-jwt-extended==4.7.1
+firebase-admin==7.3.0
 
 # --- AI & External APIs ---
-google-generativeai
-requests
+google-generativeai==0.8.6
+google-genai==1.64.0
+requests==2.32.5
 
 # --- Image & Document Processing ---
-pillow
-PyPDF2
+pillow==12.1.0
+PyPDF2==3.0.1
 
 # --- Utilities ---
-python-multipart
-typing-extensions
+python-multipart==0.0.21
+typing-extensions==4.15.0
