@@ -21,3 +21,28 @@ PyPDF2==3.0.1
 # --- Utilities ---
 python-multipart==0.0.21
 typing-extensions==4.15.0
+
+# --- Core Web Server ---
+flask==3.1.2
+flask-cors==6.0.2
+python-dotenv==1.2.1
+gunicorn==25.1.0
+
+# --- Security & Authentication ---
+cryptography==46.0.3
+flask-jwt-extended==4.7.1
+firebase-admin==7.3.0
+
+# --- AI & External APIs ---
+google-generativeai==0.8.6
+google-genai==1.64.0
+requests==2.32.5
+
+# --- Image & Document Processing ---
+pillow==12.1.0
+PyPDF2==3.0.1
+
+# --- Utilities ---
+python-multipart==0.0.21
+typing-extensions==4.15.0
+polyline
