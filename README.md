@@ -6,7 +6,7 @@ SafeNav is an AI-powered travel safety engine that combines live environmental d
 
 **Deterministic Output Layer:** Ensures stable and predictable safety scoring despite noisy, real-world inputs.
 
-## 🚧 Live Demo (In Progress)
+## 🚧 Live Demo [(In Progress)](https://drive.google.com/file/d/1Bc9oYDfGGSERi5KU-XpOtrF12JbCOkti/view?usp=drive_link)
 The production deployment is currently being optimized for UI stability and API efficiency. 
 * **GitHub Repository:** https://github.com/mohamad-shafeez/safenav
 *(A live screen demo and architecture walkthrough are available upon request).*
