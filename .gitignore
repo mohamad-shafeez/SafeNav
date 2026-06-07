@@ -68,18 +68,23 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-# Python cache (if you have .py files)
+# Python Bytecode & Runtime Caches
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 
-# VS Code settings (keeps your personal editor settings local)
-.vscode/
-.env
-__pycache__/
-*.pyc
-.DS_Store
-
+# Local Virtual Environments
+.venv/
 venv/
 backend/venv/
+env/
+ENV/
+
+# OS and Editor Specific Files
+.vscode/
+.DS_Store
+Thumbs.db
 
 # Secure Keys
 firebase_key.json
@@ -98,6 +103,7 @@ backend/database/db.sqlite3
 add_borders.py
 generate_coding_pdf.py
 structure.txt
+structured.txt
 pdf/
 backend/vault_storage/
 
