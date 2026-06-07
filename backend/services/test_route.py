@@ -1,4 +1,12 @@
+import os
 import json
+from dotenv import load_dotenv
+
+# Load environment variables from backend/.env
+env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+load_dotenv(env_path)
+
+# Re-read key in class if needed, or instantiate
 from route_engine import route_engine, build_route, analyze_route_safety, calculate_risk
 
 def run_system_test():

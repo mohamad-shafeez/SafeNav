@@ -35,14 +35,14 @@ def create_app():
             if os.path.exists(cred_path):
                 cred = credentials.Certificate(cred_path)
                 firebase_admin.initialize_app(cred)
-                print("✅ Firebase Admin SDK initialized with Service Account.")
+                print("[Firebase] Admin SDK initialized with Service Account.")
             else:
                 # Fallback to Project ID if file is missing
                 firebase_project_id = os.environ.get('FIREBASE_PROJECT_ID', 'my-diaster-project-95132-a577c')
                 firebase_admin.initialize_app(options={'projectId': firebase_project_id})
-                print("⚠️ Warning: serviceAccountKey.json not found. Using Project ID fallback.")
+                print("[Firebase] Warning: serviceAccountKey.json not found. Using Project ID fallback.")
         except Exception as e:
-            print(f"❌ Firebase Initialization Error: {e}")
+            print(f"[Firebase] Initialization Error: {e}")
 
     # Enable CORS
     CORS(app, resources={r"/api/*": {"origins": "*"}})

@@ -105,11 +105,6 @@ class RouteEngine:
     """Enhanced route engine with comprehensive, REAL analytics"""
     
     TOMTOM_ROUTING_URL = "https://api.tomtom.com/routing/1/calculateRoute"
-
-class RouteEngine:
-    """Enhanced route engine with comprehensive, REAL analytics"""
-    
-    TOMTOM_ROUTING_URL = "https://api.tomtom.com/routing/1/calculateRoute"
     TOMTOM_INCIDENTS_URL = "https://api.tomtom.com/traffic/services/5/incidentDetails" # <-- ADD THIS
     
     def __init__(self):
@@ -186,6 +181,11 @@ class RouteEngine:
             
         except Exception as e:
             return {"error": f"Route calculation failed: {str(e)}"}
+            
+    def get_multiple_routes(self, start: Dict[str, float], end: Dict[str, float], count: int = 3) -> List[Dict[str, Any]]:
+        """Multi-route wrapper"""
+        route_data = self.calculate_route(start, end)
+        return [route_data]
             
     def _get_tomtom_route(self, start: Dict[str, float], end: Dict[str, float]) -> Dict[str, Any]:
         """Get REAL route from TomTom API"""
@@ -301,8 +301,8 @@ class RouteEngine:
                         "severity": props.get("magnitudeOfDelay", 0)
                     })
                     
-            return critical_incidents
-
+            return critical_incidents[:50]
+            
         except Exception as e:
             print(f"Failed to fetch accidents: {e}")
             return []
@@ -440,7 +440,7 @@ class RouteEngine:
         Receives data from UI Sliders (AQI, Heat, Risk Tolerance)
         """
         lat = data.get('lat', 0)
-        lng = data.get('lng', 0)
+        lng = data.get('lng') or data.get('lon') or 0
         
         # Grab slider values (default to 2 "Medium")
         aqi_w = int(data.get('aqi_weight', 2))
@@ -561,76 +561,6 @@ class RouteEngine:
         d_lat, d_lon = math.radians(lat2 - lat1), math.radians(lon2 - lon1)
         a = math.sin(d_lat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lon/2)**2
         return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-
-
-class RouteEngine:
-    def __init__(self):
-        # Your existing init stuff (API keys, URLs, etc.)
-        self.TOMTOM_KEY = "YOUR_TOMTOM_KEY"  # Ensure this grabs from your config/env
-        self.TOMTOM_URL = "https://api.tomtom.com/routing/1/calculateRoute"
-
-    # ==========================================
-    # 🚨 THE NEW FAIL-SAFE ROUTING METHOD 
-    # ==========================================
-    def fetch_route_data(self, start: Dict[str, float], end: Dict[str, float], preferences: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Core method to fetch route and hazards with graceful failure."""
-        try:
-            # 1. Build the TomTom API Request
-            route_url = f"{self.TOMTOM_URL}/{start['lat']},{start['lng']}:{end['lat']},{end['lng']}/json"
-            params = {
-                "key": self.TOMTOM_KEY,
-                "traffic": "true",
-                "routeType": "fastest"
-            }
-            
-            # 2. Fire the Request (with an 8-second timeout so it doesn't hang forever)
-            response = requests.get(route_url, params=params, timeout=8)
-            response.raise_for_status() # This triggers the 'except' block if TomTom crashes
-            
-            route_data = response.json()
-
-            # 3. Fetch Incidents (Assuming you have a method for this, or it's bundled in the route)
-            # If your incidents are fetched separately, call that method here.
-            # Example: incidents = self.get_incidents_for_route(route_data)
-            incidents = route_data.get("incidents", []) # Replace with your actual incident fetcher
-            
-            # 🛡️ ITEM 3: CAP INCIDENTS TO 50
-            # Sort by severity (if available) and slice to prevent frontend browser lag
-            if incidents:
-                incidents = incidents[:50] 
-            
-            # 4. Return the perfect, clean payload
-            return {
-                "error": False,
-                "route": route_data,
-                "incidents": incidents
-            }
-
-        except requests.exceptions.RequestException as e:
-            # 🛡️ ITEM 1: GRACEFUL FAILURE HANDLING
-            print(f"🚨 SafeNav Routing Error: {e}")
-            return {
-                "error": True,
-                "message": "Routing service temporarily unavailable. Please retry.",
-                "details": str(e)
-            }
-
-    def calculate_route(self, start: Dict[str, float], end: Dict[str, float], preferences: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Single route wrapper"""
-        return self.fetch_route_data(start, end, preferences)
-
-    def get_multiple_routes(self, start: Dict[str, float], end: Dict[str, float], count: int = 3) -> List[Dict[str, Any]]:
-        """Multi-route wrapper"""
-        # For MVP, we pass the single calculated route back inside a list. 
-        # But we MUST check if it failed first!
-        data = self.fetch_route_data(start, end)
-        
-        # If the API crashed, we return a list with the error dictionary 
-        # so the frontend can catch data[0].error
-        if data.get("error"):
-            return [data] 
-            
-        return [data] # In Phase 2, this will contain 3 distinct alternative routes
 
 # ==========================================
 # GLOBAL INSTANCE & HELPER EXPORTS

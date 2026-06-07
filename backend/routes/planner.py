@@ -8,6 +8,7 @@ from flask import Blueprint, request, jsonify
 from google import genai
 from dotenv import load_dotenv
 from firebase_admin import firestore
+from services.image_service import get_destination_image
 
 def track_api_call(api_name):
     """Silently increments the API usage counter in Firestore"""
@@ -175,3 +176,4 @@ def get_image():
     except Exception as e:
         logging.error(f"📸 Unsplash Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    

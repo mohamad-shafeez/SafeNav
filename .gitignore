@@ -85,6 +85,14 @@ backend/venv/
 firebase_key.json
 serviceAccountKey.json
 *.key
+backend/firebase_key.json
+backend/serviceAccountKey.json
+backend/secret.key
+
+# Databases
+*.sqlite3
+*.db
+backend/database/db.sqlite3
 
 # Development utilities & generated files
 add_borders.py
@@ -95,3 +103,9 @@ backend/vault_storage/
 
 # Video assets
 *.mp4
+# --- 🚨 CUSTOM SECURITY & SECRETS (CRITICAL) 🚨 ---
+frontend/config.js
+backend/keys/
+backend/storage/
+data/
+*.pem
