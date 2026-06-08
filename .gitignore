@@ -115,3 +115,4 @@ backend/keys/
 backend/storage/
 data/
 *.pem
+vault_storage/
