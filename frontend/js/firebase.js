@@ -5,12 +5,12 @@
 console.log("🔥 firebase.js loaded");
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB3xYi_hrjfhRalTK0XIrurY4SRS3B8azU",
-  authDomain: "my-diaster-project-95132-a577c.firebaseapp.com",
-  projectId: "my-diaster-project-95132-a577c",
-  storageBucket: "my-diaster-project-95132-a577c.firebasestorage.app",
-  messagingSenderId: "891281104626",
-  appId: "1:891281104626:web:b2518d5c898f494fdf3a6b"
+  apiKey: "your_actual_new_api_key_here",
+  authDomain: "xxxxxxxxx",
+  projectId: "xxxxxxxxx",
+  storageBucket: "xxxxxxxxxxxxx",
+  messagingSenderId: "xxxxxxxxxx",
+  appId: "xxxxxxxxxxxxxxxxxxxxxxxxx"
 };
 
 // Initialize Firebase ONLY ONCE
