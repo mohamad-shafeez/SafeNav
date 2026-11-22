@@ -644,7 +644,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="topbar-clock" id="clockDisplay">00:00:00</div>
       <div class="admin-chip">
         <div class="admin-avatar" id="adminAvatar">SA</div>
-        <span id="adminEmail" style="font-size:.78rem">admin@safenav.com</span>
+        <span id="adminEmail" style="font-size:.78rem">Admin</span>
       </div>
     </div>
   </div>
@@ -1182,7 +1182,7 @@ db = firebase.firestore();
 auth = firebase.auth();
 
 const ROLE_HIERARCHY = { user: 0, analyst: 1, moderator: 2, superadmin: 3 };
-const AUTHORIZED_ADMINS = ["shafeezchappi18@gmail.com", "admin@safenav.com"];
+const AUTHORIZED_ADMINS = window.SAFENAV_ADMIN_EMAILS || [];
 const API_BASE_URL = 'http://localhost:5000'; 
 
 let currentAdminRole = 'superadmin';

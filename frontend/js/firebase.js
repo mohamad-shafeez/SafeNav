@@ -4,25 +4,24 @@
 
 console.log("🔥 firebase.js loaded");
 
-const firebaseConfig = {
-  apiKey: "your_actual_new_api_key_here",
-  authDomain: "xxxxxxxxx",
-  projectId: "xxxxxxxxx",
-  storageBucket: "xxxxxxxxxxxxx",
-  messagingSenderId: "xxxxxxxxxx",
-  appId: "xxxxxxxxxxxxxxxxxxxxxxxxx"
-};
+// Supply this object from an ignored config.js (see config.example.js).
+// Never commit a real Firebase web config to a public repository.
+const firebaseConfig = window.SAFENAV_FIREBASE_CONFIG;
 
-// Initialize Firebase ONLY ONCE
-if (!firebase.apps.length) {
+if (!firebaseConfig) {
+  console.error(
+    "Firebase web config is missing. Create frontend/config.js from " +
+    "config.example.js and set window.SAFENAV_FIREBASE_CONFIG."
+  );
+} else if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
   console.log("✅ Firebase initialized");
 }
 
 // Firestore (optional)
-if (firebase.firestore) {
+if (firebase.apps.length && firebase.firestore) {
   window.db = firebase.firestore();
   console.log("🔥 Firestore ready");
 } else {
-  console.warn("⚠️ Firestore not loaded (safe)");
+  console.warn("⚠️ Firestore not initialized (missing config or SDK)");
 }
