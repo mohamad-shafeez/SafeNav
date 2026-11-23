@@ -6,18 +6,15 @@
 document.addEventListener("DOMContentLoaded", () => {
 
 
-    if (typeof firebase === 'undefined' || !firebase.auth) {
-        console.error("Firebase not loaded! Check your script tags.");
+    if (typeof firebase === 'undefined' || !firebase.auth || !firebase.apps.length) {
+        console.error("Firebase not initialized. Supply window.SAFENAV_FIREBASE_CONFIG in frontend/config.js.");
         return;
     }
 
     const auth = firebase.auth();
     const db   = firebase.firestore();
 
-    const ADMIN_EMAILS = [
-        "shafeezchappi18@gmail.com",
-        "admin@safenav.com"
-    ];
+    const ADMIN_EMAILS = window.SAFENAV_ADMIN_EMAILS || [];
 
     const authMessage = document.getElementById('authMessage');
     const loginForm   = document.getElementById('loginForm');

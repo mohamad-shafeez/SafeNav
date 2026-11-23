@@ -1,18 +1,21 @@
 import os
 import logging
 import datetime
-from flask_cors import CORS
 from flask import Blueprint, request, jsonify
 from firebase_admin import auth, firestore
 
 # Create the blueprint
 dashboard_bp = Blueprint("command_center_api", __name__)
 
-CORS(dashboard_bp, resources={r"/*": {"origins": "*", "allow_headers": ["Content-Type", "Authorization"]}})
+# CORS is configured once in app.py with an explicit origin allowlist.
 
-# 🛡️ THE VIP LIST: Absolute Backend Security
-# Even if a hacker hacks the frontend, Python will reject them if their email isn't here.
-AUTHORIZED_ADMINS = ["shafeezchappi18@gmail.com", "admin@safenav.com"]
+# Admin access is configured through the environment. Never commit personal
+# admin addresses or rely on a client-side role check.
+AUTHORIZED_ADMINS = [
+    email.strip().lower()
+    for email in os.environ.get("ADMIN_EMAILS", "").split(",")
+    if email.strip()
+]
 
 # ==========================================
 # 🔐 SECURE UPGRADE: VERIFY JWT TOKEN
@@ -31,7 +34,7 @@ def verify_admin_token():
         email = decoded_token.get('email')
         uid = decoded_token.get('uid')
 
-        if email in AUTHORIZED_ADMINS:
+        if email and email.lower() in AUTHORIZED_ADMINS:
             return True, email, uid
         return False, "Unauthorized email", None
     except Exception as e:

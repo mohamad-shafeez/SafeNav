@@ -49,6 +49,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+class DocumentVaultError(Exception):
+    """Base error for document vault operations."""
+
+
+class DocumentEncryptionError(DocumentVaultError):
+    """Raised when encryption or decryption fails."""
+
+
+class FileStorageError(DocumentVaultError):
+    """Raised when a vault file cannot be read or written."""
+
 # =================================================================
 # 1. DATA MODELS
 # =================================================================
@@ -97,10 +109,10 @@ class DocumentCategory(Enum):
         return cls.MISC
 
 class EncryptionLevel(Enum):
-    STANDARD = "standard"
-    MILITARY = "military"
-    BIOMETRIC = "biometric"
-    QUANTUM = "quantum"
+    STANDARD = "standard"  # Fernet (AES-128-CBC + HMAC-SHA256)
+    MILITARY = "military"  # legacy label, not implemented
+    BIOMETRIC = "biometric"  # legacy label, not implemented
+    QUANTUM = "quantum"  # legacy label, not implemented
 
 class DocumentStatus(Enum):
     UPLOADED = "UPLOADED"
@@ -154,6 +166,7 @@ class TravelDocument:
     encryption_key_id: Optional[str] = None
     status: DocumentStatus = DocumentStatus.UPLOADED
     notes: str = ""
+    owner_id: str = "default_user"
     metadata: DocumentMetadata = field(default_factory=DocumentMetadata)
 
     @property
@@ -185,6 +198,7 @@ class TravelDocument:
             "encryption_key_id": self.encryption_key_id,
             "status": self.status.value,
             "notes": self.notes,
+            "owner_id": self.owner_id,
             "metadata": self.metadata.to_dict()
         }
 
@@ -404,89 +418,73 @@ class AIAnalysisEngine:
         return int(final_score)
 
 class EncryptionEngine:
-    """Real Cryptography Engine for secure document storage."""
-    
+    """Authenticated symmetric encryption for document storage.
+
+    Cryptography note: Fernet is AES-128-CBC with an HMAC-SHA256 authentication
+    tag. It is *not* AES-256, and the previous "military", "biometric", and
+    "quantum" labels were not backed by distinct cryptographic schemes. Only the
+    standard level is accepted now so the code and the UI tell the same story.
+    """
+
     def __init__(self, master_key: Optional[bytes] = None):
-        self.master_key = master_key or Fernet.generate_key()
+        key_path = Path(os.environ.get("VAULT_KEY_FILE", "./vault_storage/keys/master.key"))
+        env_key = os.environ.get("VAULT_MASTER_KEY")
+        if master_key:
+            self.master_key = master_key
+        elif env_key:
+            self.master_key = env_key.encode("utf-8")
+        elif key_path.exists():
+            self.master_key = key_path.read_bytes()
+        else:
+            self.master_key = Fernet.generate_key()
+
+        # Validate the key before accepting uploads.
         self.fernet = Fernet(self.master_key)
         self.key_storage: Dict[str, bytes] = {}
-        self._save_master_key()
-        
-    def _save_master_key(self):
-        """Save master key securely."""
-        key_file = Path("./vault_storage/keys/master.key")
-        key_file.parent.mkdir(parents=True, exist_ok=True)
-        key_file.write_bytes(self.master_key)
-        
-    def encrypt_document(self, document: TravelDocument, file_data: bytes) -> Tuple[bytes, str]:
+        self._save_master_key(key_path)
+
+    def _save_master_key(self, key_path: Path):
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        if not key_path.exists():
+            key_path.write_bytes(self.master_key)
         try:
-            encryption_level = document.encryption_level
-            
-            if encryption_level == EncryptionLevel.STANDARD:
-                encrypted_data = self._standard_encryption(file_data)
-            elif encryption_level == EncryptionLevel.MILITARY:
-                encrypted_data = self._military_encryption(file_data)
-            elif encryption_level == EncryptionLevel.BIOMETRIC:
-                encrypted_data = self._biometric_encryption(file_data, document.id)
-            elif encryption_level == EncryptionLevel.QUANTUM:
-                encrypted_data = self._quantum_resistant_encryption(file_data)
-            else:
-                encrypted_data = self._standard_encryption(file_data)
-            
-            key_id = hashlib.sha256(f"{document.id}{datetime.now().isoformat()}".encode()).hexdigest()[:16]
+            os.chmod(key_path, 0o600)
+        except OSError:
+            pass
+
+    def encrypt_document(self, document: TravelDocument, file_data: bytes) -> Tuple[bytes, str]:
+        if document.encryption_level != EncryptionLevel.STANDARD:
+            raise DocumentEncryptionError(
+                "Only the standard Fernet encryption level is implemented"
+            )
+        try:
+            key_id = hashlib.sha256(
+                f"{document.id}{datetime.now().isoformat()}".encode()
+            ).hexdigest()[:16]
             self.key_storage[key_id] = self.master_key
             self._save_encryption_key(key_id)
-            
-            return encrypted_data, key_id
-            
-        except Exception as e:
-            raise DocumentEncryptionError(f"Encryption failed: {str(e)}")
-    
+            return self.fernet.encrypt(file_data), key_id
+        except Exception as error:
+            raise DocumentEncryptionError(f"Encryption failed: {error}")
+
     def _save_encryption_key(self, key_id: str):
-        """Save encryption key mapping."""
         key_file = Path(f"./vault_storage/keys/{key_id}.key")
+        key_file.parent.mkdir(parents=True, exist_ok=True)
         key_file.write_bytes(self.master_key)
-    
-    def decrypt_document(self, encrypted_data: bytes, key_id: str, encryption_level: EncryptionLevel = EncryptionLevel.STANDARD) -> bytes:
+
+    def decrypt_document(
+        self,
+        encrypted_data: bytes,
+        key_id: str,
+        encryption_level: EncryptionLevel = EncryptionLevel.STANDARD,
+    ) -> bytes:
         try:
             key_file = Path(f"./vault_storage/keys/{key_id}.key")
             if not key_file.exists():
                 raise ValueError(f"Key {key_id} not found")
-            
-            # If military, strip the HMAC before decrypting
-            if encryption_level == EncryptionLevel.MILITARY:
-                encrypted_data = encrypted_data[:-32]
-
-            key_data = key_file.read_bytes()
-            fernet = Fernet(key_data)
-            return fernet.decrypt(encrypted_data)
-            
-        except Exception as e:
-            raise DocumentEncryptionError(f"Decryption failed: {str(e)}")
-    
-    def _standard_encryption(self, data: bytes) -> bytes:
-        return self.fernet.encrypt(data)
-    
-    def _military_encryption(self, data: bytes) -> bytes:
-        encrypted = self.fernet.encrypt(data)
-        hmac = hashlib.sha256(encrypted).digest()
-        return encrypted + hmac
-    
-    def _biometric_encryption(self, data: bytes, document_id: str) -> bytes:
-        biometric_key = hashlib.sha256(f"biometric_{document_id}".encode()).digest()
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=b"biometric_salt",
-            iterations=100000,
-        )
-        derived_key = base64.urlsafe_b64encode(kdf.derive(biometric_key))
-        fernet = Fernet(derived_key)
-        return fernet.encrypt(data)
-    
-    def _quantum_resistant_encryption(self, data: bytes) -> bytes:
-        # Standard fallback for quantum in this implementation
-        return self.fernet.encrypt(data)
+            return Fernet(key_file.read_bytes()).decrypt(encrypted_data)
+        except Exception as error:
+            raise DocumentEncryptionError(f"Decryption failed: {error}")
 
 class FileStorageManager:
     """Manages physical file storage operations."""
@@ -608,12 +606,13 @@ class DocumentVault:
         except Exception as e:
             logger.error(f"Error saving documents metadata: {e}")
     
-    async def upload_document(self, file_data: bytes, original_filename: str, document_type: DocumentType, tags: List[str] = None, expiry_date: Optional[date] = None, encryption_level: EncryptionLevel = EncryptionLevel.STANDARD, notes: str = "", category: str = None) -> TravelDocument:
+    async def upload_document(self, file_data: bytes, original_filename: str, document_type: DocumentType, tags: List[str] = None, expiry_date: Optional[date] = None, encryption_level: EncryptionLevel = EncryptionLevel.STANDARD, notes: str = "", category: str = None, owner_id: str = "default_user") -> TravelDocument:
         try:
             unique_filename = self.storage_manager.generate_unique_filename(original_filename)
             
             document = TravelDocument()
             document.id = str(uuid.uuid4())
+            document.owner_id = owner_id
             document.original_filename = original_filename
             document.filename = unique_filename
             document.file_size = len(file_data)
@@ -627,12 +626,17 @@ class DocumentVault:
             document.status = DocumentStatus.UPLOADED
             document.upload_date = datetime.now()
             document.last_modified = datetime.now()
-            
-            encrypted = (encryption_level != EncryptionLevel.STANDARD)
-            self.storage_manager.save_file(file_data, unique_filename, encrypted)
-            
-            if encrypted:
-                await self.encrypt_document(document.id)
+
+            if encryption_level != EncryptionLevel.STANDARD:
+                raise ValueError(
+                    "Only the standard Fernet encryption level is implemented. "
+                    "Military, biometric, and quantum labels were not real cryptographic modes."
+                )
+
+            # Every vault document is encrypted at rest. The old code left the
+            # default "standard" level unencrypted, which contradicted the UI.
+            self.storage_manager.save_file(file_data, unique_filename, encrypted=False)
+            await self.encrypt_document(document.id)
             
             document.metadata = await self.ai_engine.analyze_document(document, file_data)
             
@@ -729,6 +733,7 @@ class DocumentVault:
                 if key == 'category' and doc.category != value: matches = False; break
                 elif key == 'status' and doc.status.value != value: matches = False; break
                 elif key == 'encrypted' and doc.is_encrypted != value: matches = False; break
+                elif key == 'owner_id' and doc.owner_id != value: matches = False; break
                 elif key == 'expiring' and not doc.is_expiring_soon: matches = False; break
                 elif key == 'expired' and not doc.is_expired: matches = False; break
                 elif key == 'type' and doc.document_type.value != value: matches = False; break
@@ -822,10 +827,14 @@ class DocumentVault:
         else:
             raise ValueError(f"Unsupported export format: {export_format}")
     
-    def export_vault_summary(self) -> Dict[str, Any]:
+    def export_vault_summary(self, owner_id: Optional[str] = None) -> Dict[str, Any]:
+        documents = [
+            doc for doc in self.documents.values()
+            if owner_id is None or doc.owner_id == owner_id
+        ]
         return {
             'export_date': datetime.now().isoformat(),
-            'statistics': self.statistics.to_dict(),
+            'statistics': self.get_statistics(owner_id),
             'documents': [
                 {
                     'id': doc.id,
@@ -836,7 +845,7 @@ class DocumentVault:
                     'security': doc.encryption_level.value,
                     'category': doc.category
                 }
-                for doc in self.documents.values()
+                for doc in documents
             ]
         }
     
@@ -861,8 +870,13 @@ class DocumentVault:
         self.statistics.update_from_documents(list(self.documents.values()))
         self.statistics.last_backup = datetime.now()
     
-    def get_statistics(self) -> Dict[str, Any]:
-        return self.statistics.to_dict()
+    def get_statistics(self, owner_id: Optional[str] = None) -> Dict[str, Any]:
+        if owner_id is None:
+            return self.statistics.to_dict()
+        documents = [doc for doc in self.documents.values() if doc.owner_id == owner_id]
+        stats = VaultStatistics()
+        stats.update_from_documents(documents)
+        return stats.to_dict()
 
 
 # =================================================================

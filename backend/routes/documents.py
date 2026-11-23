@@ -32,11 +32,16 @@ class DocumentType(Enum):
     OTHER = "OTHER"
 
 class EncryptionLevel(Enum):
-    """Enumeration of encryption levels."""
-    STANDARD = "standard"  # AES-256
-    MILITARY = "military"  # Military Grade
-    BIOMETRIC = "biometric"  # Biometric + Encryption
-    QUANTUM = "quantum"  # Quantum-Resistant
+    """Enumeration of encryption levels.
+
+    Only STANDARD is implemented. It uses Fernet, which is AES-128-CBC with
+    HMAC-SHA256 authentication. The other names are retained only so old
+    metadata can be read; new uploads using them are rejected.
+    """
+    STANDARD = "standard"  # Fernet (AES-128-CBC + HMAC-SHA256)
+    MILITARY = "military"  # legacy label, not implemented
+    BIOMETRIC = "biometric"  # legacy label, not implemented
+    QUANTUM = "quantum"  # legacy label, not implemented
 
 class DocumentStatus(Enum):
     """Enumeration of document statuses."""

@@ -136,7 +136,7 @@
                 <div class="dashboard-card upload-card glass-panel" data-aos="fade-right">
                     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin: 0; font-size: 1.2rem;"><i class="fas fa-cloud-upload-alt text-primary"></i> Secure Upload</h3>
-                        <div class="card-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">AES-256 + Biometric</div>
+                        <div class="card-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Fernet authenticated encryption</div>
                     </div>
                     
                     <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
@@ -201,10 +201,7 @@
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label for="encryptionLevel" style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block;"><i class="fas fa-lock"></i> Encryption Level</label>
                                 <select id="encryptionLevel" class="modern-select premium-input">
-                                    <option value="standard">Standard (AES-256)</option>
-                                    <option value="military">Military Grade</option>
-                                    <option value="biometric">Biometric + Encryption</option>
-                                    <option value="quantum">Quantum-Resistant</option>
+                                    <option value="standard">Fernet (AES-128-CBC + HMAC-SHA256)</option>
                                 </select>
                             </div>
                             
@@ -348,7 +345,7 @@
                         <div class="vault-section active" id="encryptedSection">
                             <div class="section-header" style="margin-bottom: 15px;">
                                 <h4 style="margin: 0 0 5px 0;"><i class="fas fa-shield-alt text-primary"></i> Encrypted Documents</h4>
-                                <span class="section-info" style="font-size: 0.8rem; color: gray;">Military-grade encryption applied</span>
+                                <span class="section-info" style="font-size: 0.8rem; color: gray;">Authenticated encryption applied</span>
                             </div>
                             <div class="documents-grid" id="encryptedGrid">
                                 <div class="empty-state" style="text-align: center; padding: 40px 0; color: gray;">
@@ -506,6 +503,9 @@
         });
     </script>
     
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase.js"></script>
     <script src="js/vault.js"></script>
     <script src="js/navbar.js"></script>
 </body>

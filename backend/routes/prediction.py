@@ -1,6 +1,5 @@
 import logging
 from flask import Blueprint, request, jsonify
-from flask_cors import CORS
 from services.prediction_engine import calculate_risk
 from firebase_admin import firestore
 
@@ -16,8 +15,7 @@ def track_api_call(api_name):
 
 prediction_bp = Blueprint("prediction", __name__)
 
-# SECURITY: Replace "*" with your actual frontend URL (e.g., your-app.vercel.app)
-CORS(prediction_bp, resources={r"/predict": {"origins": "*"}})
+# CORS is configured once in app.py with an explicit origin allowlist.
 
 @prediction_bp.route("/predict", methods=["POST"])
 def predict():

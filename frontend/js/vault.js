@@ -2,11 +2,14 @@
 
 class TravelMateVault {
     constructor() {
-        // Detect environment and use correct API URL
         const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        this.apiBaseUrl = isDev
-            ? 'http://127.0.0.1:5000/api'
-            : 'https://safenav-18sk.onrender.com/api';
+        const configured =
+            (typeof CONFIG !== 'undefined' && CONFIG.BACKEND_URL) ||
+            window.BACKEND_URL ||
+            (isDev ? 'http://127.0.0.1:5000' : 'https://safenav-18sk.onrender.com');
+        this.apiBaseUrl = configured.endsWith('/api')
+            ? configured
+            : `${configured.replace(/\/$/, '')}/api`;
 
         this.documents = [];
         this.currentFilters = {};
@@ -14,6 +17,23 @@ class TravelMateVault {
         this.recognition = null;
         this.isScanning = false;
         this.init();
+    }
+
+    async authHeaders() {
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            throw new Error('Firebase authentication is not loaded');
+        }
+        const user = firebase.auth().currentUser;
+        if (!user) throw new Error('Please sign in to access the vault');
+        const token = await user.getIdToken();
+        return { Authorization: `Bearer ${token}` };
+    }
+
+    async apiFetch(path, options = {}) {
+        const headers = new Headers(options.headers || {});
+        const auth = await this.authHeaders();
+        Object.entries(auth).forEach(([key, value]) => headers.set(key, value));
+        return fetch(`${this.apiBaseUrl}${path}`, { ...options, headers });
     }
 
     init() {
@@ -176,7 +196,7 @@ class TravelMateVault {
         try {
             this.showLoading('Loading vault data...');
             
-            const response = await fetch(`${this.apiBaseUrl}/documents`);
+            const response = await this.apiFetch('/documents');
             if (!response.ok) throw new Error('Failed to load documents');
             
             this.documents = await response.json();
@@ -224,7 +244,7 @@ class TravelMateVault {
         try {
             this.showLoading('Encrypting and scanning document...');
             
-            const response = await fetch(`${this.apiBaseUrl}/documents/upload`, {
+            const response = await this.apiFetch('/documents/upload', {
                 method: 'POST',
                 body: formData
             });
@@ -452,8 +472,20 @@ class TravelMateVault {
     async downloadDocument(documentId, decrypt = false) {
         try {
             this.showToast('Initiating secure download...', 'info');
-            // Simply redirect browser to endpoint; browser handles the file save dialog
-            window.location.href = `${this.apiBaseUrl}/documents/${documentId}/download?decrypt=${decrypt}`;
+            const response = await this.apiFetch(
+                `/documents/${documentId}/download?decrypt=${decrypt}`
+            );
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `document-${documentId}${decrypt ? '' : '.enc'}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Download error:', error);
             this.showToast('Failed to download document', 'error');
@@ -468,7 +500,7 @@ class TravelMateVault {
         try {
             this.showLoading('Deleting document...');
             
-            const response = await fetch(`${this.apiBaseUrl}/documents/${documentId}`, {
+            const response = await this.apiFetch(`/documents/${documentId}`, {
                 method: 'DELETE'
             });
             
@@ -989,7 +1021,7 @@ class TravelMateVault {
             this.showLoading('Preparing export...');
             
             // Call the real Flask endpoint
-            const response = await fetch(`${this.apiBaseUrl}/export/summary`);
+            const response = await this.apiFetch('/documents/export/summary');
             if (!response.ok) throw new Error('Export failed');
             
             const summary = await response.json();

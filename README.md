@@ -23,7 +23,7 @@
   <img src="https://img.shields.io/badge/gemini-AI--Powered-blueviolet?logo=google&logoColor=white" alt="Gemini">
   <img src="https://img.shields.io/badge/firebase-auth%20%26%20hosting-orange?logo=firebase&logoColor=white" alt="Firebase">
   <img src="https://img.shields.io/badge/PWA-enabled-brightgreen?logo=pwa&logoColor=white" alt="PWA">
-  <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License">
+  <a href="https://github.com/mohamad-shafeez/SafeNav/actions/workflows/ci.yml"><img src="https://github.com/mohamad-shafeez/SafeNav/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
 ---
@@ -75,11 +75,11 @@ SafeNav is a full-stack, health-aware travel safety platform that synthesizes **
 - **Tiered Classification** — Low / Medium / High risk with TTS-ready alert messages
 
 ### 📄 Secure Document Vault
-- **Multi-Tier Encryption** — Standard (AES-256), Military-Grade (AES + HMAC), Biometric, and Quantum-Resistant tiers
+- **Authenticated Encryption** — every upload is encrypted with Fernet (AES-128-CBC + HMAC-SHA256); the legacy “military”, “biometric”, and “quantum” labels were removed because no distinct schemes backed them
 - **AI Document Analysis** — Gemini Vision extracts and validates data from Passports, Visas, IDs, Medical Reports
 - **File Integrity** — SHA-256 checksums and entropy validation before storage
 - **22 Document Types** — Passport, Aadhar, PAN, Visa, Travel Insurance, Medical Reports, Forex Receipts, and more
-- **Secure Lifecycle** — upload → AI analysis → encryption → storage → decryption → secure wipe
+- **Owner-Scoped Lifecycle** — upload → AI analysis → encryption → storage → owner-only download/delete
 
 ### 🔊 Voice & Accessibility Engine
 - **Real-Time Voice Alerts** — TTS-powered spoken warnings for extreme heat, poor air quality along the active route
@@ -94,7 +94,7 @@ SafeNav is a full-stack, health-aware travel safety platform that synthesizes **
 - **Image Proxy** — secure Unsplash integration for destination imagery
 
 ### 🛡️ Admin Command Center
-- **JWT-Verified Admin Dashboard** — Firebase token authentication with hardcoded admin whitelist
+- **Firebase-token-verified Admin Dashboard** — environment-configured admin allowlist enforced by the backend
 - **User Management** — ban, unban, delete users, and modify roles via Firebase Auth + Firestore
 - **Kill Switch** — system-wide threat level control (L0–L3) with immutable audit logging
 - **API Quota Monitoring** — real-time tracking of OpenWeatherMap, WAQI, Gemini, and Nominatim usage
@@ -120,7 +120,7 @@ SafeNav is a full-stack, health-aware travel safety platform that synthesizes **
 | **Environmental** | OpenWeatherMap (Weather), WAQI (Air Quality Index), RainViewer (Radar) |
 | **Image** | Unsplash API (Destination Imagery), Pillow (Image Processing) |
 | **Document** | PyPDF2 (PDF Parsing), Gemini Vision (OCR & Validation) |
-| **Security** | Firebase Admin SDK, JWT Verification, Fernet Encryption (AES-256-CBC), PBKDF2-HMAC-SHA256, SHA-256 Checksums |
+| **Security** | Firebase Admin SDK, Firebase ID-token verification, Fernet authenticated encryption (AES-128-CBC + HMAC-SHA256), SHA-256 checksums |
 | **PWA** | Service Workers (Stale-While-Revalidate), Web App Manifest, Capacitor (Native Bridge) |
 | **Hosting** | Render (Backend API), Firebase Hosting (Frontend), Vercel (Serverless Fallback) |
 
@@ -155,7 +155,7 @@ SafeNav is a full-stack, health-aware travel safety platform that synthesizes **
 │  └────────┬────────┘  └────────┬─────────┘  └────────┬──────────┘  │
 │  ┌────────┴────────┐  ┌────────┴─────────┐  ┌────────┴──────────┐  │
 │  │  Stay Engine    │  │ Planner Engine   │  │ Security Manager  │  │
-│  │(Weather+Heuristic) │(Gemini Itinerary)│  │(Fernet+AES+HMAC) │  │
+│  │(Weather+Heuristic) │(Gemini Itinerary)│  │(Fernet: AES-128-CBC + HMAC-SHA256) │  │
 │  └─────────────────┘  └──────────────────┘  └───────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
         │                     │                      │
@@ -203,7 +203,7 @@ safenav/
 │   │   └── image_service.py          # Unsplash destination image fetcher
 │   │
 │   ├── utils/                        # Shared utilities
-│   │   ├── security_utils.py         # SecurityManager (Fernet, AES-256, checksums)
+│   │   ├── security_utils.py         # SecurityManager (Fernet, AES-128-CBC, checksums)
 │   │   ├── data_manager.py           # JSON metadata CRUD, audit logging, statistics
 │   │   ├── firebase_admin.py         # Firebase Admin SDK initialization helper
 │   │   ├── firebase_auth.py          # Firebase authentication utilities
@@ -521,13 +521,13 @@ The `firebase.json` serves the `frontend/` directory as the public root.
 
 ## 🔒 Security
 
-- **Encryption** — Fernet (AES-256-CBC) with PBKDF2-HMAC-SHA256 key derivation
+- **Encryption** — Fernet (AES-128-CBC + HMAC-SHA256), with a persistent master key loaded from `VAULT_MASTER_KEY` or the vault key file
 - **Key Management** — Auto-generated keys with timestamped backup rotation
 - **Data Integrity** — SHA-256 checksums on all encrypted documents
-- **Authentication** — Firebase Auth with JWT token verification on all admin endpoints
-- **Admin Whitelist** — Hardcoded email allowlist for admin access (backend-enforced)
-- **CORS** — Configured per-blueprint with wildcard restriction on production
-- **Secrets** — All API keys, service account files, and encryption keys excluded via `.gitignore`
+- **Authentication** — Firebase ID-token verification on all admin endpoints
+- **Admin Allowlist** — `ADMIN_EMAILS` is read from the backend environment; no admin addresses are committed to frontend or backend source
+- **CORS** — Configured once in `app.py` with an explicit origin allowlist
+- **Secrets** — API keys, service account files, and encryption keys are excluded via `.gitignore`
 
 ---
 
@@ -565,7 +565,7 @@ Clamped to [0, 100]
 
 ## 📄 License
 
-This project was developed as a **Final Year Project (FYP)**.
+No repository-wide license is currently declared. The project is shared for portfolio review; contact the author before reuse or redistribution.
 
 ---
 
